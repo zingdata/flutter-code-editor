@@ -41,6 +41,8 @@ class FoldableBlock extends InclusiveRange with EquatableMixin {
       case FoldableBlockType.singleLineComment:
       case FoldableBlockType.multilineComment:
         return true;
+      default:
+        return false;
     }
 
     return false;
@@ -51,6 +53,8 @@ class FoldableBlock extends InclusiveRange with EquatableMixin {
     switch (type) {
       case FoldableBlockType.imports:
         return true;
+      default:
+        return false;
     }
 
     return false;
@@ -122,9 +126,7 @@ extension FoldableBlockList on List<FoldableBlock> {
 
       // And fix every violation of the hierarchy by bubbling the block up,
       // removing non-ancestors from the working list, and joining when needed.
-      for (int ancestorIndex = ancestors.length - 2;
-          ancestorIndex >= 0;
-          ancestorIndex--) {
+      for (int ancestorIndex = ancestors.length - 2; ancestorIndex >= 0; ancestorIndex--) {
         final ancestor = ancestors[ancestorIndex];
 
         if (ancestor.lastLine < bubble.firstLine) {
@@ -138,8 +140,8 @@ extension FoldableBlockList on List<FoldableBlock> {
 
         final isDuplicate = bubble.isSameLines(ancestor);
 
-        final areIntersecting = ancestor.lastLine >= bubble.firstLine &&
-            ancestor.lastLine < bubble.lastLine;
+        final areIntersecting =
+            ancestor.lastLine >= bubble.firstLine && ancestor.lastLine < bubble.lastLine;
 
         if (isDuplicate || areIntersecting) {
           final joined = ancestor.join(bubble);

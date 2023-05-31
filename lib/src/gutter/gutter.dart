@@ -37,8 +37,7 @@ class GutterWidget extends StatelessWidget {
         (style.showFoldingHandles ? 0 : _foldingColumnWidth);
 
     final issueColumnWidth = style.showErrors ? _issueColumnWidth : 0.0;
-    final foldingColumnWidth =
-        style.showFoldingHandles ? _foldingColumnWidth : 0.0;
+    final foldingColumnWidth = style.showFoldingHandles ? _foldingColumnWidth : 0.0;
 
     final tableRows = List.generate(
       code.hiddenLineRanges.visibleLineNumbers.length,
@@ -87,7 +86,7 @@ class GutterWidget extends StatelessWidget {
         continue;
       }
 
-      tableRows[lineIndex].children![_lineNumberColumn] = Text(
+      tableRows[lineIndex].children[_lineNumberColumn] = Text(
         style.showLineNumbers ? '${i + 1}' : ' ',
         style: style.textStyle,
         textAlign: style.textAlign,
@@ -105,10 +104,9 @@ class GutterWidget extends StatelessWidget {
       if (lineIndex == null || lineIndex >= tableRows.length) {
         continue;
       }
-      tableRows[lineIndex].children![_issueColumn] = GutterErrorWidget(
+      tableRows[lineIndex].children[_issueColumn] = GutterErrorWidget(
         issue,
-        style.errorPopupTextStyle ??
-            (throw Exception('Error popup style should never be null')),
+        style.errorPopupTextStyle ?? (throw Exception('Error popup style should never be null')),
       );
     }
   }
@@ -124,7 +122,7 @@ class GutterWidget extends StatelessWidget {
 
       final isFolded = code.foldedBlocks.contains(block);
 
-      tableRows[lineIndex].children![_foldingColumn] = FoldToggle(
+      tableRows[lineIndex].children[_foldingColumn] = FoldToggle(
         color: style.textStyle?.color,
         isFolded: isFolded,
         onTap: isFolded
@@ -141,7 +139,7 @@ class GutterWidget extends StatelessWidget {
         continue;
       }
 
-      tableRows[lineIndex].children![_foldingColumn] = FoldToggle(
+      tableRows[lineIndex].children[_foldingColumn] = FoldToggle(
         color: style.textStyle?.color,
         isFolded: true,
         onTap: () => codeController.unfoldAt(block.firstLine),
