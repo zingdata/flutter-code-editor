@@ -142,8 +142,7 @@ class Code {
       invalidBlocks: invalidBlocks,
       lines: lines,
       namedSections: sectionsMap,
-      visibleHighlighted:
-          hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
+      visibleHighlighted: hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
       visibleText: hiddenRanges.cutString(text),
       visibleSectionNames: visibleSectionNames,
     );
@@ -383,9 +382,7 @@ class Code {
     if (oldSelection.isCollapsed &&
         visibleAfter.text.length == visibleText.length - 1 &&
         foldedBlocks.any(
-          (block) =>
-              block.lastLine >= firstChangedLine &&
-              block.lastLine <= lastChangedLine,
+          (block) => block.lastLine >= firstChangedLine && block.lastLine <= lastChangedLine,
         )) {
       return CodeEditResult(
         fullTextAfter: text,
@@ -404,10 +401,8 @@ class Code {
     //  - (2) The char before [start] is not '\n'.
     // We don't need to check (1) because otherwise [end] and [end - 1]
     // are on the same line.
-    final lastChar = rangeBefore.end -
-        ((rangeBefore.start == 0 || text[rangeBefore.start - 1] == '\n')
-            ? 1
-            : 0);
+    final lastChar =
+        rangeBefore.end - ((rangeBefore.start == 0 || text[rangeBefore.start - 1] == '\n') ? 1 : 0);
 
     final linesChanged = TextRange(
       start: lines.characterIndexToLineIndex(rangeBefore.start),
@@ -489,8 +484,7 @@ class Code {
 
     final newHiddenRangesBuilder = _hiddenRangesBuilder.copyMergingSourceMap({
       FoldableBlock: {
-        for (final block in matcher.newFoldedBlocks)
-          block: foldableBlockToHiddenRange(block),
+        for (final block in matcher.newFoldedBlocks) block: foldableBlockToHiddenRange(block),
       },
     });
 
@@ -522,8 +516,7 @@ class Code {
       invalidBlocks: invalidBlocks,
       lines: lines,
       namedSections: namedSections,
-      visibleHighlighted:
-          hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
+      visibleHighlighted: hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
       visibleText: hiddenRanges.cutString(text),
       visibleSectionNames: visibleSectionNames,
     );

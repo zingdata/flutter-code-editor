@@ -3,13 +3,13 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class PopupController extends ChangeNotifier {
   late List<String> suggestions;
+  List<Map<String, List>> suggestionsCategory = [];
   int _selectedIndex = 0;
   bool shouldShow = false;
   bool enabled = true;
 
   final ItemScrollController itemScrollController = ItemScrollController();
-  final ItemPositionsListener itemPositionsListener =
-      ItemPositionsListener.create();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
 
   /// Should be called when an active list item is selected to be inserted into the text
   late final void Function() onCompletionSelected;
@@ -44,12 +44,24 @@ class PopupController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearSuggestionCategory() {
+    suggestionsCategory = [];
+    notifyListeners();
+  }
+
+  void addSuggestionCategories(List<Map<String, List>> suggestionsCategory) {
+    if (enabled == false) {
+      return;
+    }
+
+    this.suggestionsCategory = suggestionsCategory;
+  }
+
   /// Changes the selected item and scrolls through the list of completions on keyboard arrows pressed
   void scrollByArrow(ScrollDirection direction) {
     final previousSelectedIndex = selectedIndex;
     if (direction == ScrollDirection.up) {
-      selectedIndex =
-          (selectedIndex - 1 + suggestions.length) % suggestions.length;
+      selectedIndex = (selectedIndex - 1 + suggestions.length) % suggestions.length;
     } else {
       selectedIndex = (selectedIndex + 1) % suggestions.length;
     }

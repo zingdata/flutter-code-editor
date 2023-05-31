@@ -109,8 +109,7 @@ class CodeController extends TextEditingController {
   @internal
   late final searchController = CodeSearchController(codeController: this);
 
-  SearchSettingsController get _searchSettingsController =>
-      searchController.settingsController;
+  SearchSettingsController get _searchSettingsController => searchController.settingsController;
   SearchNavigationController get _searchNavigationController =>
       searchController.navigationController;
 
@@ -136,6 +135,13 @@ class CodeController extends TextEditingController {
     EnterKeyIntent: EnterKeyAction(controller: this),
   };
 
+  void needsQoutesChanged({required bool quotesBool}) {
+    if (quotesBool) {
+    } else {}
+  }
+
+  void addMainTableFields(List<String> columns, List<String> tables) {}
+
   CodeController({
     String? text,
     Mode? language,
@@ -144,7 +150,7 @@ class CodeController extends TextEditingController {
     Set<String> readOnlySectionNames = const {},
     Set<String> visibleSectionNames = const {},
     @Deprecated('Use CodeTheme widget to provide theme to CodeField.')
-        Map<String, TextStyle>? theme,
+    Map<String, TextStyle>? theme,
     this.analysisResult = const AnalysisResult(issues: []),
     this.patternMap,
     this.readOnly = false,
@@ -342,15 +348,13 @@ class CodeController extends TextEditingController {
       return;
     }
 
-    final currentMatchIndex =
-        _searchNavigationController.value.currentMatchIndex;
+    final currentMatchIndex = _searchNavigationController.value.currentMatchIndex;
 
     if (searchController.shouldShow && currentMatchIndex != null) {
       final fullSelection = code.hiddenRanges.recoverSelection(selection);
       final currentMatch = fullSearchResult.matches[currentMatchIndex];
 
-      if (fullSelection.start == currentMatch.start &&
-          fullSelection.end == currentMatch.end) {
+      if (fullSelection.start == currentMatch.start && fullSelection.end == currentMatch.end) {
         _searchNavigationController.moveNext();
         return;
       }
@@ -439,8 +443,7 @@ class CodeController extends TextEditingController {
         return;
       }
 
-      final selectionSnapshot =
-          code.hiddenRanges.recoverSelection(newValue.selection);
+      final selectionSnapshot = code.hiddenRanges.recoverSelection(newValue.selection);
       _updateCodeIfChanged(editResult.fullTextAfter);
 
       if (newValue.text != _code.visibleText) {
@@ -480,8 +483,7 @@ class CodeController extends TextEditingController {
 
   void applyHistoryRecord(CodeHistoryRecord record) {
     _code = record.code.foldedAs(_code);
-    final fullSelection =
-        record.code.hiddenRanges.recoverSelection(record.selection);
+    final fullSelection = record.code.hiddenRanges.recoverSelection(record.selection);
     final cutSelection = _code.hiddenRanges.cutSelection(fullSelection);
 
     super.value = TextEditingValue(
@@ -568,8 +570,7 @@ class CodeController extends TextEditingController {
   bool _anySelectedLineUncommented() {
     return _anySelectedLine((line) {
       for (final commentType in SingleLineComments.byMode[language] ?? []) {
-        if (line.trimLeft().startsWith(commentType) ||
-            line.hasOnlyWhitespaces()) {
+        if (line.trimLeft().startsWith(commentType) || line.hasOnlyWhitespaces()) {
           return false;
         }
       }
@@ -620,8 +621,7 @@ class CodeController extends TextEditingController {
         return line;
       }
 
-      for (final sequence
-          in SingleLineComments.byMode[language] ?? <String>[]) {
+      for (final sequence in SingleLineComments.byMode[language] ?? <String>[]) {
         // If there is a space after a sequence
         // we should remove it with the sequence.
         if (line.trim().startsWith('$sequence ')) {
@@ -693,8 +693,7 @@ class CodeController extends TextEditingController {
       baseOffset: firstLineStart,
       extentOffset: firstLineStart + modifiedLinesString.length,
     );
-    final finalVisibleSelection =
-        _code.hiddenRanges.cutSelection(finalFullSelection);
+    final finalVisibleSelection = _code.hiddenRanges.cutSelection(finalFullSelection);
 
     // TODO(yescorp): move to the listener both here and in `set value`
     //  or come up with a different approach
@@ -781,8 +780,7 @@ class CodeController extends TextEditingController {
       return;
     }
 
-    final suggestions =
-        (await autocompleter.getSuggestions(prefix)).toList(growable: false);
+    final suggestions = (await autocompleter.getSuggestions(prefix)).toList(growable: false);
 
     if (suggestions.isNotEmpty) {
       popupController.show(suggestions);
@@ -884,8 +882,7 @@ class CodeController extends TextEditingController {
       style: style,
     );
 
-    final visibleSearchResult =
-        _code.hiddenRanges.cutSearchResult(fullSearchResult);
+    final visibleSearchResult = _code.hiddenRanges.cutSearchResult(fullSearchResult);
 
     // TODO(alexeyinkin): Return cached if the value did not change, https://github.com/akvelon/flutter-code-editor/issues/127
     lastTextSpan = SearchResultHighlightedBuilder(
@@ -930,9 +927,7 @@ class CodeController extends TextEditingController {
 
         int idx;
         for (idx = 1;
-            idx < m.groupCount &&
-                idx <= _styleList.length &&
-                m.group(idx) == null;
+            idx < m.groupCount && idx <= _styleList.length && m.group(idx) == null;
             idx++) {}
 
         children.add(
