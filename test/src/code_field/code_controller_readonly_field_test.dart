@@ -8,7 +8,6 @@ void main() {
       const initialText = 'Aaa\nAaaa';
       final controller = CodeController(
         text: initialText,
-        readOnly: true,
       );
 
       controller.value = const TextEditingValue(
