@@ -115,7 +115,7 @@ class GutterWidget extends StatelessWidget {
         textWrappedTimes = textWidth.width / (size!.width - 36);
       }
 
-      tableRows[lineIndex].children[_lineNumberColumn] = Text(
+      tableRows[lineIndex].children?[_lineNumberColumn] = Text(
         style.showLineNumbers
             ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
             : ' ',
@@ -136,7 +136,7 @@ class GutterWidget extends StatelessWidget {
         continue;
       }
 
-      tableRows[lineIndex].children[_issueColumn] = GutterErrorWidget(
+      tableRows[lineIndex].children?[_issueColumn] = GutterErrorWidget(
         issue,
         style.errorPopupTextStyle ?? (throw Exception('Error popup style should never be null')),
       );
@@ -154,7 +154,7 @@ class GutterWidget extends StatelessWidget {
 
       final isFolded = code.foldedBlocks.contains(block);
 
-      tableRows[lineIndex].children[_foldingColumn] = FoldToggle(
+      tableRows[lineIndex].children?[_foldingColumn] = FoldToggle(
         color: style.textStyle?.color,
         isFolded: isFolded,
         onTap: isFolded
@@ -171,7 +171,7 @@ class GutterWidget extends StatelessWidget {
         continue;
       }
 
-      tableRows[lineIndex].children[_foldingColumn] = FoldToggle(
+      tableRows[lineIndex].children?[_foldingColumn] = FoldToggle(
         color: style.textStyle?.color,
         isFolded: true,
         onTap: () => codeController.unfoldAt(block.firstLine),
