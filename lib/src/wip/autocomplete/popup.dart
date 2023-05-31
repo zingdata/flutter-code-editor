@@ -72,8 +72,10 @@ class PopupState extends State<Popup> {
     return PageStorage(
       bucket: pageStorageBucket,
       child: Positioned(
-        left: horizontalOverflow ? leftOffsetLimit - 100 : widget.normalOffset.dx - 100,
-        top: verticalFlipRequired ? widget.flippedOffset.dy : widget.normalOffset.dy,
+        left: horizontalOverflow
+            ? leftOffsetLimit - 100
+            : widget.normalOffset.dx - (widget.isMobile ? 1 : 100),
+        top: verticalFlipRequired ? widget.flippedOffset.dy : widget.normalOffset.dy + 6,
         child: Container(
           alignment: Alignment.topCenter,
           constraints: BoxConstraints(
