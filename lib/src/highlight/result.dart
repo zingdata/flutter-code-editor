@@ -54,6 +54,16 @@ extension MyResult on Result {
     Mode? top,
     Result? secondBest,
   }) {
+    nodes?.forEach((node) {
+      if (node.children?.first.value == 'Name' ||
+          node.children?.first.value == 'category' ||
+          node.children?.first.value == 'year' ||
+          node.children?.first.value == 'status' ||
+          node.children?.first.value == 'date') {
+        node.className = null;
+      }
+    });
+
     return Result(
       relevance: relevance ?? this.relevance,
       nodes: nodes ?? this.nodes,

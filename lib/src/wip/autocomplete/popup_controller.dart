@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class PopupController extends ChangeNotifier {
-  late List<String> suggestions;
-  List<Map<String, List>> suggestionsCategory = [];
+  List<Map<String, String>> suggestions = [];
   int _selectedIndex = 0;
+  bool isPopupShown = false;
+  final List<Map<String, List<String>>> _suggestionCategories = [];
   bool shouldShow = false;
-  bool enabled = true;
 
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
@@ -24,11 +24,20 @@ class PopupController extends ChangeNotifier {
   int get selectedIndex => _selectedIndex;
 
   void show(List<String> suggestions) {
-    if (enabled == false) {
-      return;
+    final List<Map<String, String>> suggestions0 = [];
+
+    for (final e in suggestions) {
+      for (final element in _suggestionCategories) {
+        element.forEach((key, value) {
+          if (value.contains(e)) {
+            suggestions0.add({key: e});
+          }
+        });
+      }
     }
 
-    this.suggestions = suggestions;
+    this.suggestions = suggestions0;
+
     _selectedIndex = 0;
     shouldShow = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -36,6 +45,7 @@ class PopupController extends ChangeNotifier {
         itemScrollController.jumpTo(index: 0);
       }
     });
+
     notifyListeners();
   }
 
@@ -44,17 +54,12 @@ class PopupController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearSuggestionCategory() {
-    suggestionsCategory = [];
-    notifyListeners();
+  void addSuggestionCategories(List<Map<String, List<String>>> suggestionCategoriesSet) {
+    _suggestionCategories.addAll(suggestionCategoriesSet);
   }
 
-  void addSuggestionCategories(List<Map<String, List>> suggestionsCategory) {
-    if (enabled == false) {
-      return;
-    }
-
-    this.suggestionsCategory = suggestionsCategory;
+  void clearSuggestionCategory() {
+    _suggestionCategories.clear();
   }
 
   /// Changes the selected item and scrolls through the list of completions on keyboard arrows pressed
@@ -88,7 +93,7 @@ class PopupController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String getSelectedWord() => suggestions[selectedIndex];
+  String getSelectedWord() => suggestions[selectedIndex].values.first;
 }
 
 /// Possible directions of completions list navigation

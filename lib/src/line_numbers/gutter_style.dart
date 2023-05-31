@@ -24,7 +24,7 @@ class GutterStyle {
   final Color? background;
 
   /// Central horizontal margin between the numbers and the code.
-  final double margin;
+  final EdgeInsets? margin;
 
   /// Whether to show line numbers column.
   final bool showLineNumbers;
@@ -39,8 +39,8 @@ class GutterStyle {
   bool get showGutter => showLineNumbers || showErrors || showFoldingHandles;
 
   const GutterStyle({
-    this.margin = 10.0,
-    this.textAlign = TextAlign.right,
+    this.margin,
+    this.textAlign = TextAlign.left,
     this.showErrors = true,
     this.showFoldingHandles = true,
     this.showLineNumbers = true,

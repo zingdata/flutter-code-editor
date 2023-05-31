@@ -6,7 +6,7 @@ import '../code/reg_exp.dart';
 /// Accumulates textual data and suggests autocompletion based on it.
 class Autocompleter {
   Mode? _mode;
-  final _customAutocomplete = AutoComplete(engine: SortEngine.entriesOnly());
+  final _customAutocomplete = AutoComplete(engine: SortEngine.msOnly());
   final _keywordsAutocomplete = AutoComplete(engine: SortEngine.entriesOnly());
   final _textAutocompletes = <Object, AutoComplete>{};
   final _lastTexts = <Object, String>{};
@@ -122,9 +122,7 @@ class Autocompleter {
     final result = {
       ..._customAutocomplete.suggest(prefix),
       ..._keywordsAutocomplete.suggest(prefix),
-      ..._textAutocompletes.values
-          .map((ac) => ac.suggest(prefix))
-          .expand((e) => e),
+      // ..._textAutocompletes.values.map((ac) => ac.suggest(prefix)).expand((e) => e),
     }.where((e) => !_blacklistSet.contains(e)).toList(growable: false);
 
     result.sort();

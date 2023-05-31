@@ -6,30 +6,20 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:highlight/highlight_core.dart';
-import 'package:meta/meta.dart';
 
 import '../../flutter_code_editor.dart';
 import '../autocomplete/autocompleter.dart';
 import '../code/code_edit_result.dart';
-import '../code/key_event.dart';
 import '../history/code_history_controller.dart';
 import '../history/code_history_record.dart';
-import '../search/controller.dart';
-import '../search/result.dart';
-import '../search/search_navigation_controller.dart';
-import '../search/settings_controller.dart';
 import '../single_line_comments/parser/single_line_comments.dart';
 import '../wip/autocomplete/popup_controller.dart';
 import 'actions/comment_uncomment.dart';
 import 'actions/copy.dart';
-import 'actions/dismiss.dart';
-import 'actions/enter_key.dart';
 import 'actions/indent.dart';
 import 'actions/outdent.dart';
 import 'actions/redo.dart';
-import 'actions/search.dart';
 import 'actions/undo.dart';
-import 'search_result_highlighted_builder.dart';
 import 'span_builder.dart';
 
 class CodeController extends TextEditingController {
@@ -66,6 +56,10 @@ class CodeController extends TextEditingController {
   final AbstractNamedSectionParser? namedSectionParser;
   Set<String> _readOnlySectionNames;
 
+  bool needsQoutes = false;
+  List<String> mainTableFields = [];
+  List<String> mainTables = [];
+
   /// A map of specific regexes to style
   final Map<String, TextStyle>? patternMap;
 
@@ -90,11 +84,6 @@ class CodeController extends TextEditingController {
   ///If it is not empty, all another code except specified will be hidden.
   Set<String> _visibleSectionNames = {};
 
-  /// Makes the text un-editable, but allows to set the full text.
-  /// Focusing and moving the selection inside of a [CodeField] will
-  /// still be possible.
-  final bool readOnly;
-
   String get languageId => _languageId;
 
   Code _code;
@@ -105,16 +94,6 @@ class CodeController extends TextEditingController {
   late PopupController popupController;
   final autocompleter = Autocompleter();
   late final historyController = CodeHistoryController(codeController: this);
-
-  @internal
-  late final searchController = CodeSearchController(codeController: this);
-
-  SearchSettingsController get _searchSettingsController => searchController.settingsController;
-  SearchNavigationController get _searchNavigationController =>
-      searchController.navigationController;
-
-  @internal
-  SearchResult fullSearchResult = SearchResult.empty;
 
   /// The last [TextSpan] returned from [buildTextSpan].
   ///
@@ -130,17 +109,7 @@ class CodeController extends TextEditingController {
     OutdentIntent: OutdentIntentAction(controller: this),
     RedoTextIntent: RedoAction(controller: this),
     UndoTextIntent: UndoAction(controller: this),
-    SearchIntent: SearchAction(controller: this),
-    DismissIntent: CustomDismissAction(controller: this),
-    EnterKeyIntent: EnterKeyAction(controller: this),
   };
-
-  void needsQoutesChanged({required bool quotesBool}) {
-    if (quotesBool) {
-    } else {}
-  }
-
-  void addMainTableFields(List<String> columns, List<String> tables) {}
 
   CodeController({
     String? text,
@@ -150,10 +119,9 @@ class CodeController extends TextEditingController {
     Set<String> readOnlySectionNames = const {},
     Set<String> visibleSectionNames = const {},
     @Deprecated('Use CodeTheme widget to provide theme to CodeField.')
-    Map<String, TextStyle>? theme,
+        Map<String, TextStyle>? theme,
     this.analysisResult = const AnalysisResult(issues: []),
     this.patternMap,
-    this.readOnly = false,
     this.stringMap,
     this.params = const EditorParams(),
     this.modifiers = const [
@@ -171,11 +139,6 @@ class CodeController extends TextEditingController {
     fullText = text ?? '';
 
     addListener(_scheduleAnalysis);
-    addListener(_updateSearchResult);
-    _searchSettingsController.addListener(_updateSearchResult);
-    // This listener is called when search controller notifies about
-    // showing or hiding the search popup.
-    searchController.addListener(_updateSearchResult);
 
     // Create modifier map
     for (final el in modifiers) {
@@ -197,20 +160,6 @@ class CodeController extends TextEditingController {
     popupController = PopupController(onCompletionSelected: insertSelectedWord);
 
     unawaited(analyzeCode());
-  }
-
-  void _updateSearchResult() {
-    final result = searchController.search(
-      code,
-      settings: _searchSettingsController.value,
-    );
-
-    if (result == fullSearchResult) {
-      return;
-    }
-
-    fullSearchResult = result;
-    notifyListeners();
   }
 
   void _scheduleAnalysis() {
@@ -270,6 +219,7 @@ class CodeController extends TextEditingController {
   /// Replaces the current [selection] by [str]
   void insertStr(String str) {
     final sel = selection;
+
     text = text.replaceRange(selection.start, selection.end, str);
     final len = str.length;
 
@@ -315,6 +265,10 @@ class CodeController extends TextEditingController {
   }
 
   KeyEventResult onKey(KeyEvent event) {
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      popupController.hide();
+      return KeyEventResult.handled;
+    }
     if (event is KeyDownEvent || event is KeyRepeatEvent) {
       return _onKeyDownRepeat(event);
     }
@@ -323,11 +277,6 @@ class CodeController extends TextEditingController {
   }
 
   KeyEventResult _onKeyDownRepeat(KeyEvent event) {
-    if (event.isCtrlF(HardwareKeyboard.instance.logicalKeysPressed)) {
-      showSearch();
-      return KeyEventResult.handled;
-    }
-
     if (popupController.shouldShow) {
       if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
         popupController.scrollByArrow(ScrollDirection.up);
@@ -337,44 +286,72 @@ class CodeController extends TextEditingController {
         popupController.scrollByArrow(ScrollDirection.down);
         return KeyEventResult.handled;
       }
+      if (event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.tab) {
+        insertSelectedWord();
+        return KeyEventResult.handled;
+      }
     }
 
     return KeyEventResult.ignored; // The framework will handle.
   }
 
-  void onEnterKeyAction() {
-    if (popupController.shouldShow) {
-      insertSelectedWord();
-      return;
-    }
-
-    final currentMatchIndex = _searchNavigationController.value.currentMatchIndex;
-
-    if (searchController.shouldShow && currentMatchIndex != null) {
-      final fullSelection = code.hiddenRanges.recoverSelection(selection);
-      final currentMatch = fullSearchResult.matches[currentMatchIndex];
-
-      if (fullSelection.start == currentMatch.start && fullSelection.end == currentMatch.end) {
-        _searchNavigationController.moveNext();
-        return;
-      }
-    }
-
-    insertStr('\n');
+  void needsQoutesChanged({required bool qoutesBool}) {
+    needsQoutes = qoutesBool;
   }
+
+  void addMainTableFields(List<String> fields, List<String> tables) {
+    mainTableFields.clear();
+    mainTables.clear();
+    mainTableFields.addAll(fields);
+    mainTables.addAll(tables);
+  }
+
+  static const List<String> aggregationsWithBrackets = ['SUM', 'COUNT', 'MIN', 'MAX', 'AVG'];
+  static const List<String> mainAggregations = [
+    'SELECT',
+    'FROM',
+    'GROUP BY',
+    'WHERE',
+    'DISTINCT',
+    'JOIN',
+    'INNER JOIN',
+    'LEFT JOIN',
+    'RIGHT JOIN',
+    'HAVING',
+    'LIMIT',
+  ];
 
   /// Inserts the word selected from the list of completions
   void insertSelectedWord() {
     final previousSelection = selection;
     final selectedWord = popupController.getSelectedWord();
-    final startPosition = value.wordAtCursorStart;
+    int? startPosition = value.wordAtCursorStart;
 
     if (startPosition != null) {
       final replacedText = text.replaceRange(
         startPosition,
         selection.baseOffset,
-        selectedWord,
+        aggregationsWithBrackets.contains(selectedWord)
+            ? '$selectedWord() '
+            : mainTables.contains(selectedWord) && needsQoutes
+                ? '"$selectedWord". '
+                : mainTables.contains(selectedWord)
+                    ? '$selectedWord. '
+                    : needsQoutes && !mainAggregations.contains(selectedWord)
+                        ? '"$selectedWord" '
+                        : '$selectedWord ',
       );
+
+      startPosition = startPosition + 1;
+      if (mainTables.contains(selectedWord) && needsQoutes) {
+        startPosition = startPosition + 1;
+      }
+      if (needsQoutes &&
+          (!mainAggregations.contains(selectedWord) &&
+              !aggregationsWithBrackets.contains(selectedWord))) {
+        startPosition = startPosition + 1;
+      }
 
       final adjustedSelection = previousSelection.copyWith(
         baseOffset: startPosition + selectedWord.length,
@@ -385,9 +362,15 @@ class CodeController extends TextEditingController {
         text: replacedText,
         selection: adjustedSelection,
       );
-    }
 
-    popupController.hide();
+      if (replacedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
+        popupController.show(mainTableFields);
+      } else {
+        popupController.hide();
+      }
+    } else {
+      popupController.hide();
+    }
   }
 
   String get fullText => _code.text;
@@ -654,10 +637,6 @@ class CodeController extends TextEditingController {
   void modifySelectedLines(
     String Function(String line) modifierCallback,
   ) {
-    if (readOnly) {
-      return;
-    }
-
     if (selection.start == -1 || selection.end == -1) {
       return;
     }
@@ -732,10 +711,6 @@ class CodeController extends TextEditingController {
   Code get code => _code;
 
   CodeEditResult? _getEditResultNotBreakingReadOnly(TextEditingValue newValue) {
-    if (readOnly) {
-      return null;
-    }
-
     final editResult = _code.getEditResult(value.selection, newValue);
     if (!_code.isReadOnlyInLineRange(editResult.linesChanged)) {
       return editResult;
@@ -780,10 +755,16 @@ class CodeController extends TextEditingController {
       return;
     }
 
-    final suggestions = (await autocompleter.getSuggestions(prefix)).toList(growable: false);
+    final firstLetterCapital = '${prefix[0].toUpperCase()}${prefix.substring(1).toLowerCase()}';
+
+    final suggestions = <String>{
+      ...await autocompleter.getSuggestions(prefix.toUpperCase()),
+      ...await autocompleter.getSuggestions(prefix.toLowerCase()),
+      ...await autocompleter.getSuggestions(firstLetterCapital),
+    };
 
     if (suggestions.isNotEmpty) {
-      popupController.show(suggestions);
+      popupController.show(suggestions.toList());
     } else {
       popupController.hide();
     }
@@ -877,22 +858,8 @@ class CodeController extends TextEditingController {
     TextStyle? style,
     bool? withComposing,
   }) {
-    final spanBeforeSearch = _createTextSpan(
-      context: context,
-      style: style,
-    );
-
-    final visibleSearchResult = _code.hiddenRanges.cutSearchResult(fullSearchResult);
-
     // TODO(alexeyinkin): Return cached if the value did not change, https://github.com/akvelon/flutter-code-editor/issues/127
-    lastTextSpan = SearchResultHighlightedBuilder(
-      searchResult: visibleSearchResult,
-      rootStyle: style,
-      textSpan: spanBeforeSearch,
-      searchNavigationState: _searchNavigationController.value,
-    ).build();
-
-    return lastTextSpan!;
+    return lastTextSpan = _createTextSpan(context: context, style: style);
   }
 
   TextSpan _createTextSpan({
@@ -951,30 +918,10 @@ class CodeController extends TextEditingController {
     return CodeTheme.of(context) ?? CodeThemeData();
   }
 
-  void dismiss() {
-    _dismissSuggestions();
-    _dismissSearch();
-  }
-
-  void _dismissSuggestions() {
-    if (popupController.enabled) {
-      popupController.hide();
-    }
-  }
-
-  void _dismissSearch() {
-    searchController.hideSearch(returnFocusToCodeField: true);
-  }
-
-  void showSearch() {
-    searchController.showSearch();
-  }
-
   @override
   void dispose() {
     _debounce?.cancel();
     historyController.dispose();
-    searchController.dispose();
 
     super.dispose();
   }

@@ -14,12 +14,17 @@ const _foldingColumn = 2;
 
 class GutterWidget extends StatelessWidget {
   const GutterWidget({
+    super.key,
     required this.codeController,
     required this.style,
+    required this.scrollController,
+    required this.size,
   });
 
   final CodeController codeController;
   final GutterStyle style;
+  final ScrollController scrollController;
+  final Size? size;
 
   @override
   Widget build(BuildContext context) {
@@ -62,18 +67,36 @@ class GutterWidget extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.only(top: 12, bottom: 12, right: style.margin),
+      padding: style.margin ??
+          const EdgeInsets.only(
+            top: 10,
+            bottom: 10,
+            right: 10,
+          ),
       width: style.showLineNumbers ? gutterWidth : null,
-      child: Table(
-        columnWidths: {
-          _lineNumberColumn: const FlexColumnWidth(),
-          _issueColumn: FixedColumnWidth(issueColumnWidth),
-          _foldingColumn: FixedColumnWidth(foldingColumnWidth),
-        },
-        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-        children: tableRows,
+      child: SingleChildScrollView(
+        controller: scrollController,
+        child: Table(
+          columnWidths: {
+            _lineNumberColumn: const FlexColumnWidth(),
+            _issueColumn: FixedColumnWidth(issueColumnWidth),
+            _foldingColumn: FixedColumnWidth(foldingColumnWidth),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: tableRows,
+        ),
       ),
     );
+  }
+
+  Size getTextWidth(String text, TextStyle textStyle) {
+    final textSpan = TextSpan(text: text, style: textStyle);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    return textPainter.size;
   }
 
   void _fillLineNumbers(List<TableRow> tableRows) {
@@ -85,9 +108,17 @@ class GutterWidget extends StatelessWidget {
       if (lineIndex == null) {
         continue;
       }
+      const newLine = '\n';
+      double textWrappedTimes = 1;
+      if (size != null && code.text.isNotEmpty) {
+        final textWidth = getTextWidth(code.lines[lineIndex].text, style.textStyle!);
+        textWrappedTimes = textWidth.width / (size!.width - 36);
+      }
 
       tableRows[lineIndex].children[_lineNumberColumn] = Text(
-        style.showLineNumbers ? '${i + 1}' : ' ',
+        style.showLineNumbers
+            ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
+            : ' ',
         style: style.textStyle,
         textAlign: style.textAlign,
       );
@@ -104,6 +135,7 @@ class GutterWidget extends StatelessWidget {
       if (lineIndex == null || lineIndex >= tableRows.length) {
         continue;
       }
+
       tableRows[lineIndex].children[_issueColumn] = GutterErrorWidget(
         issue,
         style.errorPopupTextStyle ?? (throw Exception('Error popup style should never be null')),
