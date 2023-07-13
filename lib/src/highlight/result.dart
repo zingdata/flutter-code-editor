@@ -59,6 +59,7 @@ extension MyResult on Result {
           node.children?.first.value == 'category' ||
           node.children?.first.value == 'year' ||
           node.children?.first.value == 'status' ||
+          node.children?.first.value == 'Level' ||
           node.children?.first.value == 'date') {
         node.className = null;
       }
