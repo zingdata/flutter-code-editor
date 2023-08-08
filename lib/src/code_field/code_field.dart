@@ -238,6 +238,8 @@ class _CodeFieldState extends State<CodeField> {
     widget.controller.removeListener(_onTextChanged);
     widget.controller.removeListener(_updatePopupOffset);
     widget.controller.popupController.removeListener(_onPopupStateChanged);
+    _suggestionsPopup?.remove();
+
     _numberScroll?.dispose();
     _codeScroll?.dispose();
     _horizontalCodeScroll?.dispose();

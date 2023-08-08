@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:highlight/highlight_core.dart';
 
 import '../../src/highlight/result.dart';
+import '../code_field/text_editing_value.dart';
 import '../folding/foldable_block.dart';
 import '../folding/foldable_block_matcher.dart';
 import '../folding/invalid_foldable_block.dart';
@@ -142,8 +143,7 @@ class Code {
       invalidBlocks: invalidBlocks,
       lines: lines,
       namedSections: sectionsMap,
-      visibleHighlighted:
-          hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
+      visibleHighlighted: hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
       visibleText: hiddenRanges.cutString(text),
       visibleSectionNames: visibleSectionNames,
     );
@@ -325,7 +325,7 @@ class Code {
     TextSelection oldSelection,
     TextEditingValue visibleAfter,
   ) {
-    final visibleRangeAfter = visibleAfter.text.getChangedRangeAroundSelection(
+    final visibleRangeAfter = visibleAfter.getChangedRange(
           TextEditingValue(text: visibleText, selection: oldSelection),
         ) ??
         visibleAfter.text.getChangedRange(
@@ -375,6 +375,22 @@ class Code {
       ),
     );
 
+    final firstChangedLine = lines.characterIndexToLineIndex(rangeBefore.start);
+    final lastChangedLine = lines.characterIndexToLineIndex(rangeBefore.end);
+
+    // If there is any folded block that is going to be removed
+    // because of `backspace` or `delete`, return unchanged text.
+    if (oldSelection.isCollapsed &&
+        visibleAfter.text.length == visibleText.length - 1 &&
+        foldedBlocks.any(
+          (block) => block.lastLine >= firstChangedLine && block.lastLine < lastChangedLine,
+        )) {
+      return CodeEditResult(
+        fullTextAfter: text,
+        linesChanged: const TextRange(start: 0, end: 0),
+      );
+    }
+
     final fullTextAfter = rangeBefore.textBefore(text) +
         visibleRangeAfter.textInside(visibleAfter.text) +
         rangeBefore.textAfter(text);
@@ -386,10 +402,8 @@ class Code {
     //  - (2) The char before [start] is not '\n'.
     // We don't need to check (1) because otherwise [end] and [end - 1]
     // are on the same line.
-    final lastChar = rangeBefore.end -
-        ((rangeBefore.start == 0 || text[rangeBefore.start - 1] == '\n')
-            ? 1
-            : 0);
+    final lastChar =
+        rangeBefore.end - ((rangeBefore.start == 0 || text[rangeBefore.start - 1] == '\n') ? 1 : 0);
 
     final linesChanged = TextRange(
       start: lines.characterIndexToLineIndex(rangeBefore.start),
@@ -471,8 +485,7 @@ class Code {
 
     final newHiddenRangesBuilder = _hiddenRangesBuilder.copyMergingSourceMap({
       FoldableBlock: {
-        for (final block in matcher.newFoldedBlocks)
-          block: foldableBlockToHiddenRange(block),
+        for (final block in matcher.newFoldedBlocks) block: foldableBlockToHiddenRange(block),
       },
     });
 
@@ -504,8 +517,7 @@ class Code {
       invalidBlocks: invalidBlocks,
       lines: lines,
       namedSections: namedSections,
-      visibleHighlighted:
-          hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
+      visibleHighlighted: hiddenRanges.cutHighlighted(highlighted)?.splitLines(),
       visibleText: hiddenRanges.cutString(text),
       visibleSectionNames: visibleSectionNames,
     );
