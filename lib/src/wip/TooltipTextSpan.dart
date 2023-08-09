@@ -13,17 +13,17 @@ class TooltipTextSpan extends WidgetSpan {
           child: Tooltip(
             message: message,
             child: Container(
+              padding: const EdgeInsets.only(right: LINE_NUMBER_MARGIN),
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+              ),
+              width: LINE_NUMBER_WIDTH,
               child: Text(
                 number,
                 textAlign: LINE_NUMBER_ALIGN,
                 style: style,
               ),
-              padding: EdgeInsets.only(right: LINE_NUMBER_MARGIN),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.all(Radius.circular(4)),
-              ),
-              width: LINE_NUMBER_WIDTH,
             ),
           ),
         );

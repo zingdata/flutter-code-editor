@@ -67,14 +67,18 @@ class PopupState extends State<Popup> {
         widget.normalOffset.dx + Sizes.autocompletePopupMaxWidth > widget.editingWindowSize.width;
     final double leftOffsetLimit =
         // TODO(nausharipov): find where 100 comes from
-        widget.editingWindowSize.width - Sizes.autocompletePopupMaxWidth + 100;
+        widget.editingWindowSize.width -
+            Sizes.autocompletePopupMaxWidth +
+            (widget.editorOffset?.dx ?? 0) -
+            100;
 
     return PageStorage(
       bucket: pageStorageBucket,
       child: Positioned(
         left: horizontalOverflow
             ? leftOffsetLimit - 100
-            : widget.normalOffset.dx - (widget.isMobile ? 1 : 100),
+            //TODO(ALEX) this 200 controllers that offest in web
+            : widget.normalOffset.dx - (widget.isMobile ? 1 : 200),
         top: verticalFlipRequired ? widget.flippedOffset.dy : widget.normalOffset.dy + 6,
         child: Container(
           alignment: Alignment.topCenter,

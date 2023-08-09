@@ -63,9 +63,6 @@ class CodeController extends TextEditingController {
   /// A map of specific regexes to style
   final Map<String, TextStyle>? patternMap;
 
-  /// A map of specific keywords to style
-  final Map<String, TextStyle>? stringMap;
-
   /// Common editor params such as the size of a tab in spaces
   ///
   /// Will be exposed to all [modifiers]
@@ -90,7 +87,6 @@ class CodeController extends TextEditingController {
 
   final _styleList = <TextStyle>[];
   final _modifierMap = <String, CodeModifier>{};
-  RegExp? _styleRegExp;
   late PopupController popupController;
   final autocompleter = Autocompleter();
   late final historyController = CodeHistoryController(codeController: this);
@@ -118,11 +114,8 @@ class CodeController extends TextEditingController {
     this.namedSectionParser,
     Set<String> readOnlySectionNames = const {},
     Set<String> visibleSectionNames = const {},
-    @Deprecated('Use CodeTheme widget to provide theme to CodeField.')
-    Map<String, TextStyle>? theme,
     this.analysisResult = const AnalysisResult(issues: []),
     this.patternMap,
-    this.stringMap,
     this.params = const EditorParams(),
     this.modifiers = const [
       IndentModifier(),
@@ -147,15 +140,10 @@ class CodeController extends TextEditingController {
 
     // Build styleRegExp
     final patternList = <String>[];
-    if (stringMap != null) {
-      patternList.addAll(stringMap!.keys.map((e) => r'(\b' + e + r'\b)'));
-      _styleList.addAll(stringMap!.values);
-    }
     if (patternMap != null) {
       patternList.addAll(patternMap!.keys.map((e) => '($e)'));
       _styleList.addAll(patternMap!.values);
     }
-    _styleRegExp = RegExp(patternList.join('|'), multiLine: true);
 
     popupController = PopupController(onCompletionSelected: insertSelectedWord);
 
@@ -875,43 +863,7 @@ class CodeController extends TextEditingController {
       ).build();
     }
 
-    if (_styleRegExp != null) {
-      return _processPatterns(text, style);
-    }
-
     return TextSpan(text: text, style: style);
-  }
-
-  TextSpan _processPatterns(String text, TextStyle? style) {
-    final children = <TextSpan>[];
-
-    text.splitMapJoin(
-      _styleRegExp!,
-      onMatch: (Match m) {
-        if (_styleList.isEmpty) {
-          return '';
-        }
-
-        int idx;
-        for (idx = 1;
-            idx < m.groupCount && idx <= _styleList.length && m.group(idx) == null;
-            idx++) {}
-
-        children.add(
-          TextSpan(
-            text: m[0],
-            style: _styleList[idx - 1],
-          ),
-        );
-        return '';
-      },
-      onNonMatch: (String span) {
-        children.add(TextSpan(text: span, style: style));
-        return '';
-      },
-    );
-
-    return TextSpan(style: style, children: children);
   }
 
   CodeThemeData _getTheme(BuildContext context) {
