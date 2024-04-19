@@ -746,11 +746,18 @@ class CodeController extends TextEditingController {
     final firstLetterCapital = '${prefix[0].toUpperCase()}${prefix.substring(1).toLowerCase()}';
 
     final suggestions = <String>{
-      ...await autocompleter.getSuggestions(prefix),
       ...await autocompleter.getSuggestions(prefix.toUpperCase()),
       ...await autocompleter.getSuggestions(prefix.toLowerCase()),
       ...await autocompleter.getSuggestions(firstLetterCapital),
     };
+
+    if (suggestions.isEmpty) {
+      final suggestions0 = autocompleter.customWords
+          .where((element) => element.toLowerCase().contains(prefix.toLowerCase()))
+          .toList();
+      suggestions0.sort();
+      suggestions.addAll(suggestions0);
+    }
 
     if (suggestions.isNotEmpty) {
       popupController.show(suggestions.toList());

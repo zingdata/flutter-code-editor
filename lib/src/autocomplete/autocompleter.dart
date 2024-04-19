@@ -17,6 +17,9 @@ class Autocompleter {
   /// The language to automatically extract keywords from.
   Mode? get mode => _mode;
 
+  /// get custom words
+  List<String> get customWords => _customAutocomplete.allEntries.toList();
+
   set mode(Mode? value) {
     _mode = value;
     _parseKeywords();
