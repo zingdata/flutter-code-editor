@@ -746,6 +746,7 @@ class CodeController extends TextEditingController {
     final firstLetterCapital = '${prefix[0].toUpperCase()}${prefix.substring(1).toLowerCase()}';
 
     final suggestions = <String>{
+      ...await autocompleter.getSuggestions(prefix),
       ...await autocompleter.getSuggestions(prefix.toUpperCase()),
       ...await autocompleter.getSuggestions(prefix.toLowerCase()),
       ...await autocompleter.getSuggestions(firstLetterCapital),
