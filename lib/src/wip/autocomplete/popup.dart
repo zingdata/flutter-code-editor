@@ -174,6 +174,7 @@ class PopupState extends State<Popup> {
               children: [
                 Expanded(
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Image.asset(
                         getZingIcon(widget.controller.suggestions[index].keys.first),
@@ -188,7 +189,7 @@ class PopupState extends State<Popup> {
                           widget.controller.suggestions[index].values.first,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
-                          style: widget.style,
+                          style: widget.style.copyWith(fontSize: 12),
                         ),
                       ),
                     ],
