@@ -763,7 +763,10 @@ class CodeController extends TextEditingController {
     }
 
     if (suggestions.isNotEmpty) {
-      popupController.show(suggestions.toList());
+      popupController.hide();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        popupController.show(suggestions.toList());
+      });
     } else {
       popupController.hide();
     }
