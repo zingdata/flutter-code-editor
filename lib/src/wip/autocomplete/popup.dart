@@ -169,6 +169,7 @@ class PopupState extends State<Popup> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
@@ -199,6 +200,7 @@ class PopupState extends State<Popup> {
                     widget.controller.suggestions[index].keys.first,
                     textAlign: TextAlign.right,
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                     style: widget.style.copyWith(
                       fontSize: 11,
                       color: Theme.of(context).colorScheme.secondary,
