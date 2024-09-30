@@ -352,7 +352,10 @@ class CodeController extends TextEditingController {
       );
 
       if (replacedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
-        popupController.show(mainTableFields);
+        popupController.hide();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          popupController.show(mainTableFields);
+        });
       } else {
         popupController.hide();
       }

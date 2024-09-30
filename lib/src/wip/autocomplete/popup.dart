@@ -151,7 +151,6 @@ class PopupState extends State<Popup> {
         onTap: () {
           widget.controller.selectedIndex = index;
           widget.parentFocusNode.requestFocus();
-
           widget.controller.onCompletionSelected();
         },
         onDoubleTap: () {
