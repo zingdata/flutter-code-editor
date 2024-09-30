@@ -186,6 +186,7 @@ class PopupState extends State<Popup> {
                         child: Text(
                           widget.controller.suggestions[index].values.first,
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                           style: widget.style,
                         ),
                       ),
