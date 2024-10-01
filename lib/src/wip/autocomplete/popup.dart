@@ -182,33 +182,34 @@ class PopupState extends State<Popup> {
                         fit: BoxFit.contain,
                       ),
                       const SizedBox(width: 4),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: widget.isMobile ? 140 : 180),
-                        child: Text(
-                          widget.controller.suggestions[index].values.first
-                              .replaceAll('"', '')
-                              .replaceAll('`', ''),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                          style: widget.style.copyWith(fontSize: 12),
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.controller.suggestions[index].values.first
+                                  .replaceAll('"', '')
+                                  .replaceAll('`', ''),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 2,
+                              style: widget.style.copyWith(fontSize: 12),
+                            ),
+                          ),
+                          Text(
+                            widget.controller.suggestions[index].keys.first,
+                            textAlign: TextAlign.right,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            style: widget.style.copyWith(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.secondary,
+                              fontFamily: 'NotoSans',
+                              wordSpacing: 1,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ),
-                SizedBox(
-                  width: 140,
-                  child: Text(
-                    widget.controller.suggestions[index].keys.first,
-                    textAlign: TextAlign.right,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                    style: widget.style.copyWith(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.secondary,
-                      fontFamily: 'NotoSans',
-                      wordSpacing: 1,
-                    ),
                   ),
                 ),
               ],
