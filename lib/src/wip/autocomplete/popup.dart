@@ -181,15 +181,13 @@ class PopupState extends State<Popup> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          widget.controller.suggestions[index].values.first
-                              .replaceAll('"', '')
-                              .replaceAll('`', ''),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                          style: widget.style.copyWith(fontSize: 12),
-                        ),
+                      Text(
+                        widget.controller.suggestions[index].values.first
+                            .replaceAll('"', '')
+                            .replaceAll('`', ''),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        style: widget.style.copyWith(fontSize: 12),
                       ),
                       Text(
                         widget.controller.suggestions[index].keys.first,
