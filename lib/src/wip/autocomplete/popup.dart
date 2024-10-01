@@ -185,7 +185,9 @@ class PopupState extends State<Popup> {
                       ConstrainedBox(
                         constraints: BoxConstraints(maxWidth: widget.isMobile ? 140 : 180),
                         child: Text(
-                          widget.controller.suggestions[index].values.first,
+                          widget.controller.suggestions[index].values.first
+                              .replaceAll('"', '')
+                              .replaceAll('`', ''),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                           style: widget.style.copyWith(fontSize: 12),
