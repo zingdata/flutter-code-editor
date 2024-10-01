@@ -187,6 +187,7 @@ class _CodeFieldState extends State<CodeField> {
   final _codeFieldKey = GlobalKey();
 
   OverlayEntry? _suggestionsPopup;
+  Offset _caretDataOffset = Offset.zero;
   Offset _normalPopupOffset = Offset.zero;
   Offset _flippedPopupOffset = Offset.zero;
   double painterWidth = 0;
@@ -447,7 +448,7 @@ class _CodeFieldState extends State<CodeField> {
     final numberOfSuggestions = widget.controller.popupController.suggestions.isNotEmpty
         ? widget.controller.popupController.suggestions.length
         : 4;
-
+    final caretDataOffset = _getCaretOffset(textPainter);
     final leftOffset = _getPopupLeftOffset(textPainter);
     final normalTopOffset = _getPopupTopOffset(textPainter, caretHeight);
     final flippedTopOffset =
@@ -458,6 +459,7 @@ class _CodeFieldState extends State<CodeField> {
     setState(() {
       _normalPopupOffset = Offset(leftOffset, normalTopOffset);
       _flippedPopupOffset = Offset(leftOffset, flippedTopOffset);
+      _caretDataOffset = caretDataOffset;
     });
   }
 
@@ -469,11 +471,28 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   Offset _getCaretOffset(TextPainter textPainter) {
-    final box = _editorKey.currentContext!.findRenderObject() as RenderBox?;
-    return box!.localToGlobal(textPainter.getOffsetForCaret(
-      widget.controller.selection.base,
-      Rect.zero,
-    ));
+    final RenderBox? renderBox = _editorKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      final TextPosition textPosition = widget.controller.selection.base;
+      final TextSpan textSpan = widget.controller.text == ''
+          ? TextSpan(
+              text: '',
+              style: widget.textStyle,
+            )
+          : TextSpan(
+              text: widget.controller.text,
+              style: widget.textStyle,
+            );
+      final TextPainter textPainter = TextPainter(
+        text: textSpan,
+        textDirection: TextDirection.ltr,
+      );
+
+      textPainter.layout(maxWidth: renderBox.size.width);
+      final Offset caretOffset = textPainter.getOffsetForCaret(textPosition, Rect.zero);
+      return renderBox.localToGlobal(caretOffset);
+    }
+    return Offset.zero;
   }
 
   double _getCaretHeight(TextPainter textPainter) {
@@ -528,6 +547,7 @@ class _CodeFieldState extends State<CodeField> {
     return OverlayEntry(
       builder: (context) {
         return Popup(
+          caretDataOffset: _caretDataOffset,
           normalOffset: _normalPopupOffset,
           flippedOffset: _flippedPopupOffset,
           controller: widget.controller.popupController,

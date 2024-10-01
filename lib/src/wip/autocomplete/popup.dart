@@ -23,6 +23,8 @@ class Popup extends StatefulWidget {
   /// if shown below the caret.
   final Offset normalOffset;
 
+  final Offset caretDataOffset;
+
   final FocusNode parentFocusNode;
   final TextStyle style;
   final Color? backgroundColor;
@@ -36,6 +38,7 @@ class Popup extends StatefulWidget {
     required this.editorOffset,
     required this.flippedOffset,
     required this.normalOffset,
+    required this.caretDataOffset,
     required this.parentFocusNode,
     required this.style,
     this.backgroundColor,
@@ -85,7 +88,8 @@ class PopupState extends State<Popup> {
       bucket: pageStorageBucket,
       child: Positioned(
         left: leftAvailableSpace,
-        top: verticalFlipRequired ? widget.flippedOffset.dy : widget.normalOffset.dy + 6,
+        top: widget.caretDataOffset.dy + 25,
+        //  top: verticalFlipRequired ? widget.flippedOffset.dy : widget.normalOffset.dy + 6,
         child: Container(
           alignment: Alignment.topCenter,
           constraints: BoxConstraints(
