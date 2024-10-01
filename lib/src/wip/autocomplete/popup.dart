@@ -63,22 +63,28 @@ class PopupState extends State<Popup> {
   @override
   Widget build(BuildContext context) {
     final verticalFlipRequired = _isVerticalFlipRequired();
-    final bool horizontalOverflow =
-        widget.normalOffset.dx + Sizes.autocompletePopupMaxWidth > widget.editingWindowSize.width;
-    final double leftOffsetLimit =
-        // TODO(nausharipov): find where 100 comes from
-        widget.editingWindowSize.width -
-            Sizes.autocompletePopupMaxWidth +
-            (widget.editorOffset?.dx ?? 0) -
-            100;
+    // final bool horizontalOverflow =
+    //     widget.normalOffset.dx + Sizes.autocompletePopupMaxWidth > widget.editingWindowSize.width;
+    // final double leftOffsetLimit =
+    //     // TODO(nausharipov): find where 100 comes from
+    //     widget.editingWindowSize.width -
+    //         Sizes.autocompletePopupMaxWidth +
+    //         (widget.editorOffset?.dx ?? 0) -
+    //         100;
+    double leftAvailableSpace = widget.normalOffset.dx;
+    final rightAvailableSpace =
+        widget.editingWindowSize.width - leftAvailableSpace - Sizes.autocompletePopupMaxWidth;
+    if (!ScreenSize.isMobile(context)) {
+      leftAvailableSpace -= ScreenSize.isExtraWide(context) ? 185 : 80;
+    }
+    if (rightAvailableSpace < 0) {
+      leftAvailableSpace += rightAvailableSpace - 20;
+    }
 
     return PageStorage(
       bucket: pageStorageBucket,
       child: Positioned(
-        left: horizontalOverflow
-            ? leftOffsetLimit - 100
-            //TODO(ALEX) this 200 controllers that offest in web
-            : widget.normalOffset.dx - (widget.isMobile ? 1 : 100),
+        left: leftAvailableSpace,
         top: verticalFlipRequired ? widget.flippedOffset.dy : widget.normalOffset.dy + 6,
         child: Container(
           alignment: Alignment.topCenter,

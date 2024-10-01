@@ -489,7 +489,8 @@ class _CodeFieldState extends State<CodeField> {
           ? (40)
           : _getCaretOffset(textPainter).dx +
               widget.padding.left -
-              (_horizontalCodeScroll?.offset ?? 0),
+              (_horizontalCodeScroll?.offset ?? 0) +
+              (_editorOffset?.dx ?? 0),
       0,
     );
   }
