@@ -65,9 +65,11 @@ class PopupState extends State<Popup> {
 
   @override
   Widget build(BuildContext context) {
+    final maxPopUpWidth =
+        Sizes.autocompletePopupMaxWidth + (ScreenSize.isMobile(context) ? 0 : 100);
     double leftAvailableSpace = widget.caretDataOffset.dx;
     final rightAvailableSpace =
-        MediaQuery.of(context).size.width - leftAvailableSpace - Sizes.autocompletePopupMaxWidth;
+        MediaQuery.of(context).size.width - leftAvailableSpace - maxPopUpWidth;
     if (!ScreenSize.isMobile(context)) {
       leftAvailableSpace -= ScreenSize.isExtraWide(context) ? 185 : 80;
     }
@@ -83,12 +85,10 @@ class PopupState extends State<Popup> {
         child: Container(
           alignment: Alignment.topCenter,
           constraints: BoxConstraints(
-            maxHeight: widget.isMobile
+            maxHeight: ScreenSize.isMobile(context)
                 ? Sizes.autocompletePopupMaxHeight
                 : Sizes.autocompletePopupMaxHeight + 100,
-            maxWidth: widget.isMobile
-                ? Sizes.autocompletePopupMaxWidth
-                : Sizes.autocompletePopupMaxWidth + 50,
+            maxWidth: maxPopUpWidth,
           ),
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(8)),
