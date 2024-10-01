@@ -169,45 +169,39 @@ class PopupState extends State<Popup> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Image.asset(
+                  getZingIcon(widget.controller.suggestions[index].keys.first),
+                  width: 16,
+                  height: 16,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(width: 4),
                 Expanded(
-                  child: Row(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Image.asset(
-                        getZingIcon(widget.controller.suggestions[index].keys.first),
-                        width: 16,
-                        height: 16,
-                        fit: BoxFit.contain,
+                      Flexible(
+                        child: Text(
+                          widget.controller.suggestions[index].values.first
+                              .replaceAll('"', '')
+                              .replaceAll('`', ''),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: widget.style.copyWith(fontSize: 12),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.controller.suggestions[index].values.first
-                                  .replaceAll('"', '')
-                                  .replaceAll('`', ''),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                              style: widget.style.copyWith(fontSize: 12),
-                            ),
-                          ),
-                          Text(
-                            widget.controller.suggestions[index].keys.first,
-                            textAlign: TextAlign.right,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                            style: widget.style.copyWith(
-                              fontSize: 11,
-                              color: Theme.of(context).colorScheme.secondary,
-                              fontFamily: 'NotoSans',
-                              wordSpacing: 1,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        widget.controller.suggestions[index].keys.first,
+                        textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        style: widget.style.copyWith(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontFamily: 'NotoSans',
+                          wordSpacing: 1,
+                        ),
                       ),
                     ],
                   ),
