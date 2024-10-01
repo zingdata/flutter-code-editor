@@ -469,10 +469,11 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   Offset _getCaretOffset(TextPainter textPainter) {
-    return textPainter.getOffsetForCaret(
+    final box = _editorKey.currentContext!.findRenderObject() as RenderBox?;
+    return box!.localToGlobal(textPainter.getOffsetForCaret(
       widget.controller.selection.base,
       Rect.zero,
-    );
+    ));
   }
 
   double _getCaretHeight(TextPainter textPainter) {
