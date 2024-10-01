@@ -65,15 +65,6 @@ class PopupState extends State<Popup> {
 
   @override
   Widget build(BuildContext context) {
-    final verticalFlipRequired = _isVerticalFlipRequired();
-    // final bool horizontalOverflow =
-    //     widget.normalOffset.dx + Sizes.autocompletePopupMaxWidth > widget.editingWindowSize.width;
-    // final double leftOffsetLimit =
-    //     // TODO(nausharipov): find where 100 comes from
-    //     widget.editingWindowSize.width -
-    //         Sizes.autocompletePopupMaxWidth +
-    //         (widget.editorOffset?.dx ?? 0) -
-    //         100;
     double leftAvailableSpace = widget.caretDataOffset.dx;
     final rightAvailableSpace =
         MediaQuery.of(context).size.width - leftAvailableSpace - Sizes.autocompletePopupMaxWidth;
@@ -88,8 +79,7 @@ class PopupState extends State<Popup> {
       bucket: pageStorageBucket,
       child: Positioned(
         left: leftAvailableSpace,
-        top: widget.caretDataOffset.dy + 25,
-        //  top: verticalFlipRequired ? widget.flippedOffset.dy : widget.normalOffset.dy + 6,
+        top: widget.caretDataOffset.dy + 30,
         child: Container(
           alignment: Alignment.topCenter,
           constraints: BoxConstraints(
