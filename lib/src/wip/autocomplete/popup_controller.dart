@@ -44,6 +44,7 @@ class PopupController extends ChangeNotifier {
       if (itemScrollController.isAttached) {
         itemScrollController.jumpTo(index: 0);
       }
+      notifyListeners();
     });
 
     notifyListeners();
