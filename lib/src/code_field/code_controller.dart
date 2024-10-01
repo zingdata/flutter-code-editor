@@ -755,7 +755,11 @@ class CodeController extends TextEditingController {
 
     if (suggestions.isEmpty) {
       final suggestions0 = autocompleter.customWords
-          .where((element) => element.toLowerCase().contains(prefix.toLowerCase()))
+          .where((element) => element
+              .replaceAll('"', '')
+              .replaceAll('`', '')
+              .toLowerCase()
+              .contains(prefix.toLowerCase()))
           .toList();
       suggestions0.sort();
       suggestions.addAll(suggestions0);
