@@ -56,6 +56,7 @@ class PopupController extends ChangeNotifier {
   }
 
   void addSuggestionCategories(List<Map<String, List<String>>> suggestionCategoriesSet) {
+    _suggestionCategories.clear();
     _suggestionCategories.addAll(suggestionCategoriesSet);
   }
 
