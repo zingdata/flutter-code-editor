@@ -79,7 +79,7 @@ class PopupState extends State<Popup> {
       bucket: pageStorageBucket,
       child: Positioned(
         left: leftAvailableSpace,
-        top: widget.caretDataOffset.dy + (ScreenSize.isMobile(context) ? 50 : 30),
+        top: widget.caretDataOffset.dy + (ScreenSize.isMobile(context) ? 40 : 30),
         child: Container(
           alignment: Alignment.topCenter,
           constraints: BoxConstraints(
