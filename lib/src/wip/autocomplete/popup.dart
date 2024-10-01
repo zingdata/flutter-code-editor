@@ -74,7 +74,7 @@ class PopupState extends State<Popup> {
     //         Sizes.autocompletePopupMaxWidth +
     //         (widget.editorOffset?.dx ?? 0) -
     //         100;
-    double leftAvailableSpace = widget.normalOffset.dx;
+    double leftAvailableSpace = widget.caretDataOffset.dx;
     final rightAvailableSpace =
         MediaQuery.of(context).size.width - leftAvailableSpace - Sizes.autocompletePopupMaxWidth;
     if (!ScreenSize.isMobile(context)) {
