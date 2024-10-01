@@ -73,10 +73,10 @@ class PopupState extends State<Popup> {
     //         100;
     double leftAvailableSpace = widget.normalOffset.dx;
     final rightAvailableSpace =
-        widget.editingWindowSize.width - leftAvailableSpace - Sizes.autocompletePopupMaxWidth;
-    // if (!ScreenSize.isMobile(context)) {
-    //   leftAvailableSpace -= ScreenSize.isExtraWide(context) ? 185 : 80;
-    // }
+        MediaQuery.of(context).size.width - leftAvailableSpace - Sizes.autocompletePopupMaxWidth;
+    if (!ScreenSize.isMobile(context)) {
+      leftAvailableSpace -= ScreenSize.isExtraWide(context) ? 185 : 80;
+    }
     if (rightAvailableSpace < 0) {
       leftAvailableSpace += rightAvailableSpace - 20;
     }
