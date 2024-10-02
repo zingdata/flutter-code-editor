@@ -82,6 +82,7 @@ class CodeController extends TextEditingController {
   Set<String> _visibleSectionNames = {};
 
   int? lastPrefixStartIndex; // Store the start index of the prefix
+  void setLastPrefixStartIndex(int? value) => lastPrefixStartIndex = value;
 
   String get languageId => _languageId;
 
@@ -456,6 +457,7 @@ class CodeController extends TextEditingController {
     } else {
       popupController.hide();
     }
+    lastPrefixStartIndex = null;
   }
 
   String get fullText => _code.text;
@@ -848,11 +850,7 @@ class CodeController extends TextEditingController {
       return;
     }
 
-    //final prefix = prefixInfo['prefix'] as String;
     final startIndex = prefixInfo['startIndex'] as int;
-
-    lastPrefixStartIndex = startIndex; // Store the start index for use in insertText
-
     final suggestions = prefixInfo['suggestions'] as Set<String>;
 
     if (suggestions.isNotEmpty) {
