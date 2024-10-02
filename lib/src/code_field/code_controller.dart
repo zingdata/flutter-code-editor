@@ -367,7 +367,7 @@ class CodeController extends TextEditingController {
 //   }
   void insertSelectedWord() {
     final previousSelection = selection;
-    final selectedWord = popupController.getSelectedWord().stringWithoutQuotes;
+    final selectedWord = popupController.getSelectedWord();
 
     if (lastPrefixStartIndex == null) {
       // Fallback if no prefix start index is available
