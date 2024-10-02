@@ -434,7 +434,7 @@ class CodeController extends TextEditingController {
 
     // Adjust for added characters (e.g., quotes, periods, parentheses, spaces)
     if (aggregationsWithBrackets.contains(selectedWord)) {
-      adjustedOffset -= 3; // For '() '
+      adjustedOffset = 0; // For '() '
     } else if (mainTables.contains(selectedWord)) {
       adjustedOffset += needsQoutes ? 4 : 2; // For '."' or '. '
     } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
