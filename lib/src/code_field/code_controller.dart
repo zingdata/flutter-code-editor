@@ -81,6 +81,8 @@ class CodeController extends TextEditingController {
   ///If it is not empty, all another code except specified will be hidden.
   Set<String> _visibleSectionNames = {};
 
+  bool _isInsertingWord = false;
+
   int? lastPrefixStartIndex; // Store the start index of the prefix
   void setLastPrefixStartIndex(int? value) => lastPrefixStartIndex = value;
 
@@ -366,6 +368,7 @@ class CodeController extends TextEditingController {
 //     }
 //   }
   void insertSelectedWord() {
+    _isInsertingWord = true;
     final previousSelection = selection;
     final selectedWord = popupController.getSelectedWord();
 
@@ -411,6 +414,7 @@ class CodeController extends TextEditingController {
       popupController.hide();
     }
     lastPrefixStartIndex = null;
+    _isInsertingWord = false;
   }
 
   ({int adjustedOffset, String formattedText}) formatAndAdjustOffset({
@@ -556,7 +560,7 @@ class CodeController extends TextEditingController {
 
     super.value = newValue;
 
-    if (hasTextChanged) {
+    if (hasTextChanged && !_isInsertingWord) {
       autocompleter.blacklist = [newValue.wordAtCursor ?? ''];
       autocompleter.setText(this, text);
       unawaited(generateSuggestions());
