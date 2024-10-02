@@ -365,7 +365,6 @@ class CodeController extends TextEditingController {
 //     }
 //   }
   void insertSelectedWord() {
-    
     final previousSelection = selection;
     final selectedWord = popupController.getSelectedWord();
 
@@ -872,6 +871,11 @@ class CodeController extends TextEditingController {
     String prefix = '';
     Set<String> suggestions = {};
 
+    // Variables to keep track of the longest prefix with suggestions
+    String? longestPrefix;
+    int? longestStartIndex;
+    Set<String>? longestSuggestions;
+
     // Limit the maximum length to prevent performance issues
     int maxLength = 100; // Adjust as needed
 
@@ -886,17 +890,26 @@ class CodeController extends TextEditingController {
       suggestions = await fetchSuggestions(prefix);
 
       if (suggestions.isNotEmpty) {
-        // Found matching suggestions
-        return {
-          'prefix': prefix,
-          'startIndex': startIndex,
-          'suggestions': suggestions,
-        };
+        // Update the longest prefix variables
+        longestPrefix = prefix;
+        longestStartIndex = startIndex;
+        longestSuggestions = suggestions;
+      } else if (longestPrefix != null) {
+        // No suggestions for the current prefix, but we have a previous longest prefix
+        break;
       }
     }
 
-    // No matching suggestions found
-    return null;
+    if (longestPrefix != null && longestSuggestions != null && longestStartIndex != null) {
+      return {
+        'prefix': longestPrefix,
+        'startIndex': longestStartIndex,
+        'suggestions': longestSuggestions,
+      };
+    } else {
+      // No matching suggestions found
+      return null;
+    }
   }
 
   Future<Set<String>> fetchSuggestions(String prefix) async {
