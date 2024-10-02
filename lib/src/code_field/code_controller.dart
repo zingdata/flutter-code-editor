@@ -918,7 +918,7 @@ class CodeController extends TextEditingController {
     if (longestPrefix != null && longestSuggestions != null && longestStartIndex != null) {
       return {
         'prefix': longestPrefix,
-        'startIndex': longestStartIndex + 1,
+        'startIndex': longestStartIndex,
         'suggestions': longestSuggestions,
       };
     } else {
