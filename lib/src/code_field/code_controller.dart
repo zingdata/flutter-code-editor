@@ -366,7 +366,7 @@ class CodeController extends TextEditingController {
 //   }
   void insertSelectedWord() {
     final previousSelection = selection;
-    final selectedWord = popupController.getSelectedWord();
+    final selectedWord = popupController.getSelectedWord().stringWithoutQuotes;
 
     if (lastPrefixStartIndex == null) {
       // Fallback if no prefix start index is available
@@ -924,11 +924,9 @@ class CodeController extends TextEditingController {
 
     if (suggestions.isEmpty) {
       final suggestions0 = autocompleter.customWords
-          .where((element) => element
-              .replaceAll('"', '')
-              .replaceAll('`', '')
-              .toLowerCase()
-              .contains(prefix.toLowerCase()))
+          .where(
+            (element) => element.stringWithoutQuotes.toLowerCase().contains(prefix.toLowerCase()),
+          )
           .toList()
         ..sort();
       suggestions.addAll(suggestions0);

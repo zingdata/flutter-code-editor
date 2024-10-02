@@ -81,4 +81,5 @@ extension StringExtension on String {
   }
 
   bool hasOnlyWhitespaces() => trim() == '';
+  String get stringWithoutQuotes => replaceAll('"', '').replaceAll('`', '');
 }
