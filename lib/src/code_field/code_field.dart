@@ -222,8 +222,9 @@ class _CodeFieldState extends State<CodeField> {
       final double width = _codeFieldKey.currentContext!.size!.width;
       final double height = _codeFieldKey.currentContext!.size!.height;
       windowSize = Size(width, height);
+      _updatePopupOffset();
     });
-    _updatePopupOffset();
+
     widget.controller.addListener(_onTextChanged);
     widget.controller.addListener(_updatePopupOffset);
 
