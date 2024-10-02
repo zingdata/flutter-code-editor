@@ -922,7 +922,7 @@ class CodeController extends TextEditingController {
     if (longestPrefix != null && longestSuggestions != null && longestStartIndex != null) {
       return {
         'prefix': longestPrefix,
-        'startIndex': longestStartIndex,
+        'startIndex': longestStartIndex == 0 ? longestStartIndex : longestStartIndex + 1,
         'suggestions': longestSuggestions,
       };
     } else {
