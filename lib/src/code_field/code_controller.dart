@@ -374,17 +374,17 @@ class CodeController extends TextEditingController {
       final cursorPosition = previousSelection.baseOffset;
 
       // Insert the selected word at the cursor position
-      final newText = text.replaceRange(
+      var newText = text.replaceRange(
         cursorPosition,
         cursorPosition,
         selectedWord,
       );
-
-      // Update the controller's text and selection
-      text = newText;
-      selection = TextSelection.fromPosition(
-        TextPosition(offset: cursorPosition + selectedWord.length),
-      );
+      newText = formatAndAdjustOffset(
+        replacedText: newText,
+        selectedWord: selectedWord,
+        startIndex: cursorPosition,
+        endIndex: cursorPosition,
+      ).formattedText;
 
       popupController.hide();
       return;
@@ -395,7 +395,30 @@ class CodeController extends TextEditingController {
 
     // Replace the text from startIndex to endIndex with the selectedWord
     String replacedText = text.replaceRange(startIndex, endIndex, selectedWord);
+    replacedText = formatAndAdjustOffset(
+      replacedText: replacedText,
+      selectedWord: selectedWord,
+      startIndex: startIndex,
+      endIndex: endIndex,
+    ).formattedText;
 
+    // Show or hide the popup based on conditions
+    if (replacedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        popupController.show(mainTableFields);
+      });
+    } else {
+      popupController.hide();
+    }
+    lastPrefixStartIndex = null;
+  }
+
+  ({int adjustedOffset, String formattedText}) formatAndAdjustOffset({
+    required String replacedText,
+    required String selectedWord,
+    required int startIndex,
+    required int endIndex,
+  }) {
     // Handle any special cases or formatting
     if (aggregationsWithBrackets.contains(selectedWord)) {
       replacedText = text.replaceRange(
@@ -448,16 +471,7 @@ class CodeController extends TextEditingController {
     selection = TextSelection.fromPosition(
       TextPosition(offset: adjustedOffset),
     );
-
-    // Show or hide the popup based on conditions
-    if (replacedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        popupController.show(mainTableFields);
-      });
-    } else {
-      popupController.hide();
-    }
-    lastPrefixStartIndex = null;
+    return (adjustedOffset: adjustedOffset, formattedText: replacedText);
   }
 
   String get fullText => _code.text;
