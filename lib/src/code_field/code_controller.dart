@@ -836,31 +836,34 @@ class CodeController extends TextEditingController {
   }
 
   Future<void> generateSuggestions() async {
-    final textBeforeCursor = value.text.substring(0, value.selection.baseOffset);
-    if (textBeforeCursor.isEmpty) {
-      popupController.hide();
-      return;
-    }
+    try {
+      final textBeforeCursor = value.text.substring(0, value.selection.baseOffset);
+      if (textBeforeCursor.isEmpty) {
+        popupController.hide();
+        return;
+      }
 
-    // Find the longest matching prefix
-    final prefixInfo = await getLongestMatchingPrefix(textBeforeCursor);
+      // Find the longest matching prefix
+      final prefixInfo = await getLongestMatchingPrefix(textBeforeCursor);
 
-    if (prefixInfo == null) {
-      popupController.hide();
-      return;
-    }
+      if (prefixInfo == null) {
+        popupController.hide();
+        return;
+      }
 
-    final startIndex = prefixInfo['startIndex'] as int;
-    final suggestions = prefixInfo['suggestions'] as Set<String>;
+      final startIndex = prefixInfo['startIndex'] as int;
+      final suggestions = prefixInfo['suggestions'] as Set<String>;
 
-    if (suggestions.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        popupController.show(suggestions.toList());
-      });
-    } else {
-      popupController.hide();
-    }
-    lastPrefixStartIndex = startIndex;
+      if (suggestions.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          popupController.show(suggestions.toList());
+        });
+      } else {
+        popupController.hide();
+      }
+      lastPrefixStartIndex = startIndex;
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
@@ -901,7 +904,7 @@ class CodeController extends TextEditingController {
     if (longestPrefix != null && longestSuggestions != null && longestStartIndex != null) {
       return {
         'prefix': longestPrefix,
-        'startIndex': longestStartIndex,
+        'startIndex': longestStartIndex + 1,
         'suggestions': longestSuggestions,
       };
     } else {
