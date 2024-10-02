@@ -881,7 +881,7 @@ class CodeController extends TextEditingController {
   }
 
   Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
-    int cursorPosition = text.length;
+    int cursorPosition = value.selection.baseOffset;
     int startIndex = cursorPosition;
     String prefix = '';
     Set<String> suggestions = {};
