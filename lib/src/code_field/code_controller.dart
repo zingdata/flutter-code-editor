@@ -81,6 +81,8 @@ class CodeController extends TextEditingController {
   ///If it is not empty, all another code except specified will be hidden.
   Set<String> _visibleSectionNames = {};
 
+  int? lastPrefixStartIndex; // Store the start index of the prefix
+
   String get languageId => _languageId;
 
   Code _code;
@@ -739,18 +741,77 @@ class CodeController extends TextEditingController {
   }
 
   Future<void> generateSuggestions() async {
-    final prefix = value.wordToCursor;
-    if (prefix == null) {
+    final textBeforeCursor = value.text.substring(0, value.selection.baseOffset);
+    if (textBeforeCursor.isEmpty) {
       popupController.hide();
       return;
     }
 
-    final firstLetterCapital = '${prefix[0].toUpperCase()}${prefix.substring(1).toLowerCase()}';
+    // Find the longest matching prefix
+    final prefixInfo = await getLongestMatchingPrefix(textBeforeCursor);
 
+    if (prefixInfo == null) {
+      popupController.hide();
+      return;
+    }
+
+    //final prefix = prefixInfo['prefix'] as String;
+    final startIndex = prefixInfo['startIndex'] as int;
+
+    lastPrefixStartIndex = startIndex; // Store the start index for use in insertText
+
+    final suggestions = prefixInfo['suggestions'] as Set<String>;
+
+    if (suggestions.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        popupController.show(suggestions.toList());
+      });
+    } else {
+      popupController.hide();
+    }
+  }
+
+  Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
+    int cursorPosition = text.length;
+    int startIndex = cursorPosition;
+    String prefix = '';
+    Set<String> suggestions = {};
+
+    // Limit the maximum length to prevent performance issues
+    int maxLength = 100; // Adjust as needed
+
+    while (startIndex > 0 && (cursorPosition - startIndex) <= maxLength) {
+      startIndex--;
+      prefix = text.substring(startIndex, cursorPosition).trim();
+
+      if (prefix.isEmpty) {
+        continue;
+      }
+
+      suggestions = await fetchSuggestions(prefix);
+
+      if (suggestions.isNotEmpty) {
+        // Found matching suggestions
+        return {
+          'prefix': prefix,
+          'startIndex': startIndex,
+          'suggestions': suggestions,
+        };
+      }
+    }
+
+    // No matching suggestions found
+    return null;
+  }
+
+  Future<Set<String>> fetchSuggestions(String prefix) async {
     final suggestions = <String>{
-      ...await autocompleter.getSuggestions(prefix.toUpperCase()),
+      ...await autocompleter.getSuggestions(prefix),
       ...await autocompleter.getSuggestions(prefix.toLowerCase()),
-      ...await autocompleter.getSuggestions(firstLetterCapital),
+      ...await autocompleter.getSuggestions(prefix.toUpperCase()),
+      ...await autocompleter.getSuggestions(
+        prefix[0].toUpperCase() + prefix.substring(1).toLowerCase(),
+      ),
     };
 
     if (suggestions.isEmpty) {
@@ -760,18 +821,12 @@ class CodeController extends TextEditingController {
               .replaceAll('`', '')
               .toLowerCase()
               .contains(prefix.toLowerCase()))
-          .toList();
-      suggestions0.sort();
+          .toList()
+        ..sort();
       suggestions.addAll(suggestions0);
     }
 
-    if (suggestions.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        popupController.show(suggestions.toList());
-      });
-    } else {
-      popupController.hide();
-    }
+    return suggestions;
   }
 
   void foldAt(int line) {
