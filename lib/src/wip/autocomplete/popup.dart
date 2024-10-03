@@ -74,7 +74,7 @@ class PopupState extends State<Popup> {
       leftAvailableSpace -= ScreenSize.isExtraWide(context) ? 185 : 80;
     }
     if (rightAvailableSpace < 0) {
-      leftAvailableSpace += rightAvailableSpace - 20;
+      leftAvailableSpace += rightAvailableSpace - 4;
     }
 
     return PageStorage(

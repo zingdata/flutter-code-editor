@@ -900,7 +900,7 @@ class CodeController extends TextEditingController {
 
     while (startIndex > 0 && (cursorPosition - startIndex) <= maxLength) {
       startIndex--;
-      prefix = text.substring(startIndex, cursorPosition).trim();
+      prefix = text.substring(startIndex, cursorPosition);
 
       if (prefix.isEmpty) {
         continue;
@@ -922,7 +922,7 @@ class CodeController extends TextEditingController {
     if (longestPrefix != null && longestSuggestions != null && longestStartIndex != null) {
       return {
         'prefix': longestPrefix,
-        'startIndex': longestStartIndex == 0 ? longestStartIndex : longestStartIndex + 1,
+        'startIndex': longestStartIndex,
         'suggestions': longestSuggestions,
       };
     } else {
