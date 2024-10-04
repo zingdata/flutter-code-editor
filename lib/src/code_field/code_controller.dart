@@ -429,7 +429,7 @@ class CodeController extends TextEditingController {
       adjustedOffset = startIndex + selectedWord.length + 2 + (addSpace ? 1 : 0); // +2 for quotes
     } else {
       String insertionText = selectedWord + (addSpace ? ' ' : '');
-      formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+      formattedText = originalText.replaceRange(startIndex, insertionText.length, insertionText);
       adjustedOffset = startIndex + selectedWord.length + (addSpace ? 1 : 0);
     }
 
