@@ -898,19 +898,34 @@ class CodeController extends TextEditingController {
     // Limit the maximum length to prevent performance issues
     int maxLength = 100; // Adjust as needed
 
+    final delimiters = RegExp(r'[\s\.,;\n]'); // Delimiters: space, punctuation, newlines
+
     while (startIndex > 0 && (cursorPosition - startIndex) <= maxLength) {
       startIndex--;
+
+      // Check if the character at startIndex is a delimiter
+      if (delimiters.hasMatch(text[startIndex])) {
+        // If we've already found a longest prefix, break
+        if (longestPrefix != null) {
+          break;
+        } else {
+          // Otherwise, we can't expand further, so break
+          startIndex++; // Move back to the character after the delimiter
+          break;
+        }
+      }
+
       prefix = text.substring(startIndex, cursorPosition);
 
       if (prefix.isEmpty) {
         continue;
       }
 
-      suggestions = await fetchSuggestions(prefix);
+      suggestions = await fetchSuggestions(prefix.trim());
 
       if (suggestions.isNotEmpty) {
         // Update the longest prefix variables
-        longestPrefix = prefix;
+        longestPrefix = prefix.trim();
         longestStartIndex = startIndex;
         longestSuggestions = suggestions;
       } else if (longestPrefix != null) {
