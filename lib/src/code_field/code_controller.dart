@@ -838,7 +838,6 @@ class CodeController extends TextEditingController {
   Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
     int cursorPosition = value.selection.baseOffset;
     int startIndex = cursorPosition;
-    String prefix = '';
     Set<String> suggestions = {};
 
     // Limit the maximum length to prevent performance issues
@@ -849,19 +848,35 @@ class CodeController extends TextEditingController {
 
     while (startIndex > 0 && (cursorPosition - startIndex) <= maxLength) {
       startIndex--;
-      prefix = text.substring(startIndex, cursorPosition);
+      String prefix = text.substring(startIndex, cursorPosition);
 
       if (prefix.trim().isEmpty) {
         continue;
       }
 
-      suggestions = await fetchSuggestions(prefix.trim());
+      // Adjust startIndex to skip leading spaces in prefix
+      int tempStartIndex = startIndex;
+      while (tempStartIndex < cursorPosition && text[tempStartIndex] == ' ') {
+        tempStartIndex++;
+      }
+
+      if (tempStartIndex >= cursorPosition) {
+        continue; // Prefix is all spaces; skip to next iteration
+      }
+
+      prefix = text.substring(tempStartIndex, cursorPosition);
+
+      if (prefix.isEmpty) {
+        continue;
+      }
+
+      suggestions = await fetchSuggestions(prefix);
 
       if (suggestions.isNotEmpty) {
         // Store this prefix and its suggestions
         prefixMatches[prefix.length] = {
-          'prefix': prefix.trim(),
-          'startIndex': startIndex,
+          'prefix': prefix,
+          'startIndex': tempStartIndex,
           'suggestions': suggestions,
         };
       }
