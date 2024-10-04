@@ -324,16 +324,9 @@ class CodeController extends TextEditingController {
       // Fallback if no prefix start index is available
       final cursorPosition = previousSelection.baseOffset;
 
-      // Insert the selected word at the cursor position
-      var newText = text.replaceRange(
-        cursorPosition,
-        cursorPosition,
-        selectedWord,
-      );
-
       // Format the text and adjust the cursor offset
       var formatResult = formatAndAdjustOffset(
-        originalText: newText,
+        originalText: text,
         selectedWord: selectedWord,
         startIndex: cursorPosition,
         endIndex: cursorPosition,
@@ -353,12 +346,9 @@ class CodeController extends TextEditingController {
     final startIndex = lastPrefixStartIndex!;
     final endIndex = previousSelection.baseOffset;
 
-    // Replace the text from startIndex to endIndex with the selectedWord
-    String replacedText = text.replaceRange(startIndex, endIndex, selectedWord);
-
     // Format the text and adjust the cursor offset
     var formatResult = formatAndAdjustOffset(
-      originalText: replacedText,
+      originalText: text,
       selectedWord: selectedWord,
       startIndex: startIndex,
       endIndex: endIndex,
@@ -400,13 +390,13 @@ class CodeController extends TextEditingController {
 
     // Handle any special cases or formatting
     if (aggregationsWithBrackets.contains(selectedWord)) {
-      String insertionText = '$selectedWord()}';
+      String insertionText = '$selectedWord()';
       formattedText = originalText.replaceRange(
         startIndex,
-        insertionText.length,
+        endIndex,
         insertionText,
       );
-      adjustedOffset = startIndex + insertionText.length - 1; // -1 for '()'
+      adjustedOffset = startIndex + selectedWord.length - 1; // -1 for '()'
     } else if (mainTables.contains(selectedWord) && needsQoutes) {
       String insertionText = '"$selectedWord".${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(
@@ -429,8 +419,8 @@ class CodeController extends TextEditingController {
       adjustedOffset = startIndex + selectedWord.length + 2 + (addSpace ? 1 : 0); // +2 for quotes
     } else {
       String insertionText = selectedWord + (addSpace ? ' ' : '');
-      formattedText = originalText.replaceRange(startIndex, insertionText.length, insertionText);
-      adjustedOffset = startIndex + insertionText.length;
+      formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+      adjustedOffset = startIndex + selectedWord.length + (addSpace ? 1 : 0);
     }
 
     return FormatResult(
