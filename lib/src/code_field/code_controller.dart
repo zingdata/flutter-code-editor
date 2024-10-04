@@ -392,30 +392,45 @@ class CodeController extends TextEditingController {
     String formattedText;
     int adjustedOffset;
 
+    // Check if we need to add a space after the inserted text
+    bool addSpace = true;
+    if (endIndex < originalText.length && originalText[endIndex] == ' ') {
+      addSpace = false;
+    }
+
     // Handle any special cases or formatting
     if (aggregationsWithBrackets.contains(selectedWord)) {
+      String insertionText = '$selectedWord()${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(
         startIndex,
         endIndex,
-        '$selectedWord() ',
+        insertionText,
       );
-      adjustedOffset = startIndex + selectedWord.length + 3; // +3 for '() '
+      adjustedOffset = startIndex + selectedWord.length + 2 + (addSpace ? 1 : 0); // +2 for '()'
     } else if (mainTables.contains(selectedWord) && needsQoutes) {
+      String insertionText = '"$selectedWord".${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(
         startIndex,
         endIndex,
-        '"$selectedWord". ',
+        insertionText,
       );
-      adjustedOffset = startIndex + selectedWord.length + 4; // +4 for '"". '
+      adjustedOffset = startIndex + selectedWord.length + 3 + (addSpace ? 1 : 0); // +3 for '"".'
     } else if (mainTables.contains(selectedWord)) {
-      formattedText = originalText.replaceRange(startIndex, endIndex, '$selectedWord. ');
-      adjustedOffset = startIndex + selectedWord.length + 2; // +2 for '. '
+      String insertionText = '$selectedWord.${addSpace ? ' ' : ''}';
+      formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+      adjustedOffset = startIndex + selectedWord.length + 1 + (addSpace ? 1 : 0); // +1 for '.'
     } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
-      formattedText = originalText.replaceRange(startIndex, endIndex, '"$selectedWord" ');
-      adjustedOffset = startIndex + selectedWord.length + 2; // +2 for '"" '
+      String insertionText = '"$selectedWord"${addSpace ? ' ' : ''}';
+      formattedText = originalText.replaceRange(
+        startIndex,
+        endIndex,
+        insertionText,
+      );
+      adjustedOffset = startIndex + selectedWord.length + 2 + (addSpace ? 1 : 0); // +2 for quotes
     } else {
-      formattedText = originalText.replaceRange(startIndex, endIndex, '$selectedWord ');
-      adjustedOffset = startIndex + selectedWord.length + 1; // +1 for space
+      String insertionText = selectedWord + (addSpace ? ' ' : '');
+      formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+      adjustedOffset = startIndex + selectedWord.length + (addSpace ? 1 : 0);
     }
 
     return FormatResult(
@@ -835,11 +850,6 @@ class CodeController extends TextEditingController {
     int startIndex = cursorPosition;
     String prefix = '';
     Set<String> suggestions = {};
-
-    // Variables to keep track of the longest prefix with suggestions
-    String? longestPrefix;
-    int? longestStartIndex;
-    Set<String>? longestSuggestions;
 
     // Limit the maximum length to prevent performance issues
     int maxLength = 100; // Adjust as needed
