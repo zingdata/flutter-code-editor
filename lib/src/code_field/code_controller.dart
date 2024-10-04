@@ -400,13 +400,13 @@ class CodeController extends TextEditingController {
 
     // Handle any special cases or formatting
     if (aggregationsWithBrackets.contains(selectedWord)) {
-      String insertionText = '$selectedWord()${addSpace ? ' ' : ''}';
+      String insertionText = '$selectedWord()}';
       formattedText = originalText.replaceRange(
         startIndex,
-        endIndex,
+        insertionText.length,
         insertionText,
       );
-      adjustedOffset = startIndex + selectedWord.length + 2 + (addSpace ? 1 : 0); // +2 for '()'
+      adjustedOffset = startIndex + insertionText.length - 1; // -1 for '()'
     } else if (mainTables.contains(selectedWord) && needsQoutes) {
       String insertionText = '"$selectedWord".${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(
@@ -430,7 +430,7 @@ class CodeController extends TextEditingController {
     } else {
       String insertionText = selectedWord + (addSpace ? ' ' : '');
       formattedText = originalText.replaceRange(startIndex, insertionText.length, insertionText);
-      adjustedOffset = startIndex + selectedWord.length + (addSpace ? 1 : 0);
+      adjustedOffset = startIndex + insertionText.length;
     }
 
     return FormatResult(
