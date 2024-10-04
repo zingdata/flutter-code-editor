@@ -315,58 +315,6 @@ class CodeController extends TextEditingController {
     'LIMIT',
   ];
 
-  /// Inserts the word selected from the list of completions
-//   void insertSelectedWord() {
-//     final previousSelection = selection;
-//     final selectedWord = popupController.getSelectedWord();
-//     int? startPosition = value.wordAtCursorStart;
-
-//     if (startPosition != null) {
-//       final replacedText = text.replaceRange(
-//         startPosition,
-//         selection.baseOffset,
-//         aggregationsWithBrackets.contains(selectedWord)
-//             ? '$selectedWord() '
-//             : mainTables.contains(selectedWord) && needsQoutes
-//                 ? '"$selectedWord". '
-//                 : mainTables.contains(selectedWord)
-//                     ? '$selectedWord. '
-//                     : needsQoutes && !mainAggregations.contains(selectedWord)
-//                         ? '"$selectedWord" '
-//                         : '$selectedWord ',
-//       );
-
-//       startPosition = startPosition + 1;
-//       if (mainTables.contains(selectedWord) && needsQoutes) {
-//         startPosition = startPosition + 1;
-//       }
-//       if (needsQoutes &&
-//           (!mainAggregations.contains(selectedWord) &&
-//               !aggregationsWithBrackets.contains(selectedWord))) {
-//         startPosition = startPosition + 1;
-//       }
-
-//       final adjustedSelection = previousSelection.copyWith(
-//         baseOffset: startPosition + selectedWord.length,
-//         extentOffset: startPosition + selectedWord.length,
-//       );
-
-//       value = TextEditingValue(
-//         text: replacedText,
-//         selection: adjustedSelection,
-//       );
-
-//       if (replacedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
-//         WidgetsBinding.instance.addPostFrameCallback((_) {
-//           popupController.show(mainTableFields);
-//         });
-//       } else {
-//         popupController.hide();
-//       }
-//     } else {
-//       popupController.hide();
-//     }
-//   }
   void insertSelectedWord() {
     _isInsertingWord = true;
     final previousSelection = selection;
@@ -382,14 +330,23 @@ class CodeController extends TextEditingController {
         cursorPosition,
         selectedWord,
       );
-      newText = formatAndAdjustOffset(
-        replacedText: newText,
+
+      // Format the text and adjust the cursor offset
+      var formatResult = formatAndAdjustOffset(
+        originalText: newText,
         selectedWord: selectedWord,
         startIndex: cursorPosition,
         endIndex: cursorPosition,
-      ).formattedText;
+      );
+
+      // Update the controller's value
+      value = TextEditingValue(
+        text: formatResult.formattedText,
+        selection: TextSelection.collapsed(offset: formatResult.adjustedOffset),
+      );
 
       popupController.hide();
+      _isInsertingWord = false;
       return;
     }
 
@@ -398,84 +355,73 @@ class CodeController extends TextEditingController {
 
     // Replace the text from startIndex to endIndex with the selectedWord
     String replacedText = text.replaceRange(startIndex, endIndex, selectedWord);
-    replacedText = formatAndAdjustOffset(
-      replacedText: replacedText,
+
+    // Format the text and adjust the cursor offset
+    var formatResult = formatAndAdjustOffset(
+      originalText: replacedText,
       selectedWord: selectedWord,
       startIndex: startIndex,
       endIndex: endIndex,
-    ).formattedText;
+    );
+
+    // Update the controller's value
+    value = TextEditingValue(
+      text: formatResult.formattedText,
+      selection: TextSelection.collapsed(offset: formatResult.adjustedOffset),
+    );
 
     // Show or hide the popup based on conditions
-    if (replacedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
+    if (formatResult.formattedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         popupController.show(mainTableFields);
       });
     } else {
       popupController.hide();
     }
+
     lastPrefixStartIndex = null;
     _isInsertingWord = false;
   }
 
-  ({int adjustedOffset, String formattedText}) formatAndAdjustOffset({
-    required String replacedText,
+  FormatResult formatAndAdjustOffset({
+    required String originalText,
     required String selectedWord,
     required int startIndex,
     required int endIndex,
   }) {
+    String formattedText;
+    int adjustedOffset;
+
     // Handle any special cases or formatting
     if (aggregationsWithBrackets.contains(selectedWord)) {
-      replacedText = text.replaceRange(
+      formattedText = originalText.replaceRange(
         startIndex,
         endIndex,
         '$selectedWord() ',
       );
+      adjustedOffset = startIndex + selectedWord.length + 3; // +3 for '() '
     } else if (mainTables.contains(selectedWord) && needsQoutes) {
-      replacedText = text.replaceRange(
+      formattedText = originalText.replaceRange(
         startIndex,
         endIndex,
         '"$selectedWord". ',
       );
+      adjustedOffset = startIndex + selectedWord.length + 4; // +4 for '"". '
     } else if (mainTables.contains(selectedWord)) {
-      replacedText = text.replaceRange(
-        startIndex,
-        endIndex,
-        '$selectedWord. ',
-      );
+      formattedText = originalText.replaceRange(startIndex, endIndex, '$selectedWord. ');
+      adjustedOffset = startIndex + selectedWord.length + 2; // +2 for '. '
     } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
-      replacedText = text.replaceRange(
-        startIndex,
-        endIndex,
-        '"$selectedWord" ',
-      );
+      formattedText = originalText.replaceRange(startIndex, endIndex, '"$selectedWord" ');
+      adjustedOffset = startIndex + selectedWord.length + 2; // +2 for '"" '
     } else {
-      replacedText = text.replaceRange(
-        startIndex,
-        endIndex,
-        '$selectedWord ',
-      );
+      formattedText = originalText.replaceRange(startIndex, endIndex, '$selectedWord ');
+      adjustedOffset = startIndex + selectedWord.length + 1; // +1 for space
     }
 
-    // Adjust the selection
-    int adjustedOffset = startIndex + selectedWord.length;
-
-    // Adjust for added characters (e.g., quotes, periods, parentheses, spaces)
-    if (aggregationsWithBrackets.contains(selectedWord)) {
-      adjustedOffset += 1; // For '() '
-    } else if (mainTables.contains(selectedWord)) {
-      adjustedOffset += needsQoutes ? 4 : 2; // For '."' or '. '
-    } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
-      adjustedOffset += 2; // For quotes and space
-    } else {
-      adjustedOffset += 1; // For space
-    }
-
-    // Update the controller's text and selection
-    text = replacedText;
-    selection = TextSelection.fromPosition(
-      TextPosition(offset: adjustedOffset),
+    return FormatResult(
+      formattedText: formattedText,
+      adjustedOffset: adjustedOffset,
     );
-    return (adjustedOffset: adjustedOffset, formattedText: replacedText);
   }
 
   String get fullText => _code.text;
@@ -898,47 +844,38 @@ class CodeController extends TextEditingController {
     // Limit the maximum length to prevent performance issues
     int maxLength = 100; // Adjust as needed
 
-    final delimiters = RegExp(r'[\s\.,;\n]'); // Delimiters: space, punctuation, newlines
+    // Keep track of prefixes and their suggestions
+    Map<int, Map<String, dynamic>> prefixMatches = {};
 
     while (startIndex > 0 && (cursorPosition - startIndex) <= maxLength) {
       startIndex--;
-
-      // Check if the character at startIndex is a delimiter
-      if (delimiters.hasMatch(text[startIndex])) {
-        // If we've already found a longest prefix, break
-        if (longestPrefix != null) {
-          break;
-        } else {
-          // Otherwise, we can't expand further, so break
-          startIndex++; // Move back to the character after the delimiter
-          break;
-        }
-      }
-
       prefix = text.substring(startIndex, cursorPosition);
 
-      if (prefix.isEmpty) {
+      if (prefix.trim().isEmpty) {
         continue;
       }
 
       suggestions = await fetchSuggestions(prefix.trim());
 
       if (suggestions.isNotEmpty) {
-        // Update the longest prefix variables
-        longestPrefix = prefix.trim();
-        longestStartIndex = startIndex;
-        longestSuggestions = suggestions;
-      } else if (longestPrefix != null) {
-        // No suggestions for the current prefix, but we have a previous longest prefix
-        break;
+        // Store this prefix and its suggestions
+        prefixMatches[prefix.length] = {
+          'prefix': prefix.trim(),
+          'startIndex': startIndex,
+          'suggestions': suggestions,
+        };
       }
     }
 
-    if (longestPrefix != null && longestSuggestions != null && longestStartIndex != null) {
+    if (prefixMatches.isNotEmpty) {
+      // Find the longest prefix with suggestions
+      int maxPrefixLength = prefixMatches.keys.reduce((a, b) => a > b ? a : b);
+      Map<String, dynamic> longestMatch = prefixMatches[maxPrefixLength]!;
+
       return {
-        'prefix': longestPrefix,
-        'startIndex': longestStartIndex,
-        'suggestions': longestSuggestions,
+        'prefix': longestMatch['prefix'],
+        'startIndex': longestMatch['startIndex'],
+        'suggestions': longestMatch['suggestions'],
       };
     } else {
       // No matching suggestions found
@@ -1088,4 +1025,11 @@ class CodeController extends TextEditingController {
 
     super.dispose();
   }
+}
+
+class FormatResult {
+  final String formattedText;
+  final int adjustedOffset;
+
+  FormatResult({required this.formattedText, required this.adjustedOffset});
 }
