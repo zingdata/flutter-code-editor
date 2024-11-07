@@ -293,9 +293,11 @@ class CodeController extends TextEditingController {
   void needsQoutesChanged({required bool qoutesBool}) {
     needsQoutes = qoutesBool;
   }
+
   void needDotForTableChanged({required bool dotBool}) {
     needDotForTable = dotBool;
   }
+
   void addMainTableFields(List<String> fields, List<String> tables) {
     mainTableFields.clear();
     mainTables.clear();
@@ -407,11 +409,17 @@ class CodeController extends TextEditingController {
         endIndex,
         insertionText,
       );
-      adjustedOffset = startIndex + selectedWord.length + 3 + (addSpace ? 1 : 0); // +3 for '"".'
+      adjustedOffset = startIndex +
+          selectedWord.length +
+          (needDotForTable ? 3 : 2) +
+          (addSpace ? 1 : 0); // +3 for '"".'
     } else if (mainTables.contains(selectedWord)) {
       String insertionText = '$selectedWord${needDotForTable ? '.' : ''}${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
-      adjustedOffset = startIndex + selectedWord.length + 1 + (addSpace ? 1 : 0); // +1 for '.'
+      adjustedOffset =
+          startIndex + selectedWord.length + (needDotForTable ? 1 : 0) + (addSpace ? 1 : 0);
+      // Start of Selection
+      // +1 accounts for the '.' character appended to the selected word
     } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
       String insertionText = '"$selectedWord"${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(
