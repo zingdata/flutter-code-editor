@@ -57,6 +57,7 @@ class CodeController extends TextEditingController {
   Set<String> _readOnlySectionNames;
 
   bool needsQoutes = false;
+  bool needDotForTable = true;
   List<String> mainTableFields = [];
   List<String> mainTables = [];
 
@@ -292,7 +293,9 @@ class CodeController extends TextEditingController {
   void needsQoutesChanged({required bool qoutesBool}) {
     needsQoutes = qoutesBool;
   }
-
+  void needDotForTableChanged({required bool dotBool}) {
+    needDotForTable = dotBool;
+  }
   void addMainTableFields(List<String> fields, List<String> tables) {
     mainTableFields.clear();
     mainTables.clear();
@@ -398,7 +401,7 @@ class CodeController extends TextEditingController {
       );
       adjustedOffset = startIndex + insertionText.length - 1; // -1 for '()'
     } else if (mainTables.contains(selectedWord) && needsQoutes) {
-      String insertionText = '"$selectedWord".${addSpace ? ' ' : ''}';
+      String insertionText = '"$selectedWord"${needDotForTable ? '.' : ''}${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(
         startIndex,
         endIndex,
@@ -406,7 +409,7 @@ class CodeController extends TextEditingController {
       );
       adjustedOffset = startIndex + selectedWord.length + 3 + (addSpace ? 1 : 0); // +3 for '"".'
     } else if (mainTables.contains(selectedWord)) {
-      String insertionText = '$selectedWord.${addSpace ? ' ' : ''}';
+      String insertionText = '$selectedWord${needDotForTable ? '.' : ''}${addSpace ? ' ' : ''}';
       formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
       adjustedOffset = startIndex + selectedWord.length + 1 + (addSpace ? 1 : 0); // +1 for '.'
     } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
