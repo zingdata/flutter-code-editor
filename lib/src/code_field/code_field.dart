@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
@@ -15,6 +16,7 @@ import 'actions/outdent.dart';
 import 'code_controller.dart';
 import 'default_styles.dart';
 import 'disable_spell_check/disable_spell_check.dart';
+import 'web_selection_enhancer.dart';
 
 final _shortcuts = <ShortcutActivator, Intent>{
   // Copy
@@ -217,6 +219,9 @@ class _CodeFieldState extends State<CodeField> {
     // Workaround for disabling spellchecks in FireFox
     // https://github.com/akvelon/flutter-code-editor/issues/197
     disableSpellCheckIfWeb();
+    
+    // Enhance web text selection behavior
+    enhanceWebSelection();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final double width = _codeFieldKey.currentContext!.size!.width;
@@ -383,11 +388,27 @@ class _CodeFieldState extends State<CodeField> {
       readOnly: widget.readOnly,
       showCursor: true,
       autofocus: true,
+      enableInteractiveSelection: true,
+      selectionControls: !widget.isMobile ? 
+          DesktopTextSelectionControls() : 
+          MaterialTextSelectionControls(),
+      dragStartBehavior: DragStartBehavior.down,
+      mouseCursor: WidgetStateMouseCursor.textable,
+      contextMenuBuilder: (context, editableTextState) {
+        return AdaptiveTextSelectionToolbar.editableText(
+          editableTextState: editableTextState,
+        );
+      },
     );
 
     final editingField = Theme(
       data: Theme.of(context).copyWith(
-        textSelectionTheme: widget.textSelectionTheme,
+        textSelectionTheme: widget.textSelectionTheme ?? TextSelectionThemeData(
+          // Provide strong defaults that work well across browsers
+          selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+          cursorColor: widget.cursorColor ?? defaultTextStyle.color,
+          selectionHandleColor: Theme.of(context).colorScheme.primary,
+        ),
       ),
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
