@@ -50,15 +50,16 @@ class PopupController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void showOnlyColumnsOfTable(String tableName) {
+void showOnlyColumnsOfTable(String tableName) {
     final List<Map<String, String>> suggestions0 = [];
-    final List<String> columns = _suggestionCategories
-            .firstWhereOrNull((element) => element.keys.first == 'Column in $tableName')
-            ?.values
-            .first ??
-        [];
-    for (final column in columns) {
-      suggestions0.add({column: column});
+    final Map<String, List<String>>? columnsMap = _suggestionCategories
+        .firstWhereOrNull((element) => element.keys.first == 'Column in $tableName');
+    if (columnsMap != null) {
+      columnsMap.forEach((key, value) {
+        for (var element in value) {
+          suggestions0.add({key: element});
+        }
+      });
     }
 
     suggestions = suggestions0;
@@ -73,7 +74,7 @@ class PopupController extends ChangeNotifier {
 
     notifyListeners();
   }
-
+  
   void hide() {
     shouldShow = false;
     notifyListeners();
