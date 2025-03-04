@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -37,6 +38,30 @@ class PopupController extends ChangeNotifier {
     }
 
     this.suggestions = suggestions0;
+
+    _selectedIndex = 0;
+    shouldShow = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (itemScrollController.isAttached) {
+        itemScrollController.jumpTo(index: 0);
+      }
+    });
+
+    notifyListeners();
+  }
+
+  void showOnlyColumnsOfTable(String tableName) {
+    final List<Map<String, String>> suggestions0 = [];
+    final List<String> columns = _suggestionCategories
+            .firstWhereOrNull((element) => element.keys.first == 'Column in $tableName')
+            ?.values
+            .first ??
+        [];
+    for (final column in columns) {
+      suggestions0.add({column: column});
+    }
+
+    suggestions = suggestions0;
 
     _selectedIndex = 0;
     shouldShow = true;

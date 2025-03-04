@@ -345,6 +345,11 @@ class CodeController extends TextEditingController {
 
       popupController.hide();
       _isInsertingWord = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (formatResult.isTable) {
+          popupController.showOnlyColumnsOfTable(selectedWord);
+        }
+      });
       return;
     }
 
@@ -376,6 +381,11 @@ class CodeController extends TextEditingController {
 
     lastPrefixStartIndex = null;
     _isInsertingWord = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (formatResult.isTable) {
+        popupController.showOnlyColumnsOfTable(selectedWord);
+      }
+    });
   }
 
   FormatResult formatAndAdjustOffset({
@@ -386,6 +396,7 @@ class CodeController extends TextEditingController {
   }) {
     String formattedText;
     int adjustedOffset;
+    bool isTable = false;
 
     // Check if we need to add a space after the inserted text
     bool addSpace = true;
@@ -403,21 +414,20 @@ class CodeController extends TextEditingController {
       );
       adjustedOffset = startIndex + insertionText.length - 1; // -1 for '()'
     } else if (mainTables.contains(selectedWord) && needsQoutes) {
-      String insertionText = '"$selectedWord"${needDotForTable ? '.' : ''}${addSpace ? ' ' : ''}';
+      String insertionText = '"$selectedWord"${needDotForTable ? '.' : ''}';
+      isTable = true;
       formattedText = originalText.replaceRange(
         startIndex,
         endIndex,
         insertionText,
       );
-      adjustedOffset = startIndex +
-          selectedWord.length +
-          (needDotForTable ? 3 : 2) +
-          (addSpace ? 1 : 0); // +3 for '"".'
+      adjustedOffset = startIndex + selectedWord.length + (needDotForTable ? 3 : 2);
+      //+ (addSpace ? 1 : 0); // +3 for '"".'
     } else if (mainTables.contains(selectedWord)) {
-      String insertionText = '$selectedWord${needDotForTable ? '.' : ''}${addSpace ? ' ' : ''}';
+      isTable = true;
+      String insertionText = '$selectedWord${needDotForTable ? '.' : ''}';
       formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
-      adjustedOffset =
-          startIndex + selectedWord.length + (needDotForTable ? 1 : 0) + (addSpace ? 1 : 0);
+      adjustedOffset = startIndex + selectedWord.length + (needDotForTable ? 1 : 0);
       // Start of Selection
       // +1 accounts for the '.' character appended to the selected word
     } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
@@ -437,6 +447,7 @@ class CodeController extends TextEditingController {
     return FormatResult(
       formattedText: formattedText,
       adjustedOffset: adjustedOffset,
+      isTable: isTable,
     );
   }
 
@@ -1056,6 +1067,7 @@ class CodeController extends TextEditingController {
 class FormatResult {
   final String formattedText;
   final int adjustedOffset;
+  final bool isTable;
 
-  FormatResult({required this.formattedText, required this.adjustedOffset});
+  FormatResult({required this.formattedText, required this.adjustedOffset, required this.isTable});
 }
