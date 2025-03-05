@@ -49,12 +49,13 @@ class GutterWidget extends StatelessWidget {
 
     final tableRows = List.generate(
       code.hiddenLineRanges.visibleLineNumbers.length,
-      (i) => const TableRow(
-        // Use SizedBox with height for consistent vertical spacing
+      // ignore: prefer_const_constructors
+      (i) => TableRow(
+        // ignore: prefer_const_literals_to_create_immutables
         children: [
-          SizedBox(),
-          SizedBox(),
-          SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
         ],
       ),
     );
@@ -117,17 +118,12 @@ class GutterWidget extends StatelessWidget {
         textWrappedTimes = textWidth.width / (size!.width - 36);
       }
 
-      // Wrap the text in a container with centered alignment and padding
-      tableRows[lineIndex].children[_lineNumberColumn] = Container(
-        padding: const EdgeInsets.only(top: 3.0),
-        alignment: Alignment.centerLeft,
-        child: Text(
-          style.showLineNumbers
-              ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
-              : ' ',
-          style: style.textStyle,
-          textAlign: style.textAlign,
-        ),
+      tableRows[lineIndex].children[_lineNumberColumn] = Text(
+        style.showLineNumbers
+            ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
+            : ' ',
+        style: style.textStyle,
+        textAlign: style.textAlign,
       );
     }
   }
@@ -143,13 +139,9 @@ class GutterWidget extends StatelessWidget {
         continue;
       }
 
-      tableRows[lineIndex].children[_issueColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
-        alignment: Alignment.center,
-        child: GutterErrorWidget(
-          issue,
-          style.errorPopupTextStyle ?? (throw Exception('Error popup style should never be null')),
-        ),
+      tableRows[lineIndex].children[_issueColumn] = GutterErrorWidget(
+        issue,
+        style.errorPopupTextStyle ?? (throw Exception('Error popup style should never be null')),
       );
     }
   }
@@ -165,16 +157,12 @@ class GutterWidget extends StatelessWidget {
 
       final isFolded = code.foldedBlocks.contains(block);
 
-      tableRows[lineIndex].children[_foldingColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
-        alignment: Alignment.center,
-        child: FoldToggle(
-          color: style.textStyle?.color,
-          isFolded: isFolded,
-          onTap: isFolded
-              ? () => codeController.unfoldAt(block.firstLine)
-              : () => codeController.foldAt(block.firstLine),
-        ),
+      tableRows[lineIndex].children[_foldingColumn] = FoldToggle(
+        color: style.textStyle?.color,
+        isFolded: isFolded,
+        onTap: isFolded
+            ? () => codeController.unfoldAt(block.firstLine)
+            : () => codeController.foldAt(block.firstLine),
       );
     }
 
@@ -186,14 +174,10 @@ class GutterWidget extends StatelessWidget {
         continue;
       }
 
-      tableRows[lineIndex].children[_foldingColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
-        alignment: Alignment.center,
-        child: FoldToggle(
-          color: style.textStyle?.color,
-          isFolded: true,
-          onTap: () => codeController.unfoldAt(block.firstLine),
-        ),
+      tableRows[lineIndex].children[_foldingColumn] = FoldToggle(
+        color: style.textStyle?.color,
+        isFolded: true,
+        onTap: () => codeController.unfoldAt(block.firstLine),
       );
     }
   }
