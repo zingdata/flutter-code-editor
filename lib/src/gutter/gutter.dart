@@ -49,12 +49,12 @@ class GutterWidget extends StatelessWidget {
 
     final tableRows = List.generate(
       code.hiddenLineRanges.visibleLineNumbers.length,
-      (i) => TableRow(
+      (i) => const TableRow(
         // Just use minimal SizedBox placeholders
         children: [
-          const SizedBox(),
-          const SizedBox(),
-          const SizedBox(),
+          SizedBox(),
+          SizedBox(),
+          SizedBox(),
         ],
       ),
     );
@@ -189,8 +189,8 @@ class GutterWidget extends StatelessWidget {
       }
 
       tableRows[lineIndex].children[_foldingColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 0),
-        alignment: Alignment.center,
+        padding: const EdgeInsets.only(top: 3.0),
+        alignment: Alignment.centerLeft,
         child: FoldToggle(
           color: style.textStyle?.color,
           isFolded: true,
