@@ -50,11 +50,11 @@ class GutterWidget extends StatelessWidget {
     final tableRows = List.generate(
       code.hiddenLineRanges.visibleLineNumbers.length,
       (i) => TableRow(
-        // Use SizedBox with height for consistent vertical spacing
+        // Just use minimal SizedBox placeholders
         children: [
-          SizedBox(height: (style.textStyle?.fontSize ?? 14) * 1.3),
-          SizedBox(height: (style.textStyle?.fontSize ?? 14) * 1.3),
-          SizedBox(height: (style.textStyle?.fontSize ?? 14) * 1.3),
+          const SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
         ],
       ),
     );
@@ -84,7 +84,9 @@ class GutterWidget extends StatelessWidget {
             _issueColumn: FixedColumnWidth(issueColumnWidth),
             _foldingColumn: FixedColumnWidth(foldingColumnWidth),
           },
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          border: null,
           children: tableRows,
         ),
       ),
@@ -119,8 +121,8 @@ class GutterWidget extends StatelessWidget {
 
       // Wrap the text in a container with centered alignment and padding
       tableRows[lineIndex].children[_lineNumberColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
-        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 0),
+        alignment: Alignment.centerRight,
         child: Text(
           style.showLineNumbers
               ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
@@ -144,7 +146,7 @@ class GutterWidget extends StatelessWidget {
       }
 
       tableRows[lineIndex].children[_issueColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
+        padding: const EdgeInsets.symmetric(vertical: 0),
         alignment: Alignment.center,
         child: GutterErrorWidget(
           issue,
@@ -166,7 +168,7 @@ class GutterWidget extends StatelessWidget {
       final isFolded = code.foldedBlocks.contains(block);
 
       tableRows[lineIndex].children[_foldingColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
+        padding: const EdgeInsets.symmetric(vertical: 0),
         alignment: Alignment.center,
         child: FoldToggle(
           color: style.textStyle?.color,
@@ -187,7 +189,7 @@ class GutterWidget extends StatelessWidget {
       }
 
       tableRows[lineIndex].children[_foldingColumn] = Container(
-        padding: const EdgeInsets.symmetric(vertical: 3.0),
+        padding: const EdgeInsets.symmetric(vertical: 0),
         alignment: Alignment.center,
         child: FoldToggle(
           color: style.textStyle?.color,
