@@ -422,11 +422,7 @@ class _CodeFieldState extends State<CodeField> {
         builder: (BuildContext context, BoxConstraints constraints) {
           // Control horizontal scrolling
           return _wrapInScrollView(
-              Container(
-                // Add more padding between text lines to improve readability and selection
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: codeField,
-              ),
+              codeField,
               textStyle,
               constraints.maxWidth);
         },
