@@ -119,15 +119,12 @@ class GutterWidget extends StatelessWidget {
         textWrappedTimes = textWidth.width / (size!.width - 36);
       }
 
-      tableRows[lineIndex].children[_lineNumberColumn] = Padding(
-        padding: const EdgeInsets.only(top: 3.0),
-        child: Text(
-          style.showLineNumbers
-              ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
-              : ' ',
-          style: style.textStyle?.copyWith(height: 1),
-          textAlign: style.textAlign,
-        ),
+      tableRows[lineIndex].children[_lineNumberColumn] = Text(
+        style.showLineNumbers
+            ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
+            : ' ',
+        style: style.textStyle?.copyWith(height: 1),
+        textAlign: style.textAlign,
       );
     }
   }

@@ -367,7 +367,6 @@ class _CodeFieldState extends State<CodeField> {
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
       height: 1.3, // Increased line height for better padding between lines
-      letterSpacing: 0.5, // Slightly increase spacing between characters for better selection
     );
 
     final codeField = TextField(
@@ -383,7 +382,7 @@ class _CodeFieldState extends State<CodeField> {
       decoration: const InputDecoration(
         isCollapsed: true,
         // Add more vertical padding to help with line selection
-        contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 4),
+        contentPadding: EdgeInsets.symmetric(vertical: 16),
         disabledBorder: InputBorder.none,
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
