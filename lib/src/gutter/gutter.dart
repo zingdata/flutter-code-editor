@@ -124,7 +124,7 @@ class GutterWidget extends StatelessWidget {
           style.showLineNumbers
               ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
               : ' ',
-          style: style.textStyle?.copyWith(height: 1.3),
+          style: style.textStyle,
           textAlign: style.textAlign,
         ),
       );
