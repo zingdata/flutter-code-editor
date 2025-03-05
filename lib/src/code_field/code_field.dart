@@ -220,10 +220,10 @@ class _CodeFieldState extends State<CodeField> {
     // Workaround for disabling spellchecks in FireFox
     // https://github.com/akvelon/flutter-code-editor/issues/197
     disableSpellCheckIfWeb();
-    
+
     // Fix Chrome selection issues
     initChromeSelectionFix();
-  
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final double width = _codeFieldKey.currentContext!.size!.width;
       final double height = _codeFieldKey.currentContext!.size!.height;
@@ -389,7 +389,7 @@ class _CodeFieldState extends State<CodeField> {
         focusedBorder: InputBorder.none,
       ),
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
-    //  cursorHeight: widget.cursorHeight,
+      //  cursorHeight: widget.cursorHeight,
       autocorrect: false,
       enableSuggestions: false,
       enabled: widget.enabled,
@@ -398,9 +398,6 @@ class _CodeFieldState extends State<CodeField> {
       showCursor: true,
       autofocus: true,
       enableInteractiveSelection: true,
-      // Use a single consistent selection control style
-      selectionControls: DesktopTextSelectionControls(),
-      // Using down behavior for more accurate line selection
       dragStartBehavior: DragStartBehavior.down,
       mouseCursor: WidgetStateMouseCursor.textable,
       contextMenuBuilder: (context, editableTextState) {
@@ -412,26 +409,26 @@ class _CodeFieldState extends State<CodeField> {
 
     final editingField = Theme(
       data: Theme.of(context).copyWith(
-        textSelectionTheme: widget.textSelectionTheme ?? TextSelectionThemeData(
-          // Use a more pronounced and distinguishable selection color
-          // This helps with Chrome's selection rendering
-          selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-          cursorColor: widget.cursorColor ?? defaultTextStyle.color,
-          selectionHandleColor: Theme.of(context).colorScheme.primary,
-        ),
+        textSelectionTheme: widget.textSelectionTheme ??
+            TextSelectionThemeData(
+              // Use a more pronounced and distinguishable selection color
+              // This helps with Chrome's selection rendering
+              selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              cursorColor: widget.cursorColor ?? defaultTextStyle.color,
+              selectionHandleColor: Theme.of(context).colorScheme.primary,
+            ),
       ),
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           // Control horizontal scrolling
           return _wrapInScrollView(
-            Container(
-              // Add more padding between text lines to improve readability and selection
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: codeField,
-            ), 
-            textStyle, 
-            constraints.maxWidth
-          );
+              Container(
+                // Add more padding between text lines to improve readability and selection
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: codeField,
+              ),
+              textStyle,
+              constraints.maxWidth);
         },
       ),
     );
@@ -463,6 +460,8 @@ class _CodeFieldState extends State<CodeField> {
       color: lineNumberColor,
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
+      height: 1.3,
+      letterSpacing: 0.5,
     );
 
     final gutterStyle = widget.gutterStyle.copyWith(
