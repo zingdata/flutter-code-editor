@@ -370,7 +370,7 @@ class _CodeFieldState extends State<CodeField> {
       letterSpacing: 0.5, // Slightly increase spacing between characters for better selection
     );
 
-    final codeField = TextFormField(
+    final codeField = TextField(
       focusNode: _focusNode,
       scrollPadding: widget.padding,
       style: adjustedTextStyle,
@@ -383,13 +383,14 @@ class _CodeFieldState extends State<CodeField> {
       decoration: const InputDecoration(
         isCollapsed: true,
         // Add more vertical padding to help with line selection
-        contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 4),
+        contentPadding: EdgeInsets.symmetric(vertical: 24, horizontal: 4),
         disabledBorder: InputBorder.none,
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
+        isDense: true,
       ),
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
-      cursorHeight: widget.cursorHeight,
+    //  cursorHeight: widget.cursorHeight,
       autocorrect: false,
       enableSuggestions: false,
       enabled: widget.enabled,
@@ -424,12 +425,7 @@ class _CodeFieldState extends State<CodeField> {
         builder: (BuildContext context, BoxConstraints constraints) {
           // Control horizontal scrolling
           return _wrapInScrollView(
-            Container(
-              // Add a little extra padding between text lines for Chrome
-              // This improves line selection by making clearer boundaries
-              padding: const EdgeInsets.only(top: 2, bottom: 2),
-              child: codeField,
-            ), 
+            codeField, 
             textStyle, 
             constraints.maxWidth
           );
