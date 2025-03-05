@@ -72,8 +72,8 @@ class GutterWidget extends StatelessWidget {
     return Container(
       padding: style.margin ??
           const EdgeInsets.only(
-            top: 10,
-            bottom: 10,
+            top: 16,
+            bottom: 16,
             right: 10,
           ),
       width: style.showLineNumbers ? gutterWidth : null,
@@ -86,7 +86,8 @@ class GutterWidget extends StatelessWidget {
             _issueColumn: FixedColumnWidth(issueColumnWidth),
             _foldingColumn: FixedColumnWidth(foldingColumnWidth),
           },
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
           children: tableRows,
         ),
       ),
@@ -123,7 +124,7 @@ class GutterWidget extends StatelessWidget {
         style.showLineNumbers
             ? '${i + 1} ${textWrappedTimes > 1 ? (newLine * (textWrappedTimes.ceil() - 1)) : ''}'
             : ' ',
-        style: style.textStyle?.copyWith(height: 1),
+        style: style.textStyle,
         textAlign: style.textAlign,
       );
     }

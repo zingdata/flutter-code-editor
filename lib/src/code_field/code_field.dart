@@ -367,6 +367,7 @@ class _CodeFieldState extends State<CodeField> {
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
       height: 1.3, // Increased line height for better padding between lines
+      leadingDistribution: TextLeadingDistribution.even, // Added for consistent text baselines
     );
 
     final codeField = TextField(
@@ -387,6 +388,8 @@ class _CodeFieldState extends State<CodeField> {
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
       ),
+      textAlign: TextAlign.start, // Ensure consistent text alignment
+      textAlignVertical: TextAlignVertical.top, // Align text at the top for better matching
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
       //  cursorHeight: widget.cursorHeight,
       autocorrect: false,
@@ -437,9 +440,13 @@ class _CodeFieldState extends State<CodeField> {
         key: _codeFieldKey,
         padding: const EdgeInsets.only(left: 8),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (widget.gutterStyle.showGutter) _buildGutter(),
+            if (widget.gutterStyle.showGutter) 
+              Container(
+                alignment: Alignment.topCenter,
+                child: _buildGutter(),
+              ),
             Expanded(key: _editorKey, child: editingField),
           ],
         ),
@@ -451,11 +458,14 @@ class _CodeFieldState extends State<CodeField> {
     final lineNumberSize = textStyle.fontSize;
     final lineNumberColor = widget.gutterStyle.textStyle?.color ?? textStyle.color?.withOpacity(.5);
 
+    // Ensure same text style properties for consistent line height
     final lineNumberTextStyle = (widget.gutterStyle.textStyle ?? textStyle).copyWith(
       color: lineNumberColor,
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
-      height: 1.3,
+      height: 1.3, // Same as the adjustedTextStyle in the code field
+      // Add additional properties to ensure metrics consistency
+      leadingDistribution: TextLeadingDistribution.even,
     );
 
     final gutterStyle = widget.gutterStyle.copyWith(
