@@ -1,0 +1,3 @@
+bool isChromeBrowser() {
+  return false;
+}
