@@ -366,7 +366,7 @@ class _CodeFieldState extends State<CodeField> {
     // Adjust textStyle to have consistent line height
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
-      height: 1.5, // Consistent line height helps with selection behavior
+      height: 2.0, // Increased line height for better padding between lines
       letterSpacing: 0.5, // Slightly increase spacing between characters for better selection
     );
 
@@ -383,11 +383,10 @@ class _CodeFieldState extends State<CodeField> {
       decoration: const InputDecoration(
         isCollapsed: true,
         // Add more vertical padding to help with line selection
-        contentPadding: EdgeInsets.symmetric(vertical: 24, horizontal: 4),
+        contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 4),
         disabledBorder: InputBorder.none,
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
-        isDense: true,
       ),
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
     //  cursorHeight: widget.cursorHeight,
@@ -425,7 +424,11 @@ class _CodeFieldState extends State<CodeField> {
         builder: (BuildContext context, BoxConstraints constraints) {
           // Control horizontal scrolling
           return _wrapInScrollView(
-            codeField, 
+            Container(
+              // Add more padding between text lines to improve readability and selection
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: codeField,
+            ), 
             textStyle, 
             constraints.maxWidth
           );

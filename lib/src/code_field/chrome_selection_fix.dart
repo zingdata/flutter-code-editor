@@ -67,7 +67,11 @@ class ChromeSelectionFix {
             textarea.dataset.selectionFixed = "true";
             
             // Fix line-height CSS to ensure consistent selection behavior
-            textarea.style.lineHeight = "1.5";
+            textarea.style.lineHeight = "2.0";
+            
+            // Add additional CSS for better line separation
+            textarea.style.paddingTop = "2px";
+            textarea.style.paddingBottom = "2px";
             
             // Prevent Chrome's auto-selection behavior
             textarea.addEventListener('mousedown', (e) => {
