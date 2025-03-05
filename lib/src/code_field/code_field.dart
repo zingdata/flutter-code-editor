@@ -17,7 +17,8 @@ import 'actions/outdent.dart';
 import 'code_controller.dart';
 import 'default_styles.dart';
 import 'disable_spell_check/disable_spell_check.dart';
-import 'chrome_selection_handler.dart';
+
+const lineHeight = 1.25;
 
 final _shortcuts = <ShortcutActivator, Intent>{
   // Copy
@@ -364,7 +365,7 @@ class _CodeFieldState extends State<CodeField> {
     // Adjust textStyle to have consistent line height
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
-      height: 1.4, // Increased line height for better padding between lines
+      height: lineHeight, // Increased line height for better padding between lines
       leadingDistribution: TextLeadingDistribution.even, // Added for consistent text baselines
     );
 
@@ -461,7 +462,7 @@ class _CodeFieldState extends State<CodeField> {
       color: lineNumberColor,
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
-      height: 1.4, // Same as the adjustedTextStyle in the code field
+      height: lineHeight, // Same as the adjustedTextStyle in the code field
       // Add additional properties to ensure metrics consistency
       leadingDistribution: TextLeadingDistribution.even,
     );
