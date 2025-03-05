@@ -461,7 +461,6 @@ class _CodeFieldState extends State<CodeField> {
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
       height: 1.3,
-      letterSpacing: 0.5,
     );
 
     final gutterStyle = widget.gutterStyle.copyWith(
