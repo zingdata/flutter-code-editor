@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:html' as html;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,6 @@ import 'actions/outdent.dart';
 import 'code_controller.dart';
 import 'default_styles.dart';
 import 'disable_spell_check/disable_spell_check.dart';
-import 'web_selection_enhancer.dart';
 
 final _shortcuts = <ShortcutActivator, Intent>{
   // Copy
@@ -220,9 +220,7 @@ class _CodeFieldState extends State<CodeField> {
     // https://github.com/akvelon/flutter-code-editor/issues/197
     disableSpellCheckIfWeb();
     
-    // Enhance web text selection behavior
-    enhanceWebSelection();
-
+  
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final double width = _codeFieldKey.currentContext!.size!.width;
       final double height = _codeFieldKey.currentContext!.size!.height;
@@ -362,10 +360,17 @@ class _CodeFieldState extends State<CodeField> {
 
     textStyle = defaultTextStyle.merge(widget.textStyle);
 
-    final codeField = TextField(
+    // Adjust textStyle to have consistent line height
+    // This is a key fix for Chrome selection issues
+    final adjustedTextStyle = textStyle.copyWith(
+      height: 1.5, // Consistent line height helps with selection behavior
+      letterSpacing: 0.5, // Slightly increase spacing between characters for better selection
+    );
+
+    final codeField = TextFormField(
       focusNode: _focusNode,
       scrollPadding: widget.padding,
-      style: textStyle,
+      style: adjustedTextStyle,
       controller: widget.controller,
       minLines: widget.minLines,
       maxLines: widget.maxLines,
@@ -374,7 +379,8 @@ class _CodeFieldState extends State<CodeField> {
       keyboardType: widget.keyboardType,
       decoration: const InputDecoration(
         isCollapsed: true,
-        contentPadding: EdgeInsets.symmetric(vertical: 16),
+        // Add more vertical padding to help with line selection
+        contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 4),
         disabledBorder: InputBorder.none,
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
@@ -389,9 +395,9 @@ class _CodeFieldState extends State<CodeField> {
       showCursor: true,
       autofocus: true,
       enableInteractiveSelection: true,
-      selectionControls: !widget.isMobile ? 
-          DesktopTextSelectionControls() : 
-          MaterialTextSelectionControls(),
+      // Use a single consistent selection control style
+      selectionControls: DesktopTextSelectionControls(),
+      // Using down behavior for more accurate line selection
       dragStartBehavior: DragStartBehavior.down,
       mouseCursor: WidgetStateMouseCursor.textable,
       contextMenuBuilder: (context, editableTextState) {
@@ -404,8 +410,9 @@ class _CodeFieldState extends State<CodeField> {
     final editingField = Theme(
       data: Theme.of(context).copyWith(
         textSelectionTheme: widget.textSelectionTheme ?? TextSelectionThemeData(
-          // Provide strong defaults that work well across browsers
-          selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+          // Use a more pronounced and distinguishable selection color
+          // This helps with Chrome's selection rendering
+          selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
           cursorColor: widget.cursorColor ?? defaultTextStyle.color,
           selectionHandleColor: Theme.of(context).colorScheme.primary,
         ),
@@ -413,7 +420,16 @@ class _CodeFieldState extends State<CodeField> {
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           // Control horizontal scrolling
-          return _wrapInScrollView(codeField, textStyle, constraints.maxWidth);
+          return _wrapInScrollView(
+            Container(
+              // Add a little extra padding between text lines for Chrome
+              // This improves line selection by making clearer boundaries
+              padding: const EdgeInsets.only(top: 2, bottom: 2),
+              child: codeField,
+            ), 
+            textStyle, 
+            constraints.maxWidth
+          );
         },
       ),
     );
