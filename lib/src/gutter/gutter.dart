@@ -77,6 +77,7 @@ class GutterWidget extends StatelessWidget {
             right: 10,
           ),
       width: style.showLineNumbers ? gutterWidth : null,
+      color: Colors.red,
       child: SingleChildScrollView(
         controller: scrollController,
         child: Table(
