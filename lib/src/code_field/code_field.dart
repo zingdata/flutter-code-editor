@@ -221,8 +221,6 @@ class _CodeFieldState extends State<CodeField> {
     // https://github.com/akvelon/flutter-code-editor/issues/197
     disableSpellCheckIfWeb();
 
-    // Fix Chrome selection issues
-    initChromeSelectionFix();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final double width = _codeFieldKey.currentContext!.size!.width;
@@ -366,7 +364,7 @@ class _CodeFieldState extends State<CodeField> {
     // Adjust textStyle to have consistent line height
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
-      height: 1.3, // Increased line height for better padding between lines
+      height: 1.4, // Increased line height for better padding between lines
       leadingDistribution: TextLeadingDistribution.even, // Added for consistent text baselines
     );
 
@@ -463,7 +461,7 @@ class _CodeFieldState extends State<CodeField> {
       color: lineNumberColor,
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
-      height: 1.3, // Same as the adjustedTextStyle in the code field
+      height: 1.4, // Same as the adjustedTextStyle in the code field
       // Add additional properties to ensure metrics consistency
       leadingDistribution: TextLeadingDistribution.even,
     );
