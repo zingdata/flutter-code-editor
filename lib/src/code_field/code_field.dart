@@ -366,7 +366,7 @@ class _CodeFieldState extends State<CodeField> {
     // Adjust textStyle to have consistent line height
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
-      height: 1.0, // Increased line height for better padding between lines
+      height: 1.2, // Increased line height for better padding between lines
       letterSpacing: 0.5, // Slightly increase spacing between characters for better selection
     );
 
