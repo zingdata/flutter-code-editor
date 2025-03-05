@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:html' as html;
+import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -380,6 +381,9 @@ class _CodeFieldState extends State<CodeField> {
       expands: widget.expands,
       scrollController: _codeScroll,
       keyboardType: widget.keyboardType,
+      selectionHeightStyle: BoxHeightStyle.tight,
+      selectionWidthStyle: BoxWidthStyle.tight,
+      selectionControls: MaterialTextSelectionControls(),
       decoration: const InputDecoration(
         isCollapsed: true,
         // Add more vertical padding to help with line selection
@@ -391,7 +395,7 @@ class _CodeFieldState extends State<CodeField> {
       textAlign: TextAlign.start, // Ensure consistent text alignment
       textAlignVertical: TextAlignVertical.top, // Align text at the top for better matching
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
-      //  cursorHeight: widget.cursorHeight,
+      cursorHeight: widget.cursorHeight,
       autocorrect: false,
       enableSuggestions: false,
       enabled: widget.enabled,
@@ -423,10 +427,7 @@ class _CodeFieldState extends State<CodeField> {
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           // Control horizontal scrolling
-          return _wrapInScrollView(
-              codeField,
-              textStyle,
-              constraints.maxWidth);
+          return _wrapInScrollView(codeField, textStyle, constraints.maxWidth);
         },
       ),
     );
@@ -442,7 +443,7 @@ class _CodeFieldState extends State<CodeField> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (widget.gutterStyle.showGutter) 
+            if (widget.gutterStyle.showGutter)
               Container(
                 alignment: Alignment.topCenter,
                 child: _buildGutter(),
