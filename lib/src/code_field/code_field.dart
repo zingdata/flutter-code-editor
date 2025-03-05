@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:html' as html;
 import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
