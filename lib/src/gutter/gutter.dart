@@ -72,7 +72,7 @@ class GutterWidget extends StatelessWidget {
     return Container(
       padding: style.margin ??
           const EdgeInsets.only(
-            top: 16,
+            top: 13,
             bottom: 16,
             right: 10,
           ),
