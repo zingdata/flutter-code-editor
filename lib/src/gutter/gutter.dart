@@ -1,8 +1,7 @@
-// TODO(alexeyinkin): Remove when dropping support for Flutter < 3.10, https://github.com/akvelon/flutter-code-editor/issues/245
-// ignore_for_file: unnecessary_non_null_assertion
 
 import 'package:flutter/material.dart';
 
+import '../code_field/browser_detection.dart';
 import '../code_field/code_controller.dart';
 import '../line_numbers/gutter_style.dart';
 import 'error.dart';
@@ -14,6 +13,9 @@ const _foldingColumnWidth = 16.0;
 const _lineNumberColumn = 0;
 const _issueColumn = 1;
 const _foldingColumn = 2;
+
+
+
 
 class GutterWidget extends StatelessWidget {
   const GutterWidget({
@@ -71,8 +73,8 @@ class GutterWidget extends StatelessWidget {
 
     return Container(
       padding: style.margin ??
-          const EdgeInsets.only(
-            top: 13,
+          EdgeInsets.only(
+            top: getGutterTopPadding(),
             bottom: 16,
             right: 10,
           ),

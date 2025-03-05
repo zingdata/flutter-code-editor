@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
+// Conditionally import dart:js
+import 'browser_detection.dart';
+
 import '../code_theme/code_theme.dart';
 import '../gutter/gutter.dart';
 import '../line_numbers/gutter_style.dart';
@@ -18,7 +21,7 @@ import 'code_controller.dart';
 import 'default_styles.dart';
 import 'disable_spell_check/disable_spell_check.dart';
 
-const lineHeight = 1.15;
+
 
 final _shortcuts = <ShortcutActivator, Intent>{
   // Copy
@@ -365,7 +368,7 @@ class _CodeFieldState extends State<CodeField> {
     // Adjust textStyle to have consistent line height
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
-      height: lineHeight, // Increased line height for better padding between lines
+      height: getLineHeight(), // Use the function instead of constant
       leadingDistribution: TextLeadingDistribution.even, // Added for consistent text baselines
     );
 
@@ -462,7 +465,7 @@ class _CodeFieldState extends State<CodeField> {
       color: lineNumberColor,
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
-      height: lineHeight, // Same as the adjustedTextStyle in the code field
+      height: getLineHeight(), // Use the function instead of constant
       // Add additional properties to ensure metrics consistency
       leadingDistribution: TextLeadingDistribution.even,
     );
