@@ -4,7 +4,7 @@ import 'browser_detection_web.dart' if (dart.library.io) 'browser_detection_io.d
 
 // Function to determine the line height based on platform
 double getLineHeight() {
-  return detection.isChromeBrowser() ? 1.2 : 1.3;
+  return detection.isChromeBrowser() ? 1.15 : 1.3;
 }
 
 // Function to get appropriate top padding based on line height
