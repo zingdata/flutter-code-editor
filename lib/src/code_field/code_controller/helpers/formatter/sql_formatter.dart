@@ -50,6 +50,7 @@ class SqlFormatter {
   /// - Adding quotes to identifiers
   /// - Smart handling of table.column notation
   /// - Context-aware space insertion
+  /// - Properly handling multi-word identifiers with spaces
   static SqlFormatResult formatSql({
     required String originalText,
     required String selectedWord,
@@ -70,6 +71,9 @@ class SqlFormatter {
 
     // Detect if we're continuing an existing function call
     final isInFunctionContext = isInsideFunctionCall(prefixText);
+    
+    // Detect if the selectedWord contains spaces (multi-word identifier)
+    final containsSpaces = selectedWord.contains(' ');
 
     // Check if we need to add a space after the inserted text
     bool addSpace = !suffixText.startsWith(' ') &&
@@ -93,7 +97,7 @@ class SqlFormatter {
         selectedWord: selectedWord,
         startIndex: startIndex,
         endIndex: endIndex,
-        needsQuotes: needsQuotes,
+        needsQuotes: needsQuotes || containsSpaces, // Always quote multi-word tables
         needDotForTable: needDotForTable,
         inColumnContext: inColumnContext,
         suffixText: suffixText,
@@ -106,8 +110,10 @@ class SqlFormatter {
         endIndex: endIndex,
         addSpace: true,
         suffixText: suffixText,
+        needsQuotes: containsSpaces, // Auto-quote columns with spaces
       );
-    } else if (needsQuotes && !sqlKeywords.contains(selectedWord.toUpperCase())) {
+    } else if (containsSpaces || (needsQuotes && !sqlKeywords.contains(selectedWord.toUpperCase()))) {
+      // Always quote identifiers with spaces, regardless of the needsQuotes setting
       return _formatQuotedIdentifier(
         originalText: originalText,
         selectedWord: selectedWord,
@@ -201,19 +207,30 @@ class SqlFormatter {
     required int endIndex,
     required bool addSpace,
     required String suffixText,
+    bool needsQuotes = false,
   }) {
-    // Don't add quotes here since we're in column context
-    String insertionText = selectedWord;
+    // Add quotes for multi-word column names
+    String insertionText;
+    int adjustedOffset;
+    
+    if (needsQuotes && !selectedWord.startsWith('"') && !selectedWord.endsWith('"')) {
+      insertionText = '"$selectedWord"';
+      adjustedOffset = startIndex + selectedWord.length + 2; // +2 for quotes
+    } else {
+      insertionText = selectedWord;
+      adjustedOffset = startIndex + selectedWord.length;
+    }
 
     // Add space only if needed and we're not in the middle of an expression
     if (addSpace && !isInSqlExpression(suffixText)) {
       insertionText += ' ';
+      adjustedOffset += 1;
     }
 
     final formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
     return SqlFormatResult(
       formattedText: formattedText,
-      adjustedOffset: startIndex + insertionText.length,
+      adjustedOffset: adjustedOffset,
       isTable: false,
     );
   }
@@ -292,6 +309,16 @@ class SqlFormatter {
 
     if (startIndex < 0) return '';
 
+    // Check if we're dealing with a quoted identifier
+    if (startIndex >= 0 && text[startIndex] == '"') {
+      // Find the opening quote
+      int openQuoteIndex = text.lastIndexOf('"', startIndex - 1);
+      if (openQuoteIndex >= 0) {
+        // Extract the quoted identifier (including quotes)
+        return text.substring(openQuoteIndex, startIndex + 1);
+      }
+    }
+
     // Find the beginning of the word
     int wordStart = startIndex;
     while (wordStart >= 0 && (isLetterOrDigit(text[wordStart]) || text[wordStart] == '_')) {
@@ -307,6 +334,63 @@ class SqlFormatter {
     }
 
     return tableName;
+  }
+
+  /// Find the start of a multi-word phrase in text
+  /// This is useful for detecting when the user has typed part of a multi-word identifier
+  static int findMultiWordPhraseStart(String text, int endPosition) {
+    if (endPosition <= 0 || text.isEmpty) return endPosition;
+    
+    // Start from the end position and move backward
+    int position = endPosition;
+    bool foundSpace = false;
+    
+    // Check if we're in the middle of a quoted identifier
+    int quotePos = text.lastIndexOf('"', position - 1);
+    if (quotePos >= 0) {
+      int closingQuote = text.indexOf('"', quotePos + 1);
+      // If we're between quotes, return the position of the opening quote
+      if (closingQuote == -1 || closingQuote >= position) {
+        return quotePos;
+      }
+    }
+    
+    // Otherwise, try to find a phrase with spaces
+    while (position > 0) {
+      position--;
+      
+      // Check for word boundary characters that would end our search
+      if (",.;:(){}[]\"\'`=+-*/\\".contains(text[position])) {
+        return position + 1; // Start after the boundary character
+      }
+      
+      // Track if we've seen a space
+      if (text[position] == ' ') {
+        foundSpace = true;
+      }
+      
+      // If we've found a space and then a non-space, we might be in a multi-word phrase
+      if (foundSpace && text[position] != ' ' && position > 0 && text[position - 1] == ' ') {
+        // Check if previous word is part of the same phrase or a boundary
+        int prevWordStart = position - 1;
+        while (prevWordStart > 0 && text[prevWordStart - 1] == ' ') {
+          prevWordStart--;
+        }
+        
+        int wordBoundary = prevWordStart;
+        while (wordBoundary > 0 && 
+               !",;:(){}[]\"\'`=+-*/\\".contains(text[wordBoundary - 1])) {
+          wordBoundary--;
+        }
+        
+        // If we found a word before our space, include it in the phrase
+        if (wordBoundary < prevWordStart) {
+          position = wordBoundary;
+        }
+      }
+    }
+    
+    return position;
   }
 
   /// Check if we're inside a function call like "COUNT("
