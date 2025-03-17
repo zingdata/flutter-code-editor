@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../code_field/browser_detection.dart';
-import '../code_field/code_controller.dart';
+import '../code_field/code_controller/code_controller.dart';
 import '../line_numbers/gutter_style.dart';
 import 'error.dart';
 import 'fold_toggle.dart';

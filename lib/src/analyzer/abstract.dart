@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import '../code/code.dart';
-import '../code_field/code_controller.dart';
+import '../code_field/code_controller/code_controller.dart';
 import '../code_field/code_field.dart';
 import 'models/analysis_result.dart';
 

@@ -1,7 +1,7 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_code_editor/src/code_field/code_controller.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:highlight/languages/dart.dart';
 

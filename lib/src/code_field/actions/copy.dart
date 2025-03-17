@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../code_controller.dart';
+import '../code_controller/code_controller.dart';
 import '../text_editing_value.dart';
 
 class CopyAction extends Action<CopySelectionTextIntent> {

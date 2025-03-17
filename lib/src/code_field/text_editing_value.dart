@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../code/reg_exp.dart';
 import '../code/string.dart';
 import '../code/text_range.dart';
-import '../code_field/code_controller.dart';
+import 'code_controller/code_controller.dart';
 import '../util/edit_type.dart';
 import 'text_selection.dart';
 

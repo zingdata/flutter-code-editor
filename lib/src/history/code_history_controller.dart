@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import '../code/code.dart';
-import '../code_field/code_controller.dart';
+import '../code_field/code_controller/code_controller.dart';
 import '../code_field/text_selection.dart';
 import 'code_history_record.dart';
 import 'limit_stack.dart';
