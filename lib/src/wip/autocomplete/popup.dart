@@ -134,15 +134,15 @@ class PopupState extends State<Popup> {
     );
   }
 
-  bool _isVerticalFlipRequired() {
-    final isPopupShorterThanWindow =
-        Sizes.autocompletePopupMaxHeight < widget.editingWindowSize.height;
-    final isPopupOverflowingHeight =
-        widget.normalOffset.dy + Sizes.autocompletePopupMaxHeight - (widget.editorOffset?.dy ?? 0) >
-            widget.editingWindowSize.height;
+//   bool _isVerticalFlipRequired() {
+//     final isPopupShorterThanWindow =
+//         Sizes.autocompletePopupMaxHeight < widget.editingWindowSize.height;
+//     final isPopupOverflowingHeight =
+//         widget.normalOffset.dy + Sizes.autocompletePopupMaxHeight - (widget.editorOffset?.dy ?? 0) >
+//             widget.editingWindowSize.height;
 
-    return isPopupOverflowingHeight && isPopupShorterThanWindow;
-  }
+//     return isPopupOverflowingHeight && isPopupShorterThanWindow;
+//   }
 
   Widget _buildListItem(int index) {
     return Material(

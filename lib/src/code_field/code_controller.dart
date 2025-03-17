@@ -1,6 +1,7 @@
 // ignore_for_file: parameter_assignments
 
 import 'dart:async';
+import 'dart:core';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +61,8 @@ class CodeController extends TextEditingController {
   bool needDotForTable = true;
   List<String> mainTableFields = [];
   List<String> mainTables = [];
+
+  String? tableNameBeforeDot;
 
   /// A map of specific regexes to style
   final Map<String, TextStyle>? patternMap;
@@ -373,7 +376,7 @@ class CodeController extends TextEditingController {
     // Show or hide the popup based on conditions
     if (formatResult.formattedText.contains('$selectedWord()') && mainTableFields.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        popupController.show(mainTableFields);
+        popupController.show(null, mainTableFields);
       });
     } else {
       popupController.hide();
@@ -827,6 +830,7 @@ class CodeController extends TextEditingController {
   }
 
   Future<void> generateSuggestions() async {
+    tableNameBeforeDot = null;
     try {
       final textBeforeCursor = value.text.substring(0, value.selection.baseOffset);
       if (textBeforeCursor.isEmpty) {
@@ -834,7 +838,24 @@ class CodeController extends TextEditingController {
         return;
       }
 
-      // Find the longest matching prefix
+      // Check if we're typing after a dot that follows a table name
+      final dotIndex = textBeforeCursor.lastIndexOf('.');
+
+      if (dotIndex > 0 && dotIndex == textBeforeCursor.length - 1) {
+        // Extract the potential table name before the dot
+        final potentialTableName = _extractPotentialTableName(textBeforeCursor, dotIndex);
+
+        // Check if it's a known table - use suggestionCategories for validation
+        if (_isTableName(potentialTableName)) {
+          tableNameBeforeDot = potentialTableName;
+        }
+      }
+      // Try to detect the current table context even if we're not right after a dot
+      else {
+        tableNameBeforeDot = _detectTableContext(textBeforeCursor);
+      }
+
+      // Find the longest matching prefix for normal autocomplete
       final prefixInfo = await getLongestMatchingPrefix(textBeforeCursor);
 
       if (prefixInfo == null) {
@@ -847,7 +868,7 @@ class CodeController extends TextEditingController {
 
       if (suggestions.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          popupController.show(suggestions.toList());
+          popupController.show(tableNameBeforeDot, suggestions.toList());
         });
       } else {
         popupController.hide();
@@ -856,6 +877,83 @@ class CodeController extends TextEditingController {
       // ignore: empty_catches
     } catch (e) {}
   }
+
+  /// Attempts to detect which table the cursor is currently working with
+  /// based on context like FROM clauses, JOIN statements, etc.
+  String? _detectTableContext(String text) {
+    // Simple detection - find the most recently referenced table
+    for (final table in mainTables) {
+      // Check for common SQL patterns where a table name appears
+      // Find the last occurrence of patterns like "FROM table", "JOIN table", "table."
+      final fromPattern = RegExp(r'FROM\s+' + table + r'\b', caseSensitive: false);
+      final joinPattern = RegExp(r'JOIN\s+' + table + r'\b', caseSensitive: false);
+      final aliasPattern = RegExp(r'FROM\s+' + table + r'\s+AS\s+\w+', caseSensitive: false);
+
+      if (fromPattern.hasMatch(text) || joinPattern.hasMatch(text) || aliasPattern.hasMatch(text)) {
+        return table;
+      }
+    }
+
+    // If we couldn't detect a specific table, check if any table appears in the text
+    for (final table in mainTables) {
+      if (text.contains(table)) {
+        return table;
+      }
+    }
+
+    return null;
+  }
+
+  /// Checks if the given name is a table name by looking in suggestionCategories
+  bool _isTableName(String name) {
+    // First check mainTables for backward compatibility
+    if (mainTables.contains(name)) {
+      return true;
+    }
+
+    // Check in suggestionCategories for entries with 'Table' key
+    for (final category in popupController.suggestionCategories) {
+      // Look for the 'Table' category or any category containing the word 'Table'
+      if (category.keys.first == 'Table' || category.keys.first.contains('Table')) {
+        if (category.values.first.contains(name)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /// Extracts the potential table name before a dot
+  String _extractPotentialTableName(String text, int dotIndex) {
+    // Start from the dot and move backward to find the start of the table name
+    int startIndex = dotIndex - 1;
+
+    // Skip trailing whitespace
+    while (startIndex >= 0 && text[startIndex] == ' ') {
+      startIndex--;
+    }
+
+    if (startIndex < 0) return '';
+
+    // Find the beginning of the word
+    int wordStart = startIndex;
+    while (wordStart >= 0 && (text[wordStart].isLetterOrDigit || text[wordStart] == '_')) {
+      wordStart--;
+    }
+
+    // Extract the word
+    String tableName = text.substring(wordStart + 1, startIndex + 1);
+
+    // If the table name is in quotes, remove them
+    if (tableName.startsWith('"') && tableName.endsWith('"')) {
+      tableName = tableName.substring(1, tableName.length - 1);
+    }
+
+    return tableName;
+  }
+
+  // Helper extension method for character validation
 
   Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
     int cursorPosition = value.selection.baseOffset;
@@ -1070,4 +1168,13 @@ class FormatResult {
   final bool isTable;
 
   FormatResult({required this.formattedText, required this.adjustedOffset, required this.isTable});
+}
+
+extension on String {
+  bool get isLetterOrDigit {
+    final codeUnit = codeUnitAt(0);
+    return (codeUnit >= 48 && codeUnit <= 57) || // 0-9
+        (codeUnit >= 65 && codeUnit <= 90) || // A-Z
+        (codeUnit >= 97 && codeUnit <= 122); // a-z
+  }
 }

@@ -11,6 +11,7 @@ class PopupController extends ChangeNotifier {
 
   final ItemScrollController itemScrollController = ItemScrollController();
   final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
+  List<Map<String, List<String>>> get suggestionCategories => _suggestionCategories;
 
   /// Should be called when an active list item is selected to be inserted into the text
   late final void Function() onCompletionSelected;
@@ -24,7 +25,7 @@ class PopupController extends ChangeNotifier {
 
   int get selectedIndex => _selectedIndex;
 
-  void show(List<String> suggestions) {
+  void show(String? tableName, List<String> suggestions) {
     final List<Map<String, String>> suggestions0 = [];
 
     for (final e in suggestions) {
@@ -35,6 +36,25 @@ class PopupController extends ChangeNotifier {
           }
         });
       }
+    }
+
+    if (tableName != null) {
+      // Prioritize column suggestions for the provided table
+      final columnKey = 'Column in $tableName';
+      
+      // Sort the suggestions array to put columns of the specified table first
+      suggestions0.sort((a, b) {
+        final aIsColumn = a.keys.first == columnKey;
+        final bIsColumn = b.keys.first == columnKey;
+        
+        if (aIsColumn && !bIsColumn) {
+          return -1; // a comes first
+        } else if (!aIsColumn && bIsColumn) {
+          return 1;  // b comes first
+        } else {
+          return 0;  // maintain original order
+        }
+      });
     }
 
     this.suggestions = suggestions0;
@@ -50,7 +70,7 @@ class PopupController extends ChangeNotifier {
     notifyListeners();
   }
 
-void showOnlyColumnsOfTable(String tableName) {
+  void showOnlyColumnsOfTable(String tableName) {
     final List<Map<String, String>> suggestions0 = [];
     final Map<String, List<String>>? columnsMap = _suggestionCategories
         .firstWhereOrNull((element) => element.keys.first == 'Column in $tableName');
@@ -74,7 +94,7 @@ void showOnlyColumnsOfTable(String tableName) {
 
     notifyListeners();
   }
-  
+
   void hide() {
     shouldShow = false;
     notifyListeners();
