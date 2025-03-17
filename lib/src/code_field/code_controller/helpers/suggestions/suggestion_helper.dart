@@ -198,7 +198,7 @@ class SuggestionHelper {
       return ' ,.;:(){}[]"\'`=+-*/\\'.contains(char);
     }
     
-    // Find current word by looking backward until we hit a word boundary
+    // 1. First find the complete current word at cursor position
     var wordStart = cursorPosition;
     while (wordStart > 0) {
       final char = text[wordStart - 1];
@@ -208,11 +208,12 @@ class SuggestionHelper {
       wordStart--;
     }
     
-    // If we have a word, check if it has suggestions
+    // If we have identified a complete word
     if (wordStart < cursorPosition) {
       final currentWord = text.substring(wordStart, cursorPosition);
-      final wordSuggestions = await fetchSuggestions(currentWord);
       
+      // 2. Try to find suggestions for the complete word
+      final wordSuggestions = await fetchSuggestions(currentWord);
       if (wordSuggestions.isNotEmpty) {
         return {
           'prefix': currentWord,
@@ -220,71 +221,83 @@ class SuggestionHelper {
           'suggestions': wordSuggestions,
         };
       }
-    }
-    
-    // If no whole word match, find partial matches prioritizing word boundaries
-    final partialMatches = <Map<String, dynamic>>[];
-    
-    // Look for prefixes, limited to reasonable length
-    const maxSearchLength = 100; 
-    var startIndex = cursorPosition;
-    final minIndex = math.max(0, cursorPosition - maxSearchLength);
-    
-    while (startIndex > minIndex) {
-      startIndex--;
       
-      // Skip spaces at the start of prefix
-      var tempStart = startIndex;
-      while (tempStart < cursorPosition && text[tempStart] == ' ') {
-        tempStart++;
+      // 3. If no suggestions for the complete word, ONLY look for prefixes that
+      // start at word boundaries, not partial matches within the word
+      final partialMatches = <Map<String, dynamic>>[];
+      
+      // Only check at word boundaries
+      var boundaryIndex = wordStart;
+      // Add additional checks at spaces within the current word
+      for (int i = wordStart + 1; i < cursorPosition; i++) {
+        if (text[i - 1] == ' ') {
+          final subWord = text.substring(i, cursorPosition);
+          if (subWord.isNotEmpty) {
+            final subWordSuggestions = await fetchSuggestions(subWord);
+            if (subWordSuggestions.isNotEmpty) {
+              partialMatches.add({
+                'prefix': subWord,
+                'startIndex': i,
+                'suggestions': subWordSuggestions,
+                'length': subWord.length,
+              });
+            }
+          }
+        }
       }
       
-      if (tempStart >= cursorPosition) {
-        continue;
+      // 4. Check a few positions before the word start to handle edge cases
+      final checkLimit = math.max(0, wordStart - 20);
+      for (int i = wordStart - 1; i >= checkLimit; i--) {
+        if (i == 0 || isWordBoundary(text[i - 1])) {
+          final potentialPrefix = text.substring(i, cursorPosition);
+          if (potentialPrefix.isNotEmpty && !potentialPrefix.startsWith(' ')) {
+            final suggestions = await fetchSuggestions(potentialPrefix);
+            if (suggestions.isNotEmpty) {
+              partialMatches.add({
+                'prefix': potentialPrefix,
+                'startIndex': i,
+                'suggestions': suggestions,
+                'length': potentialPrefix.length,
+              });
+            }
+          }
+        }
       }
       
-      final prefix = text.substring(tempStart, cursorPosition);
-      if (prefix.isEmpty) {
-        continue;
+      // 5. Sort by length (prefer longer matches)
+      partialMatches.sort((a, b) {
+        final aLength = a['length'] as int;
+        final bLength = b['length'] as int;
+        return bLength.compareTo(aLength);
+      });
+      
+      if (partialMatches.isNotEmpty) {
+        final bestMatch = partialMatches.first;
+        return {
+          'prefix': bestMatch['prefix'],
+          'startIndex': bestMatch['startIndex'],
+          'suggestions': bestMatch['suggestions'],
+        };
       }
       
-      final prefixSuggestions = await fetchSuggestions(prefix);
-      if (prefixSuggestions.isNotEmpty) {
-        // Check if this starts at a word boundary
-        final startsAtWordBoundary = tempStart == 0 || isWordBoundary(text[tempStart - 1]);
-        
-        partialMatches.add({
-          'prefix': prefix,
-          'startIndex': tempStart,
-          'suggestions': prefixSuggestions,
-          'isWordBoundary': startsAtWordBoundary,
-          'length': prefix.length,
-        });
-      }
-    }
-    
-    // Sort matches prioritizing word boundaries first, then length
-    partialMatches.sort((a, b) {
-      final aBoundary = a['isWordBoundary'] as bool;
-      final bBoundary = b['isWordBoundary'] as bool;
-      
-      // Word boundaries take precedence
-      if (aBoundary != bBoundary) {
-        return aBoundary ? -1 : 1;
-      }
-      
-      // Then prefer longer matches
-      final aLength = a['length'] as int;
-      final bLength = b['length'] as int;
-      return bLength.compareTo(aLength);
-    });
-    
-    if (partialMatches.isNotEmpty) {
-      final bestMatch = partialMatches.first;
+      // If no matches found, just use the whole word to ensure
+      // we don't get partial word replacements
       return {
-        'prefix': bestMatch['prefix'],
-        'startIndex': bestMatch['startIndex'],
-        'suggestions': bestMatch['suggestions'],
+        'prefix': currentWord,
+        'startIndex': wordStart,
+        'suggestions': <String>{},  // Empty suggestions will hide the popup
+      };
+    }
+    
+    // If no word found at cursor (rare case), fall back to basic search
+    // This should almost never happen, but we keep it as a fallback
+    final fallbackSuggestions = await fetchSuggestions(text.substring(math.max(0, cursorPosition - 10), cursorPosition));
+    if (fallbackSuggestions.isNotEmpty) {
+      return {
+        'prefix': text.substring(math.max(0, cursorPosition - 10), cursorPosition),
+        'startIndex': math.max(0, cursorPosition - 10),
+        'suggestions': fallbackSuggestions,
       };
     }
     

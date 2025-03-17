@@ -16,10 +16,12 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - Provides relevant suggestions based on the detected context
    - Handles quoted identifiers and complex table references
 
-3. **Prefix Matching Algorithm**
-   - Uses a sophisticated prefix matching algorithm to find the longest matching prefix
+3. **Smart Word Matching Algorithm**
+   - Uses a word boundary-aware approach to identify complete words at cursor position
+   - Prioritizes complete word suggestions over partial matches
+   - Prevents partial word replacements (e.g., replacing just "nd" in "and" with a suggestion)
    - Considers various letter case combinations (lowercase, uppercase, title case)
-   - Provides fuzzy matching for more flexible suggestions
+   - Falls back to word-boundary-only matches when no direct word matches are found
 
 4. **Integration with PopupController**
    - Manages when and where to display the suggestion popup
@@ -40,14 +42,35 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - If no dot is found, try to detect the SQL context from FROM/JOIN clauses
    - Set the detected table as context for future suggestions
 
-4. **Prefix Analysis**
-   - Find the longest matching prefix in the text
-   - Generate suggestions based on that prefix
-   - Determine the insertion point for suggestions
+4. **Word Boundary Analysis**
+   - First find the complete word at the current cursor position
+   - Generate suggestions for the complete word if possible
+   - Only fall back to partial matches at proper word boundaries, never mid-word
+   - Maintain word integrity for replacement operations
 
 5. **Displaying Suggestions**
    - Show the popup with relevant suggestions
    - Hide the popup if no valid suggestions are found
+
+## Word Matching Logic
+
+The suggestion system uses a sophisticated word matching algorithm that:
+
+1. **Identifies Complete Words**
+   - Detects word boundaries using spaces, punctuation, and operators
+   - Extracts the complete word where the cursor is positioned
+   - Prevents suggestions from replacing only parts of words
+
+2. **Prioritized Matching Hierarchy**
+   - First attempts to match the complete word at cursor position
+   - Next checks spaces within multi-word phrases
+   - Then looks for matches at proper word boundaries
+   - Sorts matches by length, preferring longer matches
+
+3. **Fallback Safety Mechanism**
+   - Even when no suggestions are found, tracks the complete word
+   - Ensures the entire word is replaced, not just parts of it
+   - Maintains contextual awareness for table/column detection
 
 ## Integration with CodeController
 
@@ -67,9 +90,14 @@ The `SuggestionHelper` is initialized within the `CodeController` and takes a re
    - Easy to add support for new languages or suggestion types
    - Can be extended to support more complex SQL analysis
 
-3. **Improved Performance**
-   - Optimized prefix matching reduces computational overhead
-   - Better caching of context between suggestion generations
+3. **Improved Usability**
+   - Natural word-aware suggestions that respect word boundaries
+   - Prevents unexpected partial word replacements
+   - Better handling of multi-word phrases and expressions
+
+4. **Performance Optimization**
+   - Focused, targeted suggestions minimize processing overhead
+   - Smart caching of word positions and boundaries
 
 ## Future Extensions
 
