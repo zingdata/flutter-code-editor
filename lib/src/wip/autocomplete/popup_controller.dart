@@ -66,7 +66,7 @@ class PopupController extends ChangeNotifier {
 
     this.suggestions = suggestions0;
 
-    _selectedIndex = 0;
+    _selectedIndex = -1;
     shouldShow = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (itemScrollController.isAttached) {
@@ -91,7 +91,7 @@ class PopupController extends ChangeNotifier {
 
     suggestions = suggestions0;
 
-    _selectedIndex = 0;
+    _selectedIndex = -1;
     shouldShow = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (itemScrollController.isAttached) {
