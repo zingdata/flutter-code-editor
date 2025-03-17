@@ -841,24 +841,55 @@ class CodeController extends TextEditingController {
         return;
       }
 
-      // Check if we're typing after a dot that follows a table name
+      // Check if there's a dot in the text before cursor
       final dotIndex = textBeforeCursor.lastIndexOf('.');
-
-      if (dotIndex > 0 && dotIndex == textBeforeCursor.length - 1) {
-        // Extract the potential table name before the dot
+      
+      // If we found a dot, try to extract table name before it
+      if (dotIndex > 0) {
         final potentialTableName = _extractPotentialTableName(textBeforeCursor, dotIndex);
-
-        // Check if it's a known table - use suggestionCategories for validation
+        
+        // Check if it's a known table
         if (_isTableName(potentialTableName)) {
           tableNameBeforeDot = potentialTableName;
+          
+          // If cursor is right after the dot, show all columns for this table
+          if (dotIndex == textBeforeCursor.length - 1) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              popupController.showOnlyColumnsOfTable(potentialTableName);
+            });
+            lastPrefixStartIndex = dotIndex + 1;
+            return;
+          } 
+          // Otherwise, use text after dot as filter for columns
+          else if (dotIndex < textBeforeCursor.length - 1) {
+            final columnPrefix = textBeforeCursor.substring(dotIndex + 1).trim();
+            
+            // Only process if there's valid column text to filter by
+            if (columnPrefix.isNotEmpty) {
+              // Get filtered column suggestions based on what's been typed after dot
+              Set<String> columnSuggestions = await _getFilteredColumnSuggestions(
+                potentialTableName, 
+                columnPrefix
+              );
+              
+              if (columnSuggestions.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  popupController.show(potentialTableName, columnSuggestions.toList());
+                });
+                // Set start index to position right after dot
+                lastPrefixStartIndex = dotIndex + 1;
+                return;
+              }
+            }
+          }
         }
-      }
-      // Try to detect the current table context even if we're not right after a dot
+      } 
       else {
+        // No dot found, try to detect table context from SQL context
         tableNameBeforeDot = _detectTableContext(textBeforeCursor);
       }
 
-      // Find the longest matching prefix for normal autocomplete
+      // Fall back to standard prefix matching for normal autocomplete
       final prefixInfo = await getLongestMatchingPrefix(textBeforeCursor);
 
       if (prefixInfo == null) {
@@ -879,6 +910,35 @@ class CodeController extends TextEditingController {
       lastPrefixStartIndex = startIndex;
       // ignore: empty_catches
     } catch (e) {}
+  }
+  
+  /// Get column suggestions filtered by prefix for a specific table
+  Future<Set<String>> _getFilteredColumnSuggestions(String tableName, String prefix) async {
+    final result = <String>{};
+    
+    // Check columns in suggestionCategories
+    for (final category in popupController.suggestionCategories) {
+      final key = category.keys.first;
+      
+      // Find categories related to columns of this table
+      if (key == 'Column in $tableName' || key == 'Columns') {
+        for (final column in category.values.first) {
+          // Add columns that match the prefix
+          if (column.toLowerCase().startsWith(prefix.toLowerCase())) {
+            result.add(column);
+          }
+        }
+      }
+    }
+    
+    // Also check mainTableFields for backward compatibility
+    for (final field in mainTableFields) {
+      if (field.toLowerCase().startsWith(prefix.toLowerCase())) {
+        result.add(field);
+      }
+    }
+    
+    return result;
   }
 
   /// Attempts to detect which table the cursor is currently working with
