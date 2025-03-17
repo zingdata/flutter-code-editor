@@ -404,48 +404,80 @@ class CodeController extends TextEditingController {
     int adjustedOffset;
     bool isTable = false;
 
+    // Check surrounding context before and after insertion point
+    final prefixText = startIndex > 0 ? originalText.substring(0, startIndex) : '';
+    final suffixText = endIndex < originalText.length ? originalText.substring(endIndex) : '';
+    
+    // Check if we're in a specific SQL context (after table.)
+    final inColumnContext = _isInColumnContext(prefixText);
+    final tableName = inColumnContext ? _extractTableNameFromPrefix(prefixText) : null;
+    
+    // Detect if we're continuing an existing function call
+    final isInsideFunctionCall = _isInsideFunctionCall(prefixText);
+    
     // Check if we need to add a space after the inserted text
-    bool addSpace = true;
-    if (endIndex < originalText.length && originalText[endIndex] == ' ') {
-      addSpace = false;
-    }
+    bool addSpace = !suffixText.startsWith(' ') && 
+                   !suffixText.startsWith(')') && 
+                   !suffixText.startsWith(',') &&
+                   suffixText.isNotEmpty;
 
-    // Handle any special cases or formatting
+    // Handle SQL-specific patterns
     if (aggregationsWithBrackets.contains(selectedWord)) {
-      String insertionText = '$selectedWord()';
-      formattedText = originalText.replaceRange(
-        startIndex,
-        endIndex,
-        insertionText,
-      );
-      adjustedOffset = startIndex + insertionText.length - 1; // -1 for '()'
-    } else if (mainTables.contains(selectedWord) && needsQoutes) {
-      String insertionText = '"$selectedWord"${needDotForTable ? '.' : ''}';
-      isTable = true;
-      formattedText = originalText.replaceRange(
-        startIndex,
-        endIndex,
-        insertionText,
-      );
-      adjustedOffset = startIndex + selectedWord.length + (needDotForTable ? 3 : 2);
-      //+ (addSpace ? 1 : 0); // +3 for '"".'
+      // Don't add parentheses if we're already inside a function call
+      // or if the next character is already an opening parenthesis
+      if (isInsideFunctionCall || suffixText.startsWith('(')) {
+        formattedText = originalText.replaceRange(startIndex, endIndex, selectedWord);
+        adjustedOffset = startIndex + selectedWord.length;
+      } else {
+        String insertionText = '$selectedWord()';
+        formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+        adjustedOffset = startIndex + insertionText.length - 1; // Position cursor inside parentheses
+      }
     } else if (mainTables.contains(selectedWord)) {
       isTable = true;
-      String insertionText = '$selectedWord${needDotForTable ? '.' : ''}';
+      
+      // Check if we should add quotes and dot
+      bool shouldAddQuotes = needsQoutes && !selectedWord.startsWith('"') && !selectedWord.endsWith('"');
+      
+      // Don't add dot if we're already in a dot context or the next char is a dot
+      bool shouldAddDot = needDotForTable && !suffixText.startsWith('.') && !inColumnContext;
+      
+      String insertionText;
+      if (shouldAddQuotes) {
+        insertionText = '"$selectedWord"${shouldAddDot ? '.' : ''}';
+        adjustedOffset = startIndex + selectedWord.length + 2 + (shouldAddDot ? 1 : 0);
+      } else {
+        insertionText = '$selectedWord${shouldAddDot ? '.' : ''}';
+        adjustedOffset = startIndex + selectedWord.length + (shouldAddDot ? 1 : 0);
+      }
+      
       formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
-      adjustedOffset = startIndex + selectedWord.length + (needDotForTable ? 1 : 0);
-      // Start of Selection
-      // +1 accounts for the '.' character appended to the selected word
+    } else if (inColumnContext && tableName != null) {
+      // We're inserting a column after table.
+      // Don't add quotes here since we're in column context
+      String insertionText = selectedWord;
+      
+      // Add space only if needed and we're not in the middle of an expression
+      if (addSpace && !_isInSqlExpression(suffixText)) {
+        insertionText += ' ';
+      }
+      
+      formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+      adjustedOffset = startIndex + insertionText.length;
     } else if (needsQoutes && !mainAggregations.contains(selectedWord)) {
+      // Regular identifier that needs quotes
       String insertionText = '"$selectedWord"${addSpace ? ' ' : ''}';
-      formattedText = originalText.replaceRange(
-        startIndex,
-        endIndex,
-        insertionText,
-      );
+      formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
       adjustedOffset = startIndex + selectedWord.length + 2 + (addSpace ? 1 : 0); // +2 for quotes
     } else {
-      String insertionText = selectedWord + (addSpace ? ' ' : '');
+      // Default case - SQL keywords and other text
+      String insertionText = selectedWord;
+      
+      // Only add space after keywords and before identifiers
+      if (addSpace && (mainAggregations.contains(selectedWord.toUpperCase()) || _shouldAddSpaceAfter(selectedWord, suffixText))) {
+        insertionText += ' ';
+      }
+      
       formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
       adjustedOffset = startIndex + insertionText.length;
     }
@@ -455,6 +487,76 @@ class CodeController extends TextEditingController {
       adjustedOffset: adjustedOffset,
       isTable: isTable,
     );
+  }
+  
+  // Helper method to check if we're in a column context (right after table.)
+  bool _isInColumnContext(String prefixText) {
+    if (prefixText.isEmpty) return false;
+    
+    // Look for pattern where the last non-whitespace character is a dot
+    final trimmedPrefix = prefixText.trimRight();
+    return trimmedPrefix.isNotEmpty && trimmedPrefix.endsWith('.');
+  }
+  
+  // Extract table name from prefix like "SELECT * FROM users."
+  String? _extractTableNameFromPrefix(String prefixText) {
+    if (!_isInColumnContext(prefixText)) return null;
+    
+    final dotIndex = prefixText.lastIndexOf('.');
+    if (dotIndex <= 0) return null;
+    
+    return _extractPotentialTableName(prefixText, dotIndex);
+  }
+  
+  // Check if we're inside a function call like "COUNT("
+  bool _isInsideFunctionCall(String prefixText) {
+    final trimmedPrefix = prefixText.trimRight();
+    
+    // Check if we're inside an open parenthesis
+    int openParens = 0;
+    int closeParens = 0;
+    
+    for (int i = 0; i < trimmedPrefix.length; i++) {
+      if (trimmedPrefix[i] == '(') openParens++;
+      if (trimmedPrefix[i] == ')') closeParens++;
+    }
+    
+    return openParens > closeParens;
+  }
+  
+  // Check if the suffix is part of an SQL expression
+  bool _isInSqlExpression(String suffixText) {
+    if (suffixText.isEmpty) return false;
+    
+    // Operators or characters that indicate we're in an expression
+    const expressionChars = ['+', '-', '*', '/', '=', '<', '>', '!', ')', ','];
+    
+    // Check the first non-whitespace character
+    for (int i = 0; i < suffixText.length; i++) {
+      if (suffixText[i].trim().isEmpty) continue;
+      return expressionChars.contains(suffixText[i]);
+    }
+    
+    return false;
+  }
+  
+  // Determine if we should add a space after this word
+  bool _shouldAddSpaceAfter(String word, String suffix) {
+    // Always add space after SQL keywords
+    if (mainAggregations.contains(word.toUpperCase())) {
+      return true;
+    }
+    
+    // Don't add space if followed by punctuation
+    if (suffix.startsWith('.') || 
+        suffix.startsWith(',') || 
+        suffix.startsWith(')') || 
+        suffix.startsWith(';')) {
+      return false;
+    }
+    
+    // Default to adding a space
+    return true;
   }
 
   String get fullText => _code.text;
