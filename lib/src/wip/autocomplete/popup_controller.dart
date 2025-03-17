@@ -43,16 +43,23 @@ class PopupController extends ChangeNotifier {
       final columnKey = 'Column in $tableName';
       
       // Sort the suggestions array to put columns of the specified table first
+      // For items of the same type (column or non-column), prioritize by shortest length
       suggestions0.sort((a, b) {
         final aIsColumn = a.keys.first == columnKey;
         final bIsColumn = b.keys.first == columnKey;
+        final aValue = a.values.first;
+        final bValue = b.values.first;
         
         if (aIsColumn && !bIsColumn) {
-          return -1; // a comes first
+          return -1; // a comes first (columns have priority)
         } else if (!aIsColumn && bIsColumn) {
-          return 1;  // b comes first
+          return 1;  // b comes first (columns have priority)
         } else {
-          return 0;  // maintain original order
+          // Both are columns or both are not columns
+          // Sort by length (shortest first), then alphabetically if same length
+          return aValue.length == bValue.length 
+              ? aValue.compareTo(bValue) 
+              : aValue.length.compareTo(bValue.length);
         }
       });
     }
