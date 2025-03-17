@@ -73,10 +73,6 @@ text # not a comment
 }
 
 class _Example {
-  final Mode language;
-  final String name;
-  final Type parserType;
-  final String text;
 
   _Example(
     this.name, {
@@ -84,4 +80,8 @@ class _Example {
     required this.parserType,
     required this.text,
   });
+  final Mode language;
+  final String name;
+  final Type parserType;
+  final String text;
 }

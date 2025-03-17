@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
 
 class GutterStyle {
+
+  const GutterStyle({
+    this.margin,
+    this.textAlign = TextAlign.left,
+    this.showErrors = true,
+    this.showFoldingHandles = true,
+    this.showLineNumbers = true,
+    this.width = 80.0,
+    this.background,
+    this.errorPopupTextStyle,
+    this.textStyle,
+  });
   /// Width of the line number column.
   final double width;
 
@@ -37,18 +49,6 @@ class GutterStyle {
 
   /// Whether there is any column to show in gutter.
   bool get showGutter => showLineNumbers || showErrors || showFoldingHandles;
-
-  const GutterStyle({
-    this.margin,
-    this.textAlign = TextAlign.left,
-    this.showErrors = true,
-    this.showFoldingHandles = true,
-    this.showLineNumbers = true,
-    this.width = 80.0,
-    this.background,
-    this.errorPopupTextStyle,
-    this.textStyle,
-  });
 
   /// Hides the gutter entirely.
   ///

@@ -116,11 +116,6 @@ void main() {
 }
 
 class _Example {
-  final String name;
-  final String str1;
-  final String str2;
-  final List<TextRange>? expected;
-  final TextRange? expectedSingle;
 
   const _Example(
     this.name, {
@@ -129,4 +124,9 @@ class _Example {
     this.expected,
     this.expectedSingle,
   });
+  final String name;
+  final String str1;
+  final String str2;
+  final List<TextRange>? expected;
+  final TextRange? expectedSingle;
 }

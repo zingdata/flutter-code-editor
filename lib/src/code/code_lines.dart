@@ -5,13 +5,13 @@ import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
-import 'code_line.dart';
+import 'package:flutter_code_editor/src/code/code_line.dart';
 
 @immutable
 class CodeLines with EquatableMixin {
-  final List<CodeLine> lines;
 
   const CodeLines(this.lines);
+  final List<CodeLine> lines;
 
   static const empty = CodeLines([
     CodeLine(

@@ -1,7 +1,7 @@
 import 'package:autotrie/autotrie.dart';
 import 'package:highlight/highlight_core.dart';
 
-import '../code/reg_exp.dart';
+import 'package:flutter_code_editor/src/code/reg_exp.dart';
 
 /// Accumulates textual data and suggests autocompletion based on it.
 class Autocompleter {

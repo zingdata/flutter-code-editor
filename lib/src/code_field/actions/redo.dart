@@ -1,13 +1,13 @@
 import 'package:flutter/widgets.dart';
 
-import '../code_controller/code_controller.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 
 class RedoAction extends Action<RedoTextIntent> {
-  final CodeController controller;
 
   RedoAction({
     required this.controller,
   });
+  final CodeController controller;
 
   @override
   Object? invoke(RedoTextIntent intent) {

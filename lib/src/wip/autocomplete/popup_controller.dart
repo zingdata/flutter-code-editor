@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class PopupController extends ChangeNotifier {
+
+  PopupController({required this.onCompletionSelected}) : super();
   List<Map<String, String>> suggestions = [];
   int _selectedIndex = 0;
   bool isPopupShown = false;
@@ -15,8 +17,6 @@ class PopupController extends ChangeNotifier {
 
   /// Should be called when an active list item is selected to be inserted into the text
   late final void Function() onCompletionSelected;
-
-  PopupController({required this.onCompletionSelected}) : super();
 
   set selectedIndex(int value) {
     _selectedIndex = value;

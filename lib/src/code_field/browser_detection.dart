@@ -1,6 +1,6 @@
 
 // Use different implementations for web vs non-web platforms
-import 'browser_detection_web.dart' if (dart.library.io) 'browser_detection_io.dart' as detection;
+import 'package:flutter_code_editor/src/code_field/browser_detection_web.dart' if (dart.library.io) 'browser_detection_io.dart' as detection;
 
 // Function to determine the line height based on platform
 double getLineHeight() {

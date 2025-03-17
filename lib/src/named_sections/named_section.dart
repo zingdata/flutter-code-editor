@@ -1,8 +1,14 @@
 import 'package:equatable/equatable.dart';
 
-import '../util/inclusive_range.dart';
+import 'package:flutter_code_editor/src/util/inclusive_range.dart';
 
 class NamedSection extends InclusiveRange with EquatableMixin {
+
+  const NamedSection({
+    required this.firstLine,
+    required this.lastLine,
+    required this.name,
+  });
   /// Zero-based index of the line with the starting tag.
   final int firstLine;
 
@@ -17,12 +23,6 @@ class NamedSection extends InclusiveRange with EquatableMixin {
 
   @override
   int? get last => lastLine;
-
-  const NamedSection({
-    required this.firstLine,
-    required this.lastLine,
-    required this.name,
-  });
 
   @override
   List<Object?> get props => [

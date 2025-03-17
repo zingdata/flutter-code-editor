@@ -1,9 +1,9 @@
-import 'issue.dart';
+import 'package:flutter_code_editor/src/analyzer/models/issue.dart';
 
 class AnalysisResult {
-  final List<Issue> issues;
 
   const AnalysisResult({
     required this.issues,
   });
+  final List<Issue> issues;
 }

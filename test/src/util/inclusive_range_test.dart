@@ -66,20 +66,16 @@ void main() {
 }
 
 class _InclusiveRange extends InclusiveRange {
+
+  const _InclusiveRange(this.first, this.last);
   @override
   final int first;
 
   @override
   final int? last;
-
-  const _InclusiveRange(this.first, this.last);
 }
 
 class _OverlapsExample {
-  final String name;
-  final _InclusiveRange first;
-  final _InclusiveRange second;
-  final bool expected;
 
   const _OverlapsExample(
     this.name, {
@@ -87,4 +83,8 @@ class _OverlapsExample {
     required this.second,
     required this.expected,
   });
+  final String name;
+  final _InclusiveRange first;
+  final _InclusiveRange second;
+  final bool expected;
 }

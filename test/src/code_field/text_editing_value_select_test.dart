@@ -81,13 +81,6 @@ void main() {
 }
 
 class _Example {
-  final String name;
-
-  final TextEditingValue? expected;
-  final Pattern pattern;
-  final int start;
-  final bool throws;
-  final TextEditingValue value;
 
   const _Example(
     this.name, {
@@ -97,4 +90,11 @@ class _Example {
     this.expected,
     this.throws = false,
   });
+  final String name;
+
+  final TextEditingValue? expected;
+  final Pattern pattern;
+  final int start;
+  final bool throws;
+  final TextEditingValue value;
 }

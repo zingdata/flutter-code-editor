@@ -1,6 +1,6 @@
-import '../code/code_line.dart';
-import '../code/string.dart';
-import 'foldable_block.dart';
+import 'package:flutter_code_editor/src/code/code_line.dart';
+import 'package:flutter_code_editor/src/code/string.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block.dart';
 
 /// Matches folded blocks from the old code to the new code.
 ///
@@ -8,12 +8,6 @@ import 'foldable_block.dart';
 /// if the content of its hidden part is not changed.
 /// IMPORTANT: even if it is no longer a valid block after a change.
 class FoldableBlockMatcher {
-  final List<CodeLine> oldLines;
-  final List<FoldableBlock> newBlocks;
-  final List<CodeLine> newLines;
-  final oldToNew = <FoldableBlock, FoldableBlock>{};
-  final newFoldedBlocks = <FoldableBlock>{};
-  final newFoldableBlocksMap = <int, FoldableBlock>{};
 
   FoldableBlockMatcher({
     required this.oldLines,
@@ -65,6 +59,12 @@ class FoldableBlockMatcher {
       }
     }
   }
+  final List<CodeLine> oldLines;
+  final List<FoldableBlock> newBlocks;
+  final List<CodeLine> newLines;
+  final oldToNew = <FoldableBlock, FoldableBlock>{};
+  final newFoldedBlocks = <FoldableBlock>{};
+  final newFoldableBlocksMap = <int, FoldableBlock>{};
 
   /// Adds the folded block to newFoldedBlocks
   /// if its hidden part is not changed.

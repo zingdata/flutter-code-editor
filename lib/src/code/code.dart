@@ -4,46 +4,32 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:highlight/highlight_core.dart';
 
-import '../../src/highlight/result.dart';
-import '../code_field/text_editing_value.dart';
-import '../folding/foldable_block.dart';
-import '../folding/foldable_block_matcher.dart';
-import '../folding/invalid_foldable_block.dart';
-import '../folding/parsers/parser_factory.dart';
-import '../hidden_ranges/hidden_line_ranges.dart';
-import '../hidden_ranges/hidden_line_ranges_builder.dart';
-import '../hidden_ranges/hidden_range.dart';
-import '../hidden_ranges/hidden_ranges.dart';
-import '../hidden_ranges/hidden_ranges_builder.dart';
-import '../named_sections/named_section.dart';
-import '../named_sections/parsers/abstract.dart';
-import '../service_comment_filter/service_comment_filter.dart';
-import '../single_line_comments/parser/single_line_comment_parser.dart';
-import '../single_line_comments/parser/single_line_comments.dart';
-import '../single_line_comments/single_line_comment.dart';
-import 'code_edit_result.dart';
-import 'code_line.dart';
-import 'code_lines.dart';
-import 'code_lines_builder.dart';
-import 'map.dart';
-import 'string.dart';
-import 'text_range.dart';
+import 'package:flutter_code_editor/src/highlight/result.dart';
+import 'package:flutter_code_editor/src/code_field/text_editing_value.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block_matcher.dart';
+import 'package:flutter_code_editor/src/folding/invalid_foldable_block.dart';
+import 'package:flutter_code_editor/src/folding/parsers/parser_factory.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_line_ranges.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_line_ranges_builder.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_range.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_ranges.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_ranges_builder.dart';
+import 'package:flutter_code_editor/src/named_sections/named_section.dart';
+import 'package:flutter_code_editor/src/named_sections/parsers/abstract.dart';
+import 'package:flutter_code_editor/src/service_comment_filter/service_comment_filter.dart';
+import 'package:flutter_code_editor/src/single_line_comments/parser/single_line_comment_parser.dart';
+import 'package:flutter_code_editor/src/single_line_comments/parser/single_line_comments.dart';
+import 'package:flutter_code_editor/src/single_line_comments/single_line_comment.dart';
+import 'package:flutter_code_editor/src/code/code_edit_result.dart';
+import 'package:flutter_code_editor/src/code/code_line.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/code/code_lines_builder.dart';
+import 'package:flutter_code_editor/src/code/map.dart';
+import 'package:flutter_code_editor/src/code/string.dart';
+import 'package:flutter_code_editor/src/code/text_range.dart';
 
 class Code {
-  final String text;
-  final List<FoldableBlock> foldableBlocks;
-  final Set<FoldableBlock> foldedBlocks;
-  final HiddenLineRanges hiddenLineRanges;
-  final HiddenRanges hiddenRanges;
-  final Result? highlighted;
-  final List<InvalidFoldableBlock> invalidBlocks;
-  final CodeLines lines;
-  final Map<String, NamedSection> namedSections;
-  final Result? visibleHighlighted;
-  final String visibleText;
-  final Set<String> visibleSectionNames;
-
-  final HiddenRangesBuilder _hiddenRangesBuilder;
 
   factory Code({
     required String text,
@@ -164,6 +150,20 @@ class Code {
     required this.visibleText,
     required this.visibleSectionNames,
   }) : _hiddenRangesBuilder = hiddenRangesBuilder;
+  final String text;
+  final List<FoldableBlock> foldableBlocks;
+  final Set<FoldableBlock> foldedBlocks;
+  final HiddenLineRanges hiddenLineRanges;
+  final HiddenRanges hiddenRanges;
+  final Result? highlighted;
+  final List<InvalidFoldableBlock> invalidBlocks;
+  final CodeLines lines;
+  final Map<String, NamedSection> namedSections;
+  final Result? visibleHighlighted;
+  final String visibleText;
+  final Set<String> visibleSectionNames;
+
+  final HiddenRangesBuilder _hiddenRangesBuilder;
 
   static const empty = Code._(
     text: '',

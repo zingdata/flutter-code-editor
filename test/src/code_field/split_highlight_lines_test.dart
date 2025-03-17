@@ -139,8 +139,8 @@ void main() {
 }
 
 class _Example {
-  final String text;
-  final String expected;
 
   const _Example({required this.text, required this.expected});
+  final String text;
+  final String expected;
 }

@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 
-import 'abstract.dart';
-import 'line_semantics.dart';
+import 'package:flutter_code_editor/src/folding/parsers/abstract.dart';
+import 'package:flutter_code_editor/src/folding/parsers/line_semantics.dart';
 
 /// A parser that iterates textual content to find foldable blocks.
 abstract class TextFoldableBlockParser extends AbstractFoldableBlockParser {

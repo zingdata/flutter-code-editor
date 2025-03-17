@@ -1,11 +1,11 @@
 
 import 'package:flutter/material.dart';
 
-import '../code_field/browser_detection.dart';
-import '../code_field/code_controller/code_controller.dart';
-import '../line_numbers/gutter_style.dart';
-import 'error.dart';
-import 'fold_toggle.dart';
+import 'package:flutter_code_editor/src/code_field/browser_detection.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
+import 'package:flutter_code_editor/src/line_numbers/gutter_style.dart';
+import 'package:flutter_code_editor/src/gutter/error.dart';
+import 'package:flutter_code_editor/src/gutter/fold_toggle.dart';
 
 const _issueColumnWidth = 16.0;
 const _foldingColumnWidth = 16.0;

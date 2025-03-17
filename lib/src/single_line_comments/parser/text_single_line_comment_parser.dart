@@ -1,14 +1,9 @@
 import 'package:collection/collection.dart';
 
-import '../single_line_comment.dart';
-import 'abstract_single_line_comment_parser.dart';
+import 'package:flutter_code_editor/src/single_line_comments/single_line_comment.dart';
+import 'package:flutter_code_editor/src/single_line_comments/parser/abstract_single_line_comment_parser.dart';
 
 class TextSingleLineCommentParser extends AbstractSingleLineCommentParser {
-  final String text;
-  final List<String> singleLineCommentSequences;
-
-  @override
-  final comments = <SingleLineComment>[];
 
   TextSingleLineCommentParser({
     required this.text,
@@ -16,6 +11,11 @@ class TextSingleLineCommentParser extends AbstractSingleLineCommentParser {
   }) {
     _parse();
   }
+  final String text;
+  final List<String> singleLineCommentSequences;
+
+  @override
+  final comments = <SingleLineComment>[];
 
   void _parse() {
     final lines = text.split('\n');

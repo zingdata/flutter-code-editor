@@ -1,6 +1,6 @@
 import 'package:highlight/highlight_core.dart';
 
-import 'node.dart';
+import 'package:flutter_code_editor/src/highlight/node.dart';
 
 extension MyResult on Result {
   void forEachNode(

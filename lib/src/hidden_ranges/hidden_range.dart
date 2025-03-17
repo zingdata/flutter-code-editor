@@ -1,13 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-import '../code/text_range.dart';
+import 'package:flutter_code_editor/src/code/text_range.dart';
 
 class HiddenRange extends NormalizedTextRange with EquatableMixin {
-  final int firstLine;
-  final int lastLine;
-
-  ///Whether this range contains its first line entirely.
-  final bool wholeFirstLine;
 
   const HiddenRange(
     int start,
@@ -22,6 +17,11 @@ class HiddenRange extends NormalizedTextRange with EquatableMixin {
           'lastLine must be >= firstLine, $firstLine-$lastLine given',
         ),
         super(start: start, end: end);
+  final int firstLine;
+  final int lastLine;
+
+  ///Whether this range contains its first line entirely.
+  final bool wholeFirstLine;
 
   int get length => end - start;
 

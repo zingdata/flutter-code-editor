@@ -152,11 +152,6 @@ void main() {
 }
 
 class _CutStringExample {
-  final String name;
-  final HiddenRanges hiddenTexts;
-  final String text;
-  final int start;
-  final String result;
 
   _CutStringExample(
     this.name, {
@@ -165,4 +160,9 @@ class _CutStringExample {
     required this.start,
     required this.result,
   });
+  final String name;
+  final HiddenRanges hiddenTexts;
+  final String text;
+  final int start;
+  final String result;
 }

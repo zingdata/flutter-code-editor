@@ -1,11 +1,11 @@
 import 'package:highlight/highlight_core.dart';
 
-import '../../code/code_lines.dart';
-import '../foldable_block.dart';
-import 'abstract.dart';
-import 'highlight.dart';
-import 'indent.dart';
-import 'python_fallback.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block.dart';
+import 'package:flutter_code_editor/src/folding/parsers/abstract.dart';
+import 'package:flutter_code_editor/src/folding/parsers/highlight.dart';
+import 'package:flutter_code_editor/src/folding/parsers/indent.dart';
+import 'package:flutter_code_editor/src/folding/parsers/python_fallback.dart';
 
 /// A parser for foldable blocks for Python.
 class PythonFoldableBlockParser extends AbstractFoldableBlockParser {

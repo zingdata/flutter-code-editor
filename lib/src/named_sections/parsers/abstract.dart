@@ -1,5 +1,5 @@
-import '../../single_line_comments/single_line_comment.dart';
-import '../named_section.dart';
+import 'package:flutter_code_editor/src/single_line_comments/single_line_comment.dart';
+import 'package:flutter_code_editor/src/named_sections/named_section.dart';
 
 /// Parses named sections from tags like [START name]...[END name].
 ///

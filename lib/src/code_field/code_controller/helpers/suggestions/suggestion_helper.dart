@@ -1,15 +1,15 @@
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_code_editor/src/code/string.dart';
 
-import '../../code_controller.dart';
-import '../sql_formatter.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/helpers/sql_formatter.dart';
 
 /// Helper class for handling autocomplete suggestions logic
 class SuggestionHelper {
-  final CodeController controller;
   
   /// Create a suggestion helper for a specific code controller
   SuggestionHelper(this.controller);
+  final CodeController controller;
   
   /// Generates and displays appropriate suggestions based on current cursor position and text
   Future<void> generateSuggestions() async {

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'code_theme_data.dart';
+import 'package:flutter_code_editor/src/code_theme/code_theme_data.dart';
 
 class CodeTheme extends InheritedWidget {
   const CodeTheme({

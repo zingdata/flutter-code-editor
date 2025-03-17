@@ -407,11 +407,6 @@ import java.lang.Exception;   // 9
 }
 
 class _Example {
-  final String name;
-  final String code;
-  final String breakingCode;
-  final List<FoldableBlock> expected;
-  final List<InvalidFoldableBlock> invalidBlocks;
 
   const _Example(
     this.name, {
@@ -419,6 +414,11 @@ class _Example {
     required this.expected,
     this.invalidBlocks = const [],
   }) : breakingCode = '$code\n"\n';
+  final String name;
+  final String code;
+  final String breakingCode;
+  final List<FoldableBlock> expected;
+  final List<InvalidFoldableBlock> invalidBlocks;
 }
 
 /// Shorter alias for [FoldableBlock] to avoid line breaks.

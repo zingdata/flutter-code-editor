@@ -1,10 +1,9 @@
-import '../code/code_lines.dart';
-import 'hidden_line_ranges.dart';
-import 'hidden_ranges.dart';
-import 'line_numbering_breakpoint.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_line_ranges.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_ranges.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/line_numbering_breakpoint.dart';
 
 class HiddenLineRangesBuilder {
-  final HiddenLineRanges hiddenLineRanges;
 
   factory HiddenLineRangesBuilder({
     required CodeLines codeLines,
@@ -67,4 +66,5 @@ class HiddenLineRangesBuilder {
   const HiddenLineRangesBuilder._({
     required this.hiddenLineRanges,
   });
+  final HiddenLineRanges hiddenLineRanges;
 }

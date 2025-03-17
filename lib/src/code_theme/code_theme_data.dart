@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 
 @immutable
 class CodeThemeData {
-  final Map<String, TextStyle> styles;
 
   CodeThemeData({
     Map<String, TextStyle>? styles,
@@ -47,6 +46,7 @@ class CodeThemeData {
       this.styles['variable'] = variableStyle;
     }
   }
+  final Map<String, TextStyle> styles;
 
   @override
   int get hashCode => styles.hashCode;

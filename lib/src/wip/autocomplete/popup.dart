@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-import '../../sizes.dart';
-import 'popup_controller.dart';
+import 'package:flutter_code_editor/src/sizes.dart';
+import 'package:flutter_code_editor/src/wip/autocomplete/popup_controller.dart';
 
 /// Popup window displaying the list of possible completions
 class Popup extends StatefulWidget {
+
+  const Popup({
+    super.key,
+    required this.controller,
+    required this.editingWindowSize,
+    required this.editorOffset,
+    required this.flippedOffset,
+    required this.normalOffset,
+    required this.caretDataOffset,
+    required this.parentFocusNode,
+    required this.style,
+    this.backgroundColor,
+    this.isMobile = false,
+  });
   final PopupController controller;
   final Size editingWindowSize;
 
@@ -30,20 +44,6 @@ class Popup extends StatefulWidget {
   final Color? backgroundColor;
 
   final bool isMobile;
-
-  const Popup({
-    super.key,
-    required this.controller,
-    required this.editingWindowSize,
-    required this.editorOffset,
-    required this.flippedOffset,
-    required this.normalOffset,
-    required this.caretDataOffset,
-    required this.parentFocusNode,
-    required this.style,
-    this.backgroundColor,
-    this.isMobile = false,
-  });
 
   @override
   PopupState createState() => PopupState();

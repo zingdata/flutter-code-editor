@@ -2,12 +2,12 @@ import 'package:charcode/ascii.dart';
 import 'package:collection/collection.dart';
 import 'package:highlight/highlight_core.dart';
 
-import '../../code/code_lines.dart';
-import '../../highlight/keyword_semantics.dart';
-import '../../highlight/node.dart';
-import '../../highlight/node_classes.dart';
-import '../foldable_block_type.dart';
-import 'text.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/highlight/keyword_semantics.dart';
+import 'package:flutter_code_editor/src/highlight/node.dart';
+import 'package:flutter_code_editor/src/highlight/node_classes.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block_type.dart';
+import 'package:flutter_code_editor/src/folding/parsers/text.dart';
 
 /// A parser for foldable blocks from highlight's [Result].
 class HighlightFoldableBlockParser extends TextFoldableBlockParser {

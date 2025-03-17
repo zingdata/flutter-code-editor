@@ -46,12 +46,6 @@ void main() {
 }
 
 class _Example {
-  final String name;
-  final String initialFullText;
-  final TextSelection initialSelection;
-  final List<int> foldedBlocks;
-  final String finalVisibleText;
-  final LogicalKeyboardKey key;
 
   const _Example(
     this.name, {
@@ -61,4 +55,10 @@ class _Example {
     required this.key,
     required this.initialSelection,
   });
+  final String name;
+  final String initialFullText;
+  final TextSelection initialSelection;
+  final List<int> foldedBlocks;
+  final String finalVisibleText;
+  final LogicalKeyboardKey key;
 }

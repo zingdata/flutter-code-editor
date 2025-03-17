@@ -1,5 +1,5 @@
-import '../../flutter_code_editor.dart';
-import '../single_line_comments/single_line_comment.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_code_editor/src/single_line_comments/single_line_comment.dart';
 
 class ServiceCommentFilter {
   static Iterable<SingleLineComment> filter(

@@ -1,15 +1,15 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../code_controller/code_controller.dart';
-import '../text_editing_value.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
+import 'package:flutter_code_editor/src/code_field/text_editing_value.dart';
 
 class CopyAction extends Action<CopySelectionTextIntent> {
-  final CodeController controller;
 
   CopyAction({
     required this.controller,
   });
+  final CodeController controller;
 
   @override
   Future<void> invoke(CopySelectionTextIntent intent) async {

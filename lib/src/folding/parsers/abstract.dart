@@ -2,11 +2,11 @@ import 'package:collection/collection.dart';
 import 'package:highlight/highlight_core.dart';
 import 'package:meta/meta.dart';
 
-import '../../code/code_lines.dart';
-import '../foldable_block.dart';
-import '../foldable_block_type.dart';
-import '../invalid_foldable_block.dart';
-import 'line_semantics.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block_type.dart';
+import 'package:flutter_code_editor/src/folding/invalid_foldable_block.dart';
+import 'package:flutter_code_editor/src/folding/parsers/line_semantics.dart';
 
 /// A base class for parsers that go through some representation
 /// of code to parse blocks from it.
@@ -234,21 +234,21 @@ abstract class AbstractFoldableBlockParser {
 }
 
 class _StartedFoldableBlock {
-  final int line;
-  final FoldableBlockType type;
 
   const _StartedFoldableBlock({
     required this.line,
     required this.type,
   });
+  final int line;
+  final FoldableBlockType type;
 }
 
 class _LineWithSemantics {
-  final int index;
-  final LineSemantics semantics;
 
   const _LineWithSemantics({
     required this.index,
     required this.semantics,
   });
+  final int index;
+  final LineSemantics semantics;
 }

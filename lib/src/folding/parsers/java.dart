@@ -1,9 +1,9 @@
 import 'package:highlight/highlight.dart';
 
-import '../../../flutter_code_editor.dart';
-import '../../code/code_lines.dart';
-import 'abstract.dart';
-import 'java_fallback.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/folding/parsers/abstract.dart';
+import 'package:flutter_code_editor/src/folding/parsers/java_fallback.dart';
 
 class JavaFoldableBlockParser extends AbstractFoldableBlockParser {
   @override

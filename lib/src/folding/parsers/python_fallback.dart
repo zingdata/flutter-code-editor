@@ -1,7 +1,7 @@
 import 'package:highlight/languages/python.dart';
 
-import '../../single_line_comments/parser/single_line_comments.dart';
-import 'fallback.dart';
+import 'package:flutter_code_editor/src/single_line_comments/parser/single_line_comments.dart';
+import 'package:flutter_code_editor/src/folding/parsers/fallback.dart';
 
 class PythonFallbackFoldableBlockParser extends FallbackFoldableBlockParser {
   PythonFallbackFoldableBlockParser()

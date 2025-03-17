@@ -1,16 +1,10 @@
 import 'package:highlight/highlight_core.dart';
 
-import '../../highlight/node.dart';
-import '../single_line_comment.dart';
-import 'abstract_single_line_comment_parser.dart';
+import 'package:flutter_code_editor/src/highlight/node.dart';
+import 'package:flutter_code_editor/src/single_line_comments/single_line_comment.dart';
+import 'package:flutter_code_editor/src/single_line_comments/parser/abstract_single_line_comment_parser.dart';
 
 class HighlightSingleLineCommentParser extends AbstractSingleLineCommentParser {
-  final String text;
-  final Result highlighted;
-  final List<String> singleLineCommentSequences;
-
-  @override
-  final comments = <SingleLineComment>[];
 
   HighlightSingleLineCommentParser({
     required this.text,
@@ -19,6 +13,12 @@ class HighlightSingleLineCommentParser extends AbstractSingleLineCommentParser {
   }) {
     _parse();
   }
+  final String text;
+  final Result highlighted;
+  final List<String> singleLineCommentSequences;
+
+  @override
+  final comments = <SingleLineComment>[];
 
   void _parse() {
     int lineIndex = 0;

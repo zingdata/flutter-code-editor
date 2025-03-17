@@ -4,18 +4,11 @@ import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:highlight/highlight_core.dart';
 
-import '../code/text_range.dart';
-import 'hidden_range.dart';
+import 'package:flutter_code_editor/src/code/text_range.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_range.dart';
 
 @immutable
 class HiddenRanges {
-  /// How many hidden characters are there before this range.
-  /// Has the length of [ranges] + 1. The last element shows how many
-  /// hidden characters are there in total.
-  final List<int> hiddenCharactersBeforeRanges;
-
-  final List<HiddenRange> ranges;
-  final int textLength;
 
   HiddenRanges({
     required this.ranges,
@@ -33,6 +26,13 @@ class HiddenRanges {
     required this.ranges,
     required this.textLength,
   });
+  /// How many hidden characters are there before this range.
+  /// Has the length of [ranges] + 1. The last element shows how many
+  /// hidden characters are there in total.
+  final List<int> hiddenCharactersBeforeRanges;
+
+  final List<HiddenRange> ranges;
+  final int textLength;
 
   static const empty = HiddenRanges._(
     hiddenCharactersBeforeRanges: [0],

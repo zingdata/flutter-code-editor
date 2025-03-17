@@ -1,15 +1,15 @@
 
 /// Result of formatting a SQL fragment
 class SqlFormatResult {
-  final String formattedText;
-  final int adjustedOffset;
-  final bool isTable;
 
   SqlFormatResult({
     required this.formattedText,
     required this.adjustedOffset,
     required this.isTable,
   });
+  final String formattedText;
+  final int adjustedOffset;
+  final bool isTable;
 }
 
 /// Helper class for SQL formatting operations

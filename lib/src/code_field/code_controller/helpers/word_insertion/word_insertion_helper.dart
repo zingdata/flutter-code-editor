@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-import '../../code_controller.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 
 /// Helper class for handling word insertion from autocomplete
 class WordInsertionHelper {
-  final CodeController controller;
   
   /// Create a word insertion helper for a specific code controller
   WordInsertionHelper(this.controller);
+  final CodeController controller;
   
   /// Inserts the currently selected word from autocomplete popup
   /// into the code editor at the appropriate position

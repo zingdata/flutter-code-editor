@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'hidden_range.dart';
-import 'hidden_ranges.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_range.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/hidden_ranges.dart';
 
 /// Merges multiple sets of hidden ranges.
 ///
@@ -22,13 +22,6 @@ import 'hidden_ranges.dart';
 /// with [copyMergingSourceMap], e.g. to strip everything coming from
 /// any foldable blocks.
 class HiddenRangesBuilder {
-  final HiddenRanges ranges;
-  final Map<Type, Map<Object, HiddenRange>> sourceMap;
-
-  static const empty = HiddenRangesBuilder._(
-    ranges: HiddenRanges.empty,
-    sourceMap: {},
-  );
 
   const HiddenRangesBuilder._({
     required this.ranges,
@@ -42,6 +35,13 @@ class HiddenRangesBuilder {
           ranges: _merge(sourceMap.values.expand((map) => map.values)),
           textLength: textLength,
         );
+  final HiddenRanges ranges;
+  final Map<Type, Map<Object, HiddenRange>> sourceMap;
+
+  static const empty = HiddenRangesBuilder._(
+    ranges: HiddenRanges.empty,
+    sourceMap: {},
+  );
 
   static List<HiddenRange> _merge(Iterable<HiddenRange> ranges) {
     final result = [...ranges]..sort(HiddenRange.sort);

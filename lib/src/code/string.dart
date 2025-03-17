@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 
-import '../code_field/text_editing_value.dart';
+import 'package:flutter_code_editor/src/code_field/text_editing_value.dart';
 
 extension StringExtension on String {
   /// Returns the widest [TextRange] of this that is different from [old].

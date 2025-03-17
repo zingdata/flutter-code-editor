@@ -1,11 +1,11 @@
 import 'package:highlight/highlight_core.dart';
 
-import '../../code/code_line.dart';
-import '../../code/code_lines.dart';
-import '../../code/iterable.dart';
-import '../foldable_block.dart';
-import '../foldable_block_type.dart';
-import 'abstract.dart';
+import 'package:flutter_code_editor/src/code/code_line.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/code/iterable.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block_type.dart';
+import 'package:flutter_code_editor/src/folding/parsers/abstract.dart';
 
 /// A parser for foldable blocks from lines indentation.
 class IndentFoldableBlockParser extends AbstractFoldableBlockParser {
@@ -112,11 +112,11 @@ class IndentFoldableBlockParser extends AbstractFoldableBlockParser {
 }
 
 class _SignificantIndentIndexes {
+
+  _SignificantIndentIndexes(this.first, this.second, this.last);
   final int first;
   final int second;
   final int last;
-
-  _SignificantIndentIndexes(this.first, this.second, this.last);
 
   static _SignificantIndentIndexes? fromLineIndents(List<int?> linesIndents) {
     final first = _getNextSignificantIndentIndex(linesIndents);

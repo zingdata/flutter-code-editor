@@ -309,11 +309,6 @@ val str4 = """
 }
 
 class _Example {
-  final String name;
-  final String text;
-  final Mode language;
-  final List<SingleLineComment> comments;
-  final bool isLanguageLost;
 
   _Example(
     this.name, {
@@ -322,4 +317,9 @@ class _Example {
     this.comments = const [],
     this.isLanguageLost = false,
   });
+  final String name;
+  final String text;
+  final Mode language;
+  final List<SingleLineComment> comments;
+  final bool isLanguageLost;
 }

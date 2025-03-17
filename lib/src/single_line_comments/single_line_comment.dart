@@ -1,27 +1,9 @@
 import 'package:meta/meta.dart';
 
-import '../code/tokens.dart';
+import 'package:flutter_code_editor/src/code/tokens.dart';
 
 @immutable
 class SingleLineComment {
-  /// Zero-based index of the first character from the beginning of the text.
-  final int characterIndex;
-
-  /// The comment text without the characters signifying the comment.
-  final String innerContent;
-
-  /// Zero-based index of the line at which this comment is found.
-  final int lineIndex;
-
-  /// The comment text with the characters signifying the comment.
-  final String outerContent;
-
-  /// The object this comment was parsed from, if any.
-  ///
-  /// The object class is specific to the parser.
-  final Object? source;
-
-  late final isReadonly = _checkIfReadonly();
 
   SingleLineComment({
     required this.innerContent,
@@ -49,6 +31,24 @@ class SingleLineComment {
           outerContent: outerContent,
           source: source,
         );
+  /// Zero-based index of the first character from the beginning of the text.
+  final int characterIndex;
+
+  /// The comment text without the characters signifying the comment.
+  final String innerContent;
+
+  /// Zero-based index of the line at which this comment is found.
+  final int lineIndex;
+
+  /// The comment text with the characters signifying the comment.
+  final String outerContent;
+
+  /// The object this comment was parsed from, if any.
+  ///
+  /// The object class is specific to the parser.
+  final Object? source;
+
+  late final isReadonly = _checkIfReadonly();
 
   @override
   int get hashCode => Object.hash(

@@ -257,11 +257,6 @@ public class MyClass {
 }
 
 class _Example {
-  final String name;
-  final String fullTextBefore;
-  final TextSelection visibleSelectionBefore;
-  final TextEditingValue visibleValueAfter;
-  final CodeEditResult? expected;
 
   const _Example(
     this.name, {
@@ -270,4 +265,9 @@ class _Example {
     required this.visibleValueAfter,
     this.expected,
   });
+  final String name;
+  final String fullTextBefore;
+  final TextSelection visibleSelectionBefore;
+  final TextEditingValue visibleValueAfter;
+  final CodeEditResult? expected;
 }

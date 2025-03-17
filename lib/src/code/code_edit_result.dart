@@ -2,13 +2,13 @@ import 'package:flutter/widgets.dart';
 
 @immutable
 class CodeEditResult {
-  final String fullTextAfter;
-  final TextRange linesChanged;
 
   const CodeEditResult({
     required this.fullTextAfter,
     required this.linesChanged,
   });
+  final String fullTextAfter;
+  final TextRange linesChanged;
 
   @override
   String toString() {

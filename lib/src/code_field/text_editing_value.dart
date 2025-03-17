@@ -1,11 +1,11 @@
 import 'package:flutter/widgets.dart';
 
-import '../code/reg_exp.dart';
-import '../code/string.dart';
-import '../code/text_range.dart';
-import 'code_controller/code_controller.dart';
-import '../util/edit_type.dart';
-import 'text_selection.dart';
+import 'package:flutter_code_editor/src/code/reg_exp.dart';
+import 'package:flutter_code_editor/src/code/string.dart';
+import 'package:flutter_code_editor/src/code/text_range.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
+import 'package:flutter_code_editor/src/util/edit_type.dart';
+import 'package:flutter_code_editor/src/code_field/text_selection.dart';
 
 extension TextEditingValueExtension on TextEditingValue {
   /// The position where the word at the cursor starts.

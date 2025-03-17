@@ -1,17 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-import '../analyzer/models/issue.dart';
-import '../analyzer/models/issue_type.dart';
-import 'foldable_block.dart';
-import 'foldable_block_type.dart';
+import 'package:flutter_code_editor/src/analyzer/models/issue.dart';
+import 'package:flutter_code_editor/src/analyzer/models/issue_type.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block_type.dart';
 
 /// Anything that failed to be a [FoldableBlock] due to missing
 /// the opposite pair character.
 class InvalidFoldableBlock with EquatableMixin {
-  final int? startLine;
-  final int? endLine;
-  final Issue issue;
-  final FoldableBlockType type;
 
   InvalidFoldableBlock({
     required this.type,
@@ -26,6 +22,10 @@ class InvalidFoldableBlock with EquatableMixin {
           message: 'Invalid foldable block',
           type: IssueType.error,
         );
+  final int? startLine;
+  final int? endLine;
+  final Issue issue;
+  final FoldableBlockType type;
 
   @override
   List<Object?> get props => [

@@ -5,11 +5,6 @@ import 'package:meta/meta.dart';
 
 @immutable
 class CodeLine {
-  final String text;
-
-  final TextRange textRange;
-  final bool isReadOnly;
-  final int indent;
 
   const CodeLine({
     required this.text,
@@ -30,6 +25,11 @@ class CodeLine {
     this.isReadOnly = false,
   })  : textRange = TextRange(start: start, end: start + text.length),
         indent = _calculateIndent(text);
+  final String text;
+
+  final TextRange textRange;
+  final bool isReadOnly;
+  final int indent;
 
   @override
   String toString() =>

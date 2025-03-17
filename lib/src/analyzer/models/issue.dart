@@ -1,13 +1,8 @@
 import 'dart:core';
 
-import 'issue_type.dart';
+import 'package:flutter_code_editor/src/analyzer/models/issue_type.dart';
 
 class Issue {
-  final int line;
-  final String message;
-  final IssueType type;
-  final String? suggestion;
-  final String? url;
 
   const Issue({
     required this.line,
@@ -16,6 +11,11 @@ class Issue {
     this.suggestion,
     this.url,
   });
+  final int line;
+  final String message;
+  final IssueType type;
+  final String? suggestion;
+  final String? url;
 }
 
 Comparator<Issue> issueLineComparator = (issue1, issue2) {

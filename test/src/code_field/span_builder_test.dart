@@ -270,10 +270,6 @@ void main() {
 }
 
 class _Example {
-  final String text;
-  final Mode? mode;
-  final TextSpan expected;
-  final Set<String> readonlySectionNames;
 
   _Example({
     required this.text,
@@ -281,4 +277,8 @@ class _Example {
     required this.expected,
     this.readonlySectionNames = const {},
   });
+  final String text;
+  final Mode? mode;
+  final TextSpan expected;
+  final Set<String> readonlySectionNames;
 }

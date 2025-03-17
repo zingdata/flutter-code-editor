@@ -115,13 +115,13 @@ void main() {
 }
 
 class _CopyExample {
-  final String name;
-  final Future<void> Function() act;
-  final String visibleTextAfter;
 
   const _CopyExample(
     this.name, {
     required this.act,
     required this.visibleTextAfter,
   });
+  final String name;
+  final Future<void> Function() act;
+  final String visibleTextAfter;
 }

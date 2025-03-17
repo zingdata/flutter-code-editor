@@ -4,12 +4,18 @@ import 'package:charcode/ascii.dart';
 import 'package:highlight/highlight_core.dart';
 import 'package:tuple/tuple.dart';
 
-import '../../code/code_lines.dart';
-import '../foldable_block_type.dart';
-import 'text.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block_type.dart';
+import 'package:flutter_code_editor/src/folding/parsers/text.dart';
 
 /// A parser for foldable blocks from raw text.
 class FallbackFoldableBlockParser extends TextFoldableBlockParser {
+
+  FallbackFoldableBlockParser({
+    required this.importPrefixes,
+    this.multilineCommentSequences = const [],
+    required this.singleLineCommentSequences,
+  });
   final List<String> importPrefixes;
 
   /// [ ['/*', '*/'] , ...]
@@ -30,12 +36,6 @@ class FallbackFoldableBlockParser extends TextFoldableBlockParser {
 
   bool _foundServiceSingleLineComment = false;
   bool _isLineStart = true;
-
-  FallbackFoldableBlockParser({
-    required this.importPrefixes,
-    this.multilineCommentSequences = const [],
-    required this.singleLineCommentSequences,
-  });
 
   @override
   void parse({

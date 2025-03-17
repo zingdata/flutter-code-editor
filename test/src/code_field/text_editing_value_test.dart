@@ -357,25 +357,25 @@ void main() {
 }
 
 class _IntExample {
-  final String name;
-  final TextEditingValue value;
-  final int? expected;
 
   const _IntExample(
     this.name, {
     required this.value,
     required this.expected,
   });
+  final String name;
+  final TextEditingValue value;
+  final int? expected;
 }
 
 class _StringExample {
-  final String name;
-  final TextEditingValue value;
-  final String? expected;
 
   const _StringExample(
     this.name, {
     required this.value,
     required this.expected,
   });
+  final String name;
+  final TextEditingValue value;
+  final String? expected;
 }

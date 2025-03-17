@@ -181,10 +181,6 @@ void main() {
 }
 
 class _Example {
-  final String name;
-  final TextEditingValue initialValue;
-  final TextEditingValue editedValue;
-  final TextEditingValue expected;
 
   const _Example(
     this.name, {
@@ -192,4 +188,8 @@ class _Example {
     required this.editedValue,
     required this.expected,
   });
+  final String name;
+  final TextEditingValue initialValue;
+  final TextEditingValue editedValue;
+  final TextEditingValue expected;
 }

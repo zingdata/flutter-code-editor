@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 
-import 'code_line.dart';
-import 'code_lines.dart';
+import 'package:flutter_code_editor/src/code/code_line.dart';
+import 'package:flutter_code_editor/src/code/code_lines.dart';
 
 class CodeLinesBuilder {
   static CodeLines textToCodeLines({

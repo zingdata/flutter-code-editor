@@ -333,16 +333,16 @@ if (isFlutterCodeEditor
 }
 
 class _Example {
-  final String name;
-  final String code;
-  final String breakingCode;
-  final List<FoldableBlock> expected;
 
   const _Example(
     this.name, {
     required this.code,
     required this.expected,
   }) : breakingCode = '$code\ndef fn() #comment\n';
+  final String name;
+  final String code;
+  final String breakingCode;
+  final List<FoldableBlock> expected;
 }
 
 /// Shorter alias for [FoldableBlock] to avoid line breaks.

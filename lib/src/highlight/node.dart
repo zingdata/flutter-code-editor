@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:highlight/highlight_core.dart';
 
-import 'keyword_semantics.dart';
-import 'node_classes.dart';
+import 'package:flutter_code_editor/src/highlight/keyword_semantics.dart';
+import 'package:flutter_code_editor/src/highlight/node_classes.dart';
 
 extension MyNode on Node {
   int getValueNewlineCount() => '\n'.allMatches(value ?? '').length;

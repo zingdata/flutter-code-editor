@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
-import '../code/code.dart';
-import '../code_field/code_controller/code_controller.dart';
-import '../code_field/text_selection.dart';
-import 'code_history_record.dart';
-import 'limit_stack.dart';
+import 'package:flutter_code_editor/src/code/code.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
+import 'package:flutter_code_editor/src/code_field/text_selection.dart';
+import 'package:flutter_code_editor/src/history/code_history_record.dart';
+import 'package:flutter_code_editor/src/history/limit_stack.dart';
 
 enum HistoryControllerAction {
   newEntryAfterEdit,
@@ -26,6 +26,13 @@ enum HistoryControllerAction {
 /// - On any selection change other than that of inserting a single
 ///   character, if the text has changed since the last record.
 class CodeHistoryController {
+
+  CodeHistoryController({
+    required this.codeController,
+  })  : lastCode = codeController.code,
+        lastSelection = codeController.value.selection {
+    _push();
+  }
   final CodeController codeController;
   Code lastCode;
   TextSelection lastSelection;
@@ -38,13 +45,6 @@ class CodeHistoryController {
 
   static const idle = Duration(seconds: 5);
   static const limit = 100;
-
-  CodeHistoryController({
-    required this.codeController,
-  })  : lastCode = codeController.code,
-        lastSelection = codeController.value.selection {
-    _push();
-  }
 
   void beforeCodeControllerValueChanged({
     required Code code,

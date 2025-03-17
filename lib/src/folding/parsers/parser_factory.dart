@@ -2,10 +2,10 @@ import 'package:highlight/highlight_core.dart';
 import 'package:highlight/languages/java.dart';
 import 'package:highlight/languages/python.dart';
 
-import 'abstract.dart';
-import 'highlight.dart';
-import 'java.dart';
-import 'python.dart';
+import 'package:flutter_code_editor/src/folding/parsers/abstract.dart';
+import 'package:flutter_code_editor/src/folding/parsers/highlight.dart';
+import 'package:flutter_code_editor/src/folding/parsers/java.dart';
+import 'package:flutter_code_editor/src/folding/parsers/python.dart';
 
 class FoldableBlockParserFactory {
   static AbstractFoldableBlockParser provideParser(Mode mode) {

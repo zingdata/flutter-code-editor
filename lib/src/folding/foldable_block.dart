@@ -2,10 +2,16 @@ import 'dart:math';
 
 import 'package:equatable/equatable.dart';
 
-import '../util/inclusive_range.dart';
-import 'foldable_block_type.dart';
+import 'package:flutter_code_editor/src/util/inclusive_range.dart';
+import 'package:flutter_code_editor/src/folding/foldable_block_type.dart';
 
 class FoldableBlock extends InclusiveRange with EquatableMixin {
+
+  const FoldableBlock({
+    required this.firstLine,
+    required this.lastLine,
+    required this.type,
+  });
   final int firstLine;
   final int lastLine;
   final FoldableBlockType type;
@@ -15,12 +21,6 @@ class FoldableBlock extends InclusiveRange with EquatableMixin {
 
   @override
   int get last => lastLine;
-
-  const FoldableBlock({
-    required this.firstLine,
-    required this.lastLine,
-    required this.type,
-  });
 
   @override
   List<Object?> get props => [

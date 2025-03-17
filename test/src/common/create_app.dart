@@ -44,14 +44,14 @@ CodeController createController(
 }
 
 class TestApp extends StatefulWidget {
-  final CodeController controller;
-  final FocusNode focusNode;
 
   const TestApp({
     super.key,
     required this.controller,
     required this.focusNode,
   });
+  final CodeController controller;
+  final FocusNode focusNode;
 
   @override
   State<TestApp> createState() => _TestAppState();

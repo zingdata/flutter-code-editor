@@ -3,11 +3,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../code/code.dart';
-import 'abstract.dart';
-import 'models/analysis_result.dart';
-import 'models/issue.dart';
-import 'models/issue_type.dart';
+import 'package:flutter_code_editor/src/code/code.dart';
+import 'package:flutter_code_editor/src/analyzer/abstract.dart';
+import 'package:flutter_code_editor/src/analyzer/models/analysis_result.dart';
+import 'package:flutter_code_editor/src/analyzer/models/issue.dart';
+import 'package:flutter_code_editor/src/analyzer/models/issue_type.dart';
 
 // Example for implementation of Analyzer for Dart.
 class DartPadAnalyzer extends AbstractAnalyzer {

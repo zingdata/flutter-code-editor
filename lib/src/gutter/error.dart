@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
-import '../analyzer/models/issue.dart';
-import 'clickable.dart';
+import 'package:flutter_code_editor/src/analyzer/models/issue.dart';
+import 'package:flutter_code_editor/src/gutter/clickable.dart';
 
 const errorIcon = Icon(
   Icons.cancel,
@@ -13,10 +13,10 @@ const errorIcon = Icon(
 );
 
 class GutterErrorWidget extends StatefulWidget {
-  final Issue issue;
-  final TextStyle popupTextStyle;
 
   const GutterErrorWidget(this.issue, this.popupTextStyle, {super.key});
+  final Issue issue;
+  final TextStyle popupTextStyle;
 
   @override
   State<GutterErrorWidget> createState() => _GutterErrorWidgetState();

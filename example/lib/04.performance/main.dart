@@ -62,10 +62,12 @@ final renderer =
     js.globalContext['flutterCanvasKit'] == null ? 'HTML' : 'CanvasKit';
 
 void main() {
-  runApp(CodeEditor());
+  runApp(const CodeEditor());
 }
 
 class CodeEditor extends StatefulWidget {
+  const CodeEditor({super.key});
+
   @override
   State<CodeEditor> createState() => _CodeEditorState();
 }

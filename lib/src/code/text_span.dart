@@ -1,6 +1,6 @@
 import 'package:flutter/painting.dart';
 
-import 'text_style.dart';
+import 'package:flutter_code_editor/src/code/text_style.dart';
 
 extension TextSpanExtension on TextSpan {
   String toStringRecursive([int indent = 0]) {

@@ -1,4 +1,4 @@
-import '../single_line_comment.dart';
+import 'package:flutter_code_editor/src/single_line_comments/single_line_comment.dart';
 
 abstract class AbstractSingleLineCommentParser {
   List<SingleLineComment> get comments;

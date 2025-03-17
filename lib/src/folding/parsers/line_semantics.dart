@@ -1,4 +1,4 @@
-import '../../highlight/keyword_semantics.dart';
+import 'package:flutter_code_editor/src/highlight/keyword_semantics.dart';
 
 /// The semantics of a line from the perspective of a sequence
 /// of similar lines that can form a foldable block.

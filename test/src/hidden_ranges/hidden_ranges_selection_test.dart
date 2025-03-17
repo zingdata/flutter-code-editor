@@ -169,11 +169,6 @@ void main() {
 }
 
 class _Example {
-  final String name;
-  final TextRange? cutInput;
-  final TextRange? cutExpected;
-  final TextRange? recoverInput;
-  final TextRange? recoverExpected;
 
   const _Example.nonDestructive(
     this.name, {
@@ -193,4 +188,9 @@ class _Example {
         cutExpected = cut,
         recoverInput = cut,
         recoverExpected = recovered;
+  final String name;
+  final TextRange? cutInput;
+  final TextRange? cutExpected;
+  final TextRange? recoverInput;
+  final TextRange? recoverExpected;
 }

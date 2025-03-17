@@ -1,7 +1,7 @@
-import '../code/code.dart';
+import 'package:flutter_code_editor/src/code/code.dart';
 
-import 'abstract.dart';
-import 'models/analysis_result.dart';
+import 'package:flutter_code_editor/src/analyzer/abstract.dart';
+import 'package:flutter_code_editor/src/analyzer/models/analysis_result.dart';
 
 class DefaultLocalAnalyzer extends AbstractAnalyzer {
   const DefaultLocalAnalyzer();

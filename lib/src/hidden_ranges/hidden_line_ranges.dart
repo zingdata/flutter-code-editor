@@ -1,13 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-import 'line_numbering_breakpoint.dart';
+import 'package:flutter_code_editor/src/hidden_ranges/line_numbering_breakpoint.dart';
 
 class HiddenLineRanges with EquatableMixin {
-  final List<LineNumberingBreakpoint> breakpoints;
-  final int fullLineCount;
-
-  final List<int?> _fullToVisible;
-  final List<int> _visibleToFull;
 
   factory HiddenLineRanges({
     required List<LineNumberingBreakpoint> breakpoints,
@@ -54,6 +49,11 @@ class HiddenLineRanges with EquatableMixin {
     required List<int> visibleToFull,
   })  : _fullToVisible = fullToVisible,
         _visibleToFull = visibleToFull;
+  final List<LineNumberingBreakpoint> breakpoints;
+  final int fullLineCount;
+
+  final List<int?> _fullToVisible;
+  final List<int> _visibleToFull;
 
   static const empty = HiddenLineRanges._(
     breakpoints: [],

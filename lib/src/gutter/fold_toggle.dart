@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'clickable.dart';
+import 'package:flutter_code_editor/src/gutter/clickable.dart';
 
 class FoldToggle extends StatelessWidget {
-  final Color? color;
-  final bool isFolded;
-  final VoidCallback onTap;
 
   const FoldToggle({
     super.key,
@@ -13,6 +10,9 @@ class FoldToggle extends StatelessWidget {
     required this.isFolded,
     required this.onTap,
   });
+  final Color? color;
+  final bool isFolded;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {

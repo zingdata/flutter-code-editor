@@ -8,25 +8,70 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:highlight/highlight_core.dart';
 
-import '../../../flutter_code_editor.dart';
-import '../../autocomplete/autocompleter.dart';
-import '../../code/code_edit_result.dart';
-import '../../history/code_history_controller.dart';
-import '../../history/code_history_record.dart';
-import '../../single_line_comments/parser/single_line_comments.dart';
-import '../../wip/autocomplete/popup_controller.dart';
-import '../actions/comment_uncomment.dart';
-import '../actions/copy.dart';
-import '../actions/indent.dart';
-import '../actions/outdent.dart';
-import '../actions/redo.dart';
-import '../actions/undo.dart';
-import '../span_builder.dart';
-import 'helpers/formatter/sql_formatter.dart';
-import 'helpers/suggestions/suggestion_helper.dart';
-import 'helpers/word_insertion/word_insertion_helper.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_code_editor/src/autocomplete/autocompleter.dart';
+import 'package:flutter_code_editor/src/code/code_edit_result.dart';
+import 'package:flutter_code_editor/src/history/code_history_controller.dart';
+import 'package:flutter_code_editor/src/history/code_history_record.dart';
+import 'package:flutter_code_editor/src/single_line_comments/parser/single_line_comments.dart';
+import 'package:flutter_code_editor/src/wip/autocomplete/popup_controller.dart';
+import 'package:flutter_code_editor/src/code_field/actions/comment_uncomment.dart';
+import 'package:flutter_code_editor/src/code_field/actions/copy.dart';
+import 'package:flutter_code_editor/src/code_field/actions/indent.dart';
+import 'package:flutter_code_editor/src/code_field/actions/outdent.dart';
+import 'package:flutter_code_editor/src/code_field/actions/redo.dart';
+import 'package:flutter_code_editor/src/code_field/actions/undo.dart';
+import 'package:flutter_code_editor/src/code_field/span_builder.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/helpers/formatter/sql_formatter.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/suggestion_helper.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/helpers/word_insertion/word_insertion_helper.dart';
 
 class CodeController extends TextEditingController {
+
+  CodeController({
+    String? text,
+    Mode? language,
+    AbstractAnalyzer analyzer = const DefaultLocalAnalyzer(),
+    this.namedSectionParser,
+    Set<String> readOnlySectionNames = const {},
+    Set<String> visibleSectionNames = const {},
+    this.analysisResult = const AnalysisResult(issues: []),
+    this.patternMap,
+    this.params = const EditorParams(),
+    this.modifiers = const [
+      IndentModifier(),
+      CloseBlockModifier(),
+      TabModifier(),
+    ],
+  })  : _analyzer = analyzer,
+        readOnlySectionNames = readOnlySectionNames,
+        _code = Code.empty,
+        _isTabReplacementEnabled = modifiers.any((e) => e is TabModifier) {
+    setLanguage(language, analyzer: analyzer);
+    this.visibleSectionNames = visibleSectionNames;
+    _code = _createCode(text ?? '');
+    fullText = text ?? '';
+
+    addListener(_scheduleAnalysis);
+
+    // Create modifier map
+    for (final el in modifiers) {
+      _modifierMap[el.char] = el;
+    }
+
+    // Build styleRegExp
+    final patternList = <String>[];
+    if (patternMap != null) {
+      patternList.addAll(patternMap!.keys.map((e) => '($e)'));
+      _styleList.addAll(patternMap!.values);
+    }
+
+    _wordInsertionHelper = WordInsertionHelper(this);
+    _suggestionHelper = SuggestionHelper(this);
+    popupController = PopupController(onCompletionSelected: insertSelectedWord);
+
+    unawaited(analyzeCode());
+  }
   Mode? _language;
 
   /// A highlight language to parse the text with
@@ -121,51 +166,6 @@ class CodeController extends TextEditingController {
     RedoTextIntent: RedoAction(controller: this),
     UndoTextIntent: UndoAction(controller: this),
   };
-
-  CodeController({
-    String? text,
-    Mode? language,
-    AbstractAnalyzer analyzer = const DefaultLocalAnalyzer(),
-    this.namedSectionParser,
-    Set<String> readOnlySectionNames = const {},
-    Set<String> visibleSectionNames = const {},
-    this.analysisResult = const AnalysisResult(issues: []),
-    this.patternMap,
-    this.params = const EditorParams(),
-    this.modifiers = const [
-      IndentModifier(),
-      CloseBlockModifier(),
-      TabModifier(),
-    ],
-  })  : _analyzer = analyzer,
-        this.readOnlySectionNames = readOnlySectionNames,
-        _code = Code.empty,
-        _isTabReplacementEnabled = modifiers.any((e) => e is TabModifier) {
-    setLanguage(language, analyzer: analyzer);
-    this.visibleSectionNames = visibleSectionNames;
-    _code = _createCode(text ?? '');
-    fullText = text ?? '';
-
-    addListener(_scheduleAnalysis);
-
-    // Create modifier map
-    for (final el in modifiers) {
-      _modifierMap[el.char] = el;
-    }
-
-    // Build styleRegExp
-    final patternList = <String>[];
-    if (patternMap != null) {
-      patternList.addAll(patternMap!.keys.map((e) => '($e)'));
-      _styleList.addAll(patternMap!.values);
-    }
-
-    _wordInsertionHelper = WordInsertionHelper(this);
-    _suggestionHelper = SuggestionHelper(this);
-    popupController = PopupController(onCompletionSelected: insertSelectedWord);
-
-    unawaited(analyzeCode());
-  }
 
   void _scheduleAnalysis() {
     _debounce?.cancel();
@@ -870,9 +870,9 @@ class CodeController extends TextEditingController {
 }
 
 class FormatResult {
+
+  FormatResult({required this.formattedText, required this.adjustedOffset, required this.isTable});
   final String formattedText;
   final int adjustedOffset;
   final bool isTable;
-
-  FormatResult({required this.formattedText, required this.adjustedOffset, required this.isTable});
 }

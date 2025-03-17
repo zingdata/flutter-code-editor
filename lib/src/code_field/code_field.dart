@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -7,19 +6,19 @@ import 'package:flutter/services.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
 // Conditionally import dart:js
-import 'browser_detection.dart';
+import 'package:flutter_code_editor/src/code_field/browser_detection.dart';
 
-import '../code_theme/code_theme.dart';
-import '../gutter/gutter.dart';
-import '../line_numbers/gutter_style.dart';
-import '../sizes.dart';
-import '../wip/autocomplete/popup.dart';
-import 'actions/comment_uncomment.dart';
-import 'actions/indent.dart';
-import 'actions/outdent.dart';
-import 'code_controller/code_controller.dart';
-import 'default_styles.dart';
-import 'disable_spell_check/disable_spell_check.dart';
+import 'package:flutter_code_editor/src/code_theme/code_theme.dart';
+import 'package:flutter_code_editor/src/gutter/gutter.dart';
+import 'package:flutter_code_editor/src/line_numbers/gutter_style.dart';
+import 'package:flutter_code_editor/src/sizes.dart';
+import 'package:flutter_code_editor/src/wip/autocomplete/popup.dart';
+import 'package:flutter_code_editor/src/code_field/actions/comment_uncomment.dart';
+import 'package:flutter_code_editor/src/code_field/actions/indent.dart';
+import 'package:flutter_code_editor/src/code_field/actions/outdent.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
+import 'package:flutter_code_editor/src/code_field/default_styles.dart';
+import 'package:flutter_code_editor/src/code_field/disable_spell_check/disable_spell_check.dart';
 
 
 
@@ -97,6 +96,36 @@ final _shortcuts = <ShortcutActivator, Intent>{
 };
 
 class CodeField extends StatefulWidget {
+
+  const CodeField({
+    super.key,
+    required this.controller,
+    this.minLines,
+    this.maxLines,
+    this.expands = false,
+    this.wrap = false,
+    this.background,
+    this.decoration,
+    this.textStyle,
+    this.padding = EdgeInsets.zero,
+    GutterStyle? gutterStyle,
+    this.enabled,
+    this.readOnly = false,
+    this.cursorColor,
+    this.textSelectionTheme,
+    this.lineNumberBuilder,
+    this.focusNode,
+    this.keyboardType,
+    this.cursorHeight,
+    this.onChanged,
+    this.isMobile = false,
+    @Deprecated('Use gutterStyle instead') this.lineNumbers,
+    @Deprecated('Use gutterStyle instead') this.lineNumberStyle = const GutterStyle(),
+  })  : assert(
+            gutterStyle == null || lineNumbers == null,
+            'Can not provide gutterStyle and lineNumbers at the same time. '
+            'Please use gutterStyle and provide necessary columns to show/hide'),
+        gutterStyle = gutterStyle ?? ((lineNumbers == false) ? GutterStyle.none : lineNumberStyle);
   /// {@macro flutter.widgets.textField.minLines}
   final int? minLines;
 
@@ -150,36 +179,6 @@ class CodeField extends StatefulWidget {
   final GutterStyle gutterStyle;
 
   final bool isMobile;
-
-  const CodeField({
-    super.key,
-    required this.controller,
-    this.minLines,
-    this.maxLines,
-    this.expands = false,
-    this.wrap = false,
-    this.background,
-    this.decoration,
-    this.textStyle,
-    this.padding = EdgeInsets.zero,
-    GutterStyle? gutterStyle,
-    this.enabled,
-    this.readOnly = false,
-    this.cursorColor,
-    this.textSelectionTheme,
-    this.lineNumberBuilder,
-    this.focusNode,
-    this.keyboardType,
-    this.cursorHeight,
-    this.onChanged,
-    this.isMobile = false,
-    @Deprecated('Use gutterStyle instead') this.lineNumbers,
-    @Deprecated('Use gutterStyle instead') this.lineNumberStyle = const GutterStyle(),
-  })  : assert(
-            gutterStyle == null || lineNumbers == null,
-            'Can not provide gutterStyle and lineNumbers at the same time. '
-            'Please use gutterStyle and provide necessary columns to show/hide'),
-        gutterStyle = gutterStyle ?? ((lineNumbers == false) ? GutterStyle.none : lineNumberStyle);
 
   @override
   State<CodeField> createState() => _CodeFieldState();
@@ -382,8 +381,6 @@ class _CodeFieldState extends State<CodeField> {
       expands: widget.expands,
       scrollController: _codeScroll,
       keyboardType: widget.keyboardType,
-      selectionHeightStyle: BoxHeightStyle.tight,
-      selectionWidthStyle: BoxWidthStyle.tight,
       selectionControls: MaterialTextSelectionControls(),
       decoration: const InputDecoration(
         isCollapsed: true,
@@ -393,7 +390,6 @@ class _CodeFieldState extends State<CodeField> {
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
       ),
-      textAlign: TextAlign.start, // Ensure consistent text alignment
       textAlignVertical: TextAlignVertical.top, // Align text at the top for better matching
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
       cursorHeight: widget.cursorHeight,

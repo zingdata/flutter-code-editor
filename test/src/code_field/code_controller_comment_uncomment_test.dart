@@ -477,11 +477,6 @@ a
 }
 
 class _Example {
-  final String name;
-  final String initialFullText;
-  final TextSelection initialSelection;
-  final String expectedFullText;
-  final TextSelection expectedSelection;
 
   const _Example(
     this.name, {
@@ -490,4 +485,9 @@ class _Example {
     required this.expectedFullText,
     required this.expectedSelection,
   });
+  final String name;
+  final String initialFullText;
+  final TextSelection initialSelection;
+  final String expectedFullText;
+  final TextSelection expectedSelection;
 }

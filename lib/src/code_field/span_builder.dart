@@ -1,23 +1,23 @@
 import 'package:flutter/widgets.dart';
 import 'package:highlight/highlight_core.dart';
 
-import '../code/code.dart';
-import '../code/text_style.dart';
-import '../code_theme/code_theme_data.dart';
-import '../highlight/node.dart';
+import 'package:flutter_code_editor/src/code/code.dart';
+import 'package:flutter_code_editor/src/code/text_style.dart';
+import 'package:flutter_code_editor/src/code_theme/code_theme_data.dart';
+import 'package:flutter_code_editor/src/highlight/node.dart';
 
 class SpanBuilder {
-  final Code code;
-  final CodeThemeData? theme;
-  final TextStyle? rootStyle;
-
-  int _visibleLineIndex = 0;
 
   SpanBuilder({
     required this.code,
     required this.theme,
     this.rootStyle,
   });
+  final Code code;
+  final CodeThemeData? theme;
+  final TextStyle? rootStyle;
+
+  int _visibleLineIndex = 0;
 
   TextSpan build() {
     _visibleLineIndex = 0;

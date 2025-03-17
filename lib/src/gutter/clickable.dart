@@ -2,14 +2,14 @@ import 'package:flutter/widgets.dart';
 
 /// MouseRegion + GestureDetector.
 class ClickableWidget extends StatelessWidget {
-  final Widget child;
-  final VoidCallback? onTap;
 
   const ClickableWidget({
     super.key,
     required this.child,
     required this.onTap,
   });
+  final Widget child;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
