@@ -104,7 +104,7 @@ class SqlFormatter {
         selectedWord: selectedWord,
         startIndex: startIndex,
         endIndex: endIndex,
-        addSpace: addSpace,
+        addSpace: true,
         suffixText: suffixText,
       );
     } else if (needsQuotes && !sqlKeywords.contains(selectedWord.toUpperCase())) {
