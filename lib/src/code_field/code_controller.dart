@@ -324,6 +324,9 @@ class CodeController extends TextEditingController {
   ];
 
   void insertSelectedWord() {
+    if (popupController.selectedIndex < 0) {
+      return;
+    }
     _isInsertingWord = true;
     final previousSelection = selection;
     final selectedWord = popupController.getSelectedWord();
