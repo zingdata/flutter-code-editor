@@ -939,21 +939,58 @@ class CodeController extends TextEditingController {
 
     if (startIndex < 0) return '';
 
-    // Find the beginning of the word
+    // First find the beginning of the immediate word
     int wordStart = startIndex;
     while (wordStart >= 0 && (text[wordStart].isLetterOrDigit || text[wordStart] == '_')) {
       wordStart--;
     }
 
-    // Extract the word
-    String tableName = text.substring(wordStart + 1, startIndex + 1);
-
-    // If the table name is in quotes, remove them
-    if (tableName.startsWith('"') && tableName.endsWith('"')) {
-      tableName = tableName.substring(1, tableName.length - 1);
+    // Extract the immediate word
+    String potentialTableName = text.substring(wordStart + 1, startIndex + 1);
+    
+    // Now check for longer possible table names by including more preceding text
+    int extendedStart = wordStart;
+    
+    // Try to find the longest valid table name
+    while (extendedStart > 0) {
+      extendedStart--;
+      
+      // If we hit a clear delimiter like a space, try the current segment
+      if (text[extendedStart] == ' ' || text[extendedStart] == ',' || 
+          text[extendedStart] == '(' || text[extendedStart] == ')') {
+        
+        // Extract extended name, trim spaces
+        String extendedName = text.substring(extendedStart + 1, startIndex + 1).trim();
+        
+        // Check if this longer name is a valid table
+        if (_isTableName(extendedName)) {
+          return extendedName;
+        }
+      }
+      
+      // Otherwise continue to build a potential longer name
+      if (extendedStart == 0 || !(text[extendedStart].isLetterOrDigit || 
+          text[extendedStart] == '_' || text[extendedStart] == ' ')) {
+        
+        // We've reached the beginning or a non-table character
+        String fullName = text.substring(extendedStart + 1, startIndex + 1).trim();
+        
+        if (_isTableName(fullName)) {
+          return fullName;
+        }
+        
+        break;
+      }
     }
 
-    return tableName;
+    // If the single word is a valid table name, return it
+    if (_isTableName(potentialTableName)) {
+      return potentialTableName;
+    }
+    
+    // If no valid table name was found, return the original extracted name
+    // (in case the validation logic changes later)
+    return potentialTableName;
   }
 
   // Helper extension method for character validation
