@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:core';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:highlight/highlight_core.dart';
@@ -57,7 +58,7 @@ class CodeController extends TextEditingController {
   Timer? _debounce;
 
   final AbstractNamedSectionParser? namedSectionParser;
-   final Set<String> _readOnlySectionNames;
+  Set<String> readOnlySectionNames;
 
   bool needsQoutes = false;
   bool needDotForTable = true;
@@ -137,7 +138,7 @@ class CodeController extends TextEditingController {
       TabModifier(),
     ],
   })  : _analyzer = analyzer,
-        _readOnlySectionNames = readOnlySectionNames,
+        this.readOnlySectionNames = readOnlySectionNames,
         _code = Code.empty,
         _isTabReplacementEnabled = modifiers.any((e) => e is TabModifier) {
     setLanguage(language, analyzer: analyzer);
@@ -356,14 +357,13 @@ class CodeController extends TextEditingController {
       needDotForTable: needDotForTable,
       mainTables: mainTables,
     );
-    
+
     return FormatResult(
       formattedText: sqlResult.formattedText,
       adjustedOffset: sqlResult.adjustedOffset,
       isTable: sqlResult.isTable,
     );
   }
-  
 
   String get fullText => _code.text;
 
@@ -728,7 +728,7 @@ class CodeController extends TextEditingController {
       language: language,
       highlighted: highlight.parse(text, language: _languageId),
       namedSectionParser: namedSectionParser,
-      readOnlySectionNames: _readOnlySectionNames,
+      readOnlySectionNames: readOnlySectionNames,
       visibleSectionNames: _visibleSectionNames,
     );
   }
@@ -820,6 +820,52 @@ class CodeController extends TextEditingController {
     final newCode = _code.unfoldedAt(line);
     super.value = _getValueWithCode(newCode);
     _code = newCode;
+  }
+
+  /// Folds the comment block at line zero if it exists
+  ///
+  /// This is useful for hiding documentation comments at the beginning of files
+  void foldCommentAtLineZero() {
+    final block = _code.foldableBlocks.firstOrNull;
+
+    if (block == null || !block.isComment || block.firstLine != 0) {
+      return;
+    }
+
+    foldAt(0);
+  }
+
+  /// Folds all import blocks in the code
+  ///
+  /// This is useful for hiding import statements to focus on the actual implementation
+  void foldImports() {
+    // TODO(alexeyinkin): An optimized method to fold multiple blocks, https://github.com/akvelon/flutter-code-editor/issues/106
+    for (final block in _code.foldableBlocks) {
+      if (block.isImports) {
+        foldAt(block.firstLine);
+      }
+    }
+  }
+
+  /// Folds blocks that are outside all of the [names] sections.
+  ///
+  /// For a block to be not folded, it must overlap any of the given sections
+  /// in any way.
+  void foldOutsideSections(Iterable<String> names) {
+    final foldLines = {..._code.foldableBlocks.map((b) => b.firstLine)};
+    final sections = names.map((s) => _code.namedSections[s]).whereNotNull();
+
+    for (final block in _code.foldableBlocks) {
+      for (final section in sections) {
+        if (block.overlaps(section)) {
+          foldLines.remove(block.firstLine);
+          break;
+        }
+      }
+    }
+
+    // TODO(alexeyinkin): An optimized method to fold multiple blocks, https://github.com/akvelon/flutter-code-editor/issues/106
+    foldLines.forEach(foldAt);
   }
 }
 
