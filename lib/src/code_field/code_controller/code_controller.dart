@@ -27,7 +27,6 @@ import 'package:flutter_code_editor/src/code_field/code_controller/helpers/sugge
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/word_insertion/word_insertion_helper.dart';
 
 class CodeController extends TextEditingController {
-
   CodeController({
     String? text,
     Mode? language,
@@ -291,8 +290,9 @@ class CodeController extends TextEditingController {
         popupController.scrollByArrow(ScrollDirection.down);
         return KeyEventResult.handled;
       }
-      if (event.logicalKey == LogicalKeyboardKey.enter ||
-          event.logicalKey == LogicalKeyboardKey.tab) {
+      if ((event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.tab) &&
+          popupController.selectedIndex > -1) {
         insertSelectedWord();
         return KeyEventResult.handled;
       }
@@ -870,7 +870,6 @@ class CodeController extends TextEditingController {
 }
 
 class FormatResult {
-
   FormatResult({required this.formattedText, required this.adjustedOffset, required this.isTable});
   final String formattedText;
   final int adjustedOffset;

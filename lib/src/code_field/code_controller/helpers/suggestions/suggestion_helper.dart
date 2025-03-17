@@ -225,9 +225,7 @@ class SuggestionHelper {
       // 3. If no suggestions for the complete word, ONLY look for prefixes that
       // start at word boundaries, not partial matches within the word
       final partialMatches = <Map<String, dynamic>>[];
-      
-      // Only check at word boundaries
-      var boundaryIndex = wordStart;
+   
       // Add additional checks at spaces within the current word
       for (int i = wordStart + 1; i < cursorPosition; i++) {
         if (text[i - 1] == ' ') {

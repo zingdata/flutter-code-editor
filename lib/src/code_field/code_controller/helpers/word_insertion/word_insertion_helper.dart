@@ -17,7 +17,6 @@ class WordInsertionHelper {
     if (controller.popupController.selectedIndex < 0) {
       return;
     }
-    
     // Mark that we're inserting a word to prevent triggering other listeners
     controller.isInsertingWord = true;
     
