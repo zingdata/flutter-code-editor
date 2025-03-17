@@ -5,11 +5,10 @@ import 'package:flutter_code_editor/src/code_field/code_controller/code_controll
 
 /// Helper class for handling word insertion from autocomplete
 class WordInsertionHelper {
-  
   /// Create a word insertion helper for a specific code controller
   WordInsertionHelper(this.controller);
   final CodeController controller;
-  
+
   /// Inserts the currently selected word from autocomplete popup
   /// into the code editor at the appropriate position
   void insertSelectedWord() {
@@ -19,27 +18,28 @@ class WordInsertionHelper {
     }
     // Mark that we're inserting a word to prevent triggering other listeners
     controller.isInsertingWord = true;
-    
+
     final previousSelection = controller.selection;
     final selectedWord = controller.popupController.getSelectedWord();
-
+    final isColumn = controller.popupController.isColumn();
     try {
       // Handle case where we don't have a defined prefix start index
       if (controller.lastPrefixStartIndex == null) {
-        _handleInsertionWithoutPrefixIndex(previousSelection, selectedWord);
+        _handleInsertionWithoutPrefixIndex(previousSelection, isColumn, selectedWord);
         return;
       }
 
       // Normal case - we have a prefix start index
-      _handleNormalInsertion(previousSelection, selectedWord);
+      _handleNormalInsertion(previousSelection, isColumn, selectedWord);
     } finally {
       // Always reset insertion flag when done, even if exception occurs
       controller.isInsertingWord = false;
     }
   }
-  
+
   /// Handles insertion when we don't have a valid prefix start index
-  void _handleInsertionWithoutPrefixIndex(TextSelection previousSelection, String selectedWord) {
+  void _handleInsertionWithoutPrefixIndex(
+      TextSelection previousSelection, bool isColumn, String selectedWord) {
     final cursorPosition = previousSelection.baseOffset;
 
     // Format the text and adjust the cursor offset
@@ -48,6 +48,7 @@ class WordInsertionHelper {
       selectedWord: selectedWord,
       startIndex: cursorPosition,
       endIndex: cursorPosition,
+      isColumn: isColumn,
     );
 
     // Update the controller's value
@@ -57,13 +58,13 @@ class WordInsertionHelper {
     );
 
     controller.popupController.hide();
-    
+
     // Show column suggestions if we inserted a table name
     _showColumnSuggestionsIfTable(formatResult.isTable, selectedWord);
   }
-  
+
   /// Handles normal insertion with a valid prefix start index
-  void _handleNormalInsertion(TextSelection previousSelection, String selectedWord) {
+  void _handleNormalInsertion(TextSelection previousSelection, bool isColumn, String selectedWord) {
     final startIndex = controller.lastPrefixStartIndex!;
     final endIndex = previousSelection.baseOffset;
 
@@ -73,6 +74,7 @@ class WordInsertionHelper {
       selectedWord: selectedWord,
       startIndex: startIndex,
       endIndex: endIndex,
+      isColumn: isColumn,
     );
 
     // Update the controller's value
@@ -82,7 +84,7 @@ class WordInsertionHelper {
     );
 
     // Show or hide the popup based on conditions
-    if (formatResult.formattedText.contains('$selectedWord()') && 
+    if (formatResult.formattedText.contains('$selectedWord()') &&
         controller.mainTableFields.isNotEmpty) {
       _showMainTableFields();
     } else {
@@ -90,11 +92,11 @@ class WordInsertionHelper {
     }
 
     controller.lastPrefixStartIndex = null;
-    
+
     // Show column suggestions if we inserted a table name
     _showColumnSuggestionsIfTable(formatResult.isTable, selectedWord);
   }
-  
+
   /// Shows column suggestions for a table if needed
   void _showColumnSuggestionsIfTable(bool isTable, String tableName) {
     if (isTable) {
@@ -103,11 +105,11 @@ class WordInsertionHelper {
       });
     }
   }
-  
+
   /// Shows suggestions for main table fields
   void _showMainTableFields() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       controller.popupController.show(null, controller.mainTableFields);
     });
   }
-} 
+}

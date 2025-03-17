@@ -346,6 +346,7 @@ class CodeController extends TextEditingController {
     required String selectedWord,
     required int startIndex,
     required int endIndex,
+    required bool isColumn,
   }) {
     // Use SQL formatter helper to handle SQL-specific formatting
     final sqlResult = SqlFormatter.formatSql(
@@ -356,6 +357,7 @@ class CodeController extends TextEditingController {
       needsQuotes: needsQoutes,
       needDotForTable: needDotForTable,
       mainTables: mainTables,
+      isColumn: isColumn,
     );
 
     return FormatResult(

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class PopupController extends ChangeNotifier {
-
   PopupController({required this.onCompletionSelected}) : super();
   List<Map<String, String>> suggestions = [];
   int _selectedIndex = 0;
@@ -41,7 +40,7 @@ class PopupController extends ChangeNotifier {
     if (tableName != null) {
       // Prioritize column suggestions for the provided table
       final columnKey = 'Column in $tableName';
-      
+
       // Sort the suggestions array to put columns of the specified table first
       // For items of the same type (column or non-column), prioritize by shortest length
       suggestions0.sort((a, b) {
@@ -49,16 +48,16 @@ class PopupController extends ChangeNotifier {
         final bIsColumn = b.keys.first == columnKey;
         final aValue = a.values.first;
         final bValue = b.values.first;
-        
+
         if (aIsColumn && !bIsColumn) {
           return -1; // a comes first (columns have priority)
         } else if (!aIsColumn && bIsColumn) {
-          return 1;  // b comes first (columns have priority)
+          return 1; // b comes first (columns have priority)
         } else {
           // Both are columns or both are not columns
           // Sort by length (shortest first), then alphabetically if same length
-          return aValue.length == bValue.length 
-              ? aValue.compareTo(bValue) 
+          return aValue.length == bValue.length
+              ? aValue.compareTo(bValue)
               : aValue.length.compareTo(bValue.length);
         }
       });
@@ -147,6 +146,7 @@ class PopupController extends ChangeNotifier {
   }
 
   String getSelectedWord() => suggestions[selectedIndex].values.first;
+  bool isColumn() => suggestions[selectedIndex].keys.first.contains('Column in');
 }
 
 /// Possible directions of completions list navigation
