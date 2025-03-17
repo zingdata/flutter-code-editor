@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_code_editor/src/code/string.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
@@ -5,7 +6,6 @@ import 'package:flutter_code_editor/src/code_field/code_controller/helpers/forma
 
 /// Helper class for handling autocomplete suggestions logic
 class SuggestionHelper {
-  
   /// Create a suggestion helper for a specific code controller
   SuggestionHelper(this.controller);
   final CodeController controller;
@@ -185,68 +185,110 @@ class SuggestionHelper {
     controller.lastPrefixStartIndex = startIndex;
   }
 
-  /// Find the longest matching prefix for suggestion purposes
+  /// Find the longest matching prefix for suggestion purposes, 
+  /// prioritizing word boundaries over partial matches
   Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
-    int cursorPosition = controller.selection.baseOffset;
-    int startIndex = cursorPosition;
-    Set<String> suggestions = {};
-
-    // Limit the maximum length to prevent performance issues
-    int maxLength = 100; // Adjust as needed
-
-    // Keep track of prefixes and their suggestions
-    Map<int, Map<String, dynamic>> prefixMatches = {};
-
-    while (startIndex > 0 && (cursorPosition - startIndex) <= maxLength) {
-      startIndex--;
-      String prefix = text.substring(startIndex, cursorPosition);
-
-      if (prefix.trim().isEmpty) {
-        continue;
+    final cursorPosition = controller.selection.baseOffset;
+    if (cursorPosition <= 0 || text.isEmpty) {
+      return null;
+    }
+    
+    // Word boundary characters
+    bool isWordBoundary(String char) {
+      return ' ,.;:(){}[]"\'`=+-*/\\'.contains(char);
+    }
+    
+    // Find current word by looking backward until we hit a word boundary
+    var wordStart = cursorPosition;
+    while (wordStart > 0) {
+      final char = text[wordStart - 1];
+      if (isWordBoundary(char)) {
+        break;
       }
-
-      // Adjust startIndex to skip leading spaces in prefix
-      int tempStartIndex = startIndex;
-      while (tempStartIndex < cursorPosition && text[tempStartIndex] == ' ') {
-        tempStartIndex++;
-      }
-
-      if (tempStartIndex >= cursorPosition) {
-        continue; // Prefix is all spaces; skip to next iteration
-      }
-
-      prefix = text.substring(tempStartIndex, cursorPosition);
-
-      if (prefix.isEmpty) {
-        continue;
-      }
-
-      suggestions = await fetchSuggestions(prefix);
-
-      if (suggestions.isNotEmpty) {
-        // Store this prefix and its suggestions
-        prefixMatches[prefix.length] = {
-          'prefix': prefix,
-          'startIndex': tempStartIndex,
-          'suggestions': suggestions,
+      wordStart--;
+    }
+    
+    // If we have a word, check if it has suggestions
+    if (wordStart < cursorPosition) {
+      final currentWord = text.substring(wordStart, cursorPosition);
+      final wordSuggestions = await fetchSuggestions(currentWord);
+      
+      if (wordSuggestions.isNotEmpty) {
+        return {
+          'prefix': currentWord,
+          'startIndex': wordStart,
+          'suggestions': wordSuggestions,
         };
       }
     }
-
-    if (prefixMatches.isNotEmpty) {
-      // Find the longest prefix with suggestions
-      int maxPrefixLength = prefixMatches.keys.reduce((a, b) => a > b ? a : b);
-      Map<String, dynamic> longestMatch = prefixMatches[maxPrefixLength]!;
-
-      return {
-        'prefix': longestMatch['prefix'],
-        'startIndex': longestMatch['startIndex'],
-        'suggestions': longestMatch['suggestions'],
-      };
-    } else {
-      // No matching suggestions found
-      return null;
+    
+    // If no whole word match, find partial matches prioritizing word boundaries
+    final partialMatches = <Map<String, dynamic>>[];
+    
+    // Look for prefixes, limited to reasonable length
+    const maxSearchLength = 100; 
+    var startIndex = cursorPosition;
+    final minIndex = math.max(0, cursorPosition - maxSearchLength);
+    
+    while (startIndex > minIndex) {
+      startIndex--;
+      
+      // Skip spaces at the start of prefix
+      var tempStart = startIndex;
+      while (tempStart < cursorPosition && text[tempStart] == ' ') {
+        tempStart++;
+      }
+      
+      if (tempStart >= cursorPosition) {
+        continue;
+      }
+      
+      final prefix = text.substring(tempStart, cursorPosition);
+      if (prefix.isEmpty) {
+        continue;
+      }
+      
+      final prefixSuggestions = await fetchSuggestions(prefix);
+      if (prefixSuggestions.isNotEmpty) {
+        // Check if this starts at a word boundary
+        final startsAtWordBoundary = tempStart == 0 || isWordBoundary(text[tempStart - 1]);
+        
+        partialMatches.add({
+          'prefix': prefix,
+          'startIndex': tempStart,
+          'suggestions': prefixSuggestions,
+          'isWordBoundary': startsAtWordBoundary,
+          'length': prefix.length,
+        });
+      }
     }
+    
+    // Sort matches prioritizing word boundaries first, then length
+    partialMatches.sort((a, b) {
+      final aBoundary = a['isWordBoundary'] as bool;
+      final bBoundary = b['isWordBoundary'] as bool;
+      
+      // Word boundaries take precedence
+      if (aBoundary != bBoundary) {
+        return aBoundary ? -1 : 1;
+      }
+      
+      // Then prefer longer matches
+      final aLength = a['length'] as int;
+      final bLength = b['length'] as int;
+      return bLength.compareTo(aLength);
+    });
+    
+    if (partialMatches.isNotEmpty) {
+      final bestMatch = partialMatches.first;
+      return {
+        'prefix': bestMatch['prefix'],
+        'startIndex': bestMatch['startIndex'],
+        'suggestions': bestMatch['suggestions'],
+      };
+    }
+    
+    return null;
   }
 
   /// Fetch suggestions for a specific prefix
