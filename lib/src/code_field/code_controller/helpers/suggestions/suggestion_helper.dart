@@ -1,8 +1,7 @@
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_code_editor/src/code/string.dart';
-
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
-import 'package:flutter_code_editor/src/code_field/code_controller/helpers/sql_formatter.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/helpers/formatter/sql_formatter.dart';
 
 /// Helper class for handling autocomplete suggestions logic
 class SuggestionHelper {
