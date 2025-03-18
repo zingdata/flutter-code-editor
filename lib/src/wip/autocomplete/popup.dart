@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import 'package:flutter_code_editor/src/sizes.dart';
@@ -67,27 +68,40 @@ class PopupState extends State<Popup> {
   Widget build(BuildContext context) {
     final maxPopUpWidth =
         Sizes.autocompletePopupMaxWidth + (ScreenSize.isMobile(context) ? 0 : 100);
-    double leftAvailableSpace = widget.caretDataOffset.dx;
-    final rightAvailableSpace =
-        MediaQuery.of(context).size.width - leftAvailableSpace - maxPopUpWidth;
-    if (!ScreenSize.isMobile(context)) {
-      leftAvailableSpace -= ScreenSize.isExtraWide(context) ? 185 : 80;
+    
+    // Determine if popup should be flipped (shown above caret instead of below)
+    final bool shouldFlip = _isVerticalFlipRequired(context);
+    
+    // Use the appropriate offset based on whether we should flip or not
+    final Offset positionOffset = shouldFlip ? widget.flippedOffset : widget.normalOffset;
+    
+    // Ensure popup stays within screen bounds
+    final screenSize = MediaQuery.of(context).size;
+    double adjustedLeft = positionOffset.dx;
+    
+    // Adjust if popup would go off the right edge of the screen
+    if (adjustedLeft + maxPopUpWidth > screenSize.width) {
+      adjustedLeft = max(0, screenSize.width - maxPopUpWidth - 16); // 16px margin
     }
-    if (rightAvailableSpace < 0) {
-      leftAvailableSpace += rightAvailableSpace - 4;
-    }
+    
+    // Adjust if popup would go off the left edge
+    adjustedLeft = max(16, adjustedLeft); // 16px minimum margin
+    
+    // Calculate actual height based on number of suggestions
+    final actualHeight = min(
+      min(widget.controller.suggestions.length, 5) * 34.0, // Height per suggestion item
+      Sizes.autocompletePopupMaxHeight
+    );
 
     return PageStorage(
       bucket: pageStorageBucket,
       child: Positioned(
-        left: leftAvailableSpace,
-        top: widget.caretDataOffset.dy + (ScreenSize.isMobile(context) ? 40 : 30),
+        left: adjustedLeft,
+        top: positionOffset.dy,
         child: Container(
           alignment: Alignment.topCenter,
           constraints: BoxConstraints(
-            maxHeight: ScreenSize.isMobile(context)
-                ? Sizes.autocompletePopupMaxHeight
-                : Sizes.autocompletePopupMaxHeight + 100,
+            maxHeight: actualHeight,
             maxWidth: maxPopUpWidth,
           ),
           decoration: const BoxDecoration(
@@ -134,15 +148,25 @@ class PopupState extends State<Popup> {
     );
   }
 
-//   bool _isVerticalFlipRequired() {
-//     final isPopupShorterThanWindow =
-//         Sizes.autocompletePopupMaxHeight < widget.editingWindowSize.height;
-//     final isPopupOverflowingHeight =
-//         widget.normalOffset.dy + Sizes.autocompletePopupMaxHeight - (widget.editorOffset?.dy ?? 0) >
-//             widget.editingWindowSize.height;
-
-//     return isPopupOverflowingHeight && isPopupShorterThanWindow;
-//   }
+  bool _isVerticalFlipRequired(BuildContext context) {
+    // Get the screen size
+    final screenSize = MediaQuery.of(context).size;
+    
+    // Get popup height based on number of suggestions (with a minimum)
+    final popupHeight = min(
+      max(widget.controller.suggestions.length, 1) * 34.0,
+      Sizes.autocompletePopupMaxHeight
+    );
+    
+    // Check if popup would extend below the bottom of the screen
+    final wouldOverflowBottom = widget.normalOffset.dy + popupHeight > screenSize.height - 16;
+    
+    // Check if there's enough space to flip (show above cursor)
+    final hasSpaceToFlip = widget.flippedOffset.dy > 16; // Minimum 16px from top
+    
+    // Flip if it would overflow AND there's space above
+    return wouldOverflowBottom && hasSpaceToFlip;
+  }
 
   Widget _buildListItem(int index) {
     return Material(

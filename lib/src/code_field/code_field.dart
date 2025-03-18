@@ -220,6 +220,9 @@ class _CodeFieldState extends State<CodeField> {
     _focusNode = widget.focusNode ?? FocusNode();
     _focusNode!.attach(context, onKeyEvent: _onKeyEvent);
 
+    // Add a scroll listener to update popup position when scrolling
+    _codeScroll?.addListener(_updatePopupOffset);
+
     // Workaround for disabling spellchecks in FireFox
     // https://github.com/akvelon/flutter-code-editor/issues/197
     disableSpellCheckIfWeb();
@@ -250,6 +253,7 @@ class _CodeFieldState extends State<CodeField> {
     widget.controller.popupController.removeListener(_onPopupStateChanged);
     _suggestionsPopup?.remove();
 
+    _codeScroll?.removeListener(_updatePopupOffset);
     _numberScroll?.dispose();
     _codeScroll?.dispose();
     _horizontalCodeScroll?.dispose();
@@ -300,12 +304,9 @@ class _CodeFieldState extends State<CodeField> {
 
     if (_codeScroll != null && _editorKey.currentContext != null) {
       final box = _editorKey.currentContext!.findRenderObject() as RenderBox?;
+      // Get the editor position in global coordinates WITHOUT scroll adjustment
       _editorOffset = box?.localToGlobal(Offset.zero);
-      if (_editorOffset != null) {
-        var fixedOffset = _editorOffset!;
-        fixedOffset += Offset(0, _codeScroll!.offset);
-        _editorOffset = fixedOffset;
-      }
+      // Don't add scroll offset here - we'll handle it in the popup position calculation
     }
 
     rebuild();
@@ -493,16 +494,23 @@ class _CodeFieldState extends State<CodeField> {
     final caretDataOffset = _getCaretOffset(textPainter);
     final leftOffset = _getPopupLeftOffset(textPainter);
     final normalTopOffset = _getPopupTopOffset(textPainter, caretHeight);
-    final flippedTopOffset =
-        (normalTopOffset - (Sizes.autocompletePopupMaxHeight + caretHeight + Sizes.caretPadding)) +
-            10 +
-            (numberOfSuggestions < 4 ? (4 - numberOfSuggestions) * 34 : 1);
-
+    
+    // Calculate flipped position (for when popup would appear above the cursor)
+    // Add dynamic adjustment based on the number of suggestions
+    final suggestionHeight = min(numberOfSuggestions, 4) * 34.0;
+    final flippedTopOffset = normalTopOffset - (suggestionHeight + caretHeight + 26);
+    
+    // Store both positioning options
     setState(() {
       _normalPopupOffset = Offset(leftOffset, normalTopOffset);
-      _flippedPopupOffset = Offset(leftOffset, flippedTopOffset);
+      _flippedPopupOffset = Offset(leftOffset, max(0, flippedTopOffset));
       _caretDataOffset = caretDataOffset;
     });
+    
+    // Immediately update the popup if it's currently displayed
+    if (_suggestionsPopup != null && widget.controller.popupController.shouldShow) {
+      _suggestionsPopup!.markNeedsBuild();
+    }
   }
 
   TextPainter _getTextPainter(String text) {
@@ -516,22 +524,30 @@ class _CodeFieldState extends State<CodeField> {
     final RenderBox? renderBox = _editorKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null) {
       final TextPosition textPosition = widget.controller.selection.base;
-      final TextSpan textSpan = widget.controller.text == ''
-          ? TextSpan(
-              text: '',
-              style: widget.textStyle,
-            )
-          : TextSpan(
-              text: widget.controller.text,
-              style: widget.textStyle,
-            );
-      final TextPainter textPainter = TextPainter(
+      
+      // Create a text painter with the proper text and style
+      final TextSpan textSpan = TextSpan(
+        text: widget.controller.text,
+        style: textStyle.copyWith(
+          height: getLineHeight(), // Ensure consistent line height
+          leadingDistribution: TextLeadingDistribution.even,
+        ),
+      );
+      
+      final TextPainter painter = TextPainter(
         text: textSpan,
         textDirection: TextDirection.ltr,
       );
 
-      textPainter.layout(maxWidth: renderBox.size.width);
-      final Offset caretOffset = textPainter.getOffsetForCaret(textPosition, Rect.zero);
+      // Get proper width constraint from the render box
+      // This is critical for accurate positioning with multi-line text
+      painter.layout(maxWidth: renderBox.size.width);
+      
+      // Get caret position within the text painter's coordinate space
+      final Offset caretOffset = painter.getOffsetForCaret(textPosition, Rect.zero);
+      
+      // Convert to global coordinates (screen space)
+      // We don't adjust for scroll here - that happens in the popup position calculation
       return renderBox.localToGlobal(caretOffset);
     }
     return Offset.zero;
@@ -558,13 +574,20 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   double _getPopupTopOffset(TextPainter textPainter, double caretHeight) {
+    // Get the base position without any scroll adjustment
+    final baseCaretDy = _getCaretOffset(textPainter).dy;
+    
+    // Get editor position
+    final editorDy = _editorOffset?.dy ?? 0;
+    
+    // Calculate popup position, properly accounting for scroll
     return max(
-      _getCaretOffset(textPainter).dy +
+      baseCaretDy +
           caretHeight +
           16 +
           widget.padding.top -
           (_codeScroll?.offset ?? 0) +
-          (_editorOffset?.dy ?? 0),
+          editorDy,
       0,
     );
   }
