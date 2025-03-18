@@ -34,38 +34,21 @@ class WordInsertionHelper {
         return;
       }
 
-      // Check if the selected word contains spaces (multi-word identifier)
-      final containsSpaces = selectedWord.contains(' ');
-
-      // For multi-word identifiers, we need to extend the prefix start to include
-      // any partial words before the current start index
+      // Get the start and end indices for the replacement
       int startIndex = controller.lastPrefixStartIndex!;
       final endIndex = previousSelection.baseOffset;
-
-      if (containsSpaces && startIndex < endIndex) {
-        // Get the text before the cursor
-        final textBeforeCursor = controller.text.substring(0, endIndex);
-
-        // Check if we're already in the middle of typing a multi-word phrase
-        if (startIndex > 0 && textBeforeCursor[startIndex - 1] == ' ') {
-          // Find the start of the entire phrase by looking for word boundaries
-          int phraseStart = SqlFormatter.findMultiWordPhraseStart(textBeforeCursor, startIndex);
-          if (phraseStart < startIndex) {
-            // Update the start index to include the entire phrase
-            startIndex = phraseStart;
-          }
-        }
-
-        // Also handle case where the user has typed the first word and part of the second
-        // For example "pet ty" for "Pet Type"
-        final partialTyped = textBeforeCursor.substring(startIndex, endIndex);
-        if (partialTyped.contains(' ')) {
-          // User has typed something with a space, ensure we find the real start
-          int phraseStart = SqlFormatter.findMultiWordPhraseStart(textBeforeCursor, endIndex);
-          if (phraseStart < startIndex) {
-            startIndex = phraseStart;
-          }
-        }
+      
+      // Get the current text being typed/replaced
+      final textBeingReplaced = controller.text.substring(startIndex, endIndex);
+      
+      // Check if we should do special handling for multi-word identifiers
+      if (selectedWord.contains(' ') || textBeingReplaced.contains(' ')) {
+        startIndex = _determineMultiWordReplacementStart(
+          startIndex, 
+          endIndex, 
+          selectedWord, 
+          textBeingReplaced
+        );
       }
 
       // Normal insertion with adjusted start index
@@ -73,6 +56,69 @@ class WordInsertionHelper {
     } finally {
       // Always reset insertion flag when done, even if exception occurs
       controller.isInsertingWord = false;
+    }
+  }
+
+  /// Determines the appropriate start index for multi-word identifier replacements
+  int _determineMultiWordReplacementStart(
+    int startIndex, 
+    int endIndex, 
+    String selectedWord, 
+    String textBeingReplaced
+  ) {
+    // If what's being typed doesn't contain spaces, we should only replace that word
+    if (!textBeingReplaced.contains(' ')) {
+      // This is a simple case, just replace what's been typed
+      return startIndex;
+    }
+    
+    // Split both strings into word tokens for comparison
+    final selectedTokens = selectedWord.split(' ');
+    final replacedTokens = textBeingReplaced.split(' ');
+    
+    // Case 1: User typed same or more words than the suggestion
+    // Example: Typed "SELECT FROM INN", selecting "INNER JOIN"
+    // We should only replace "INN" with "INNER JOIN"
+    if (replacedTokens.length >= selectedTokens.length) {
+      // Only replace the last word that was typed - this handles cases like:
+      // "SELECT FROM INN" -> only replace "INN" with "INNER JOIN"
+      final lastWordIndex = textBeingReplaced.lastIndexOf(' ');
+      if (lastWordIndex >= 0) {
+        return startIndex + lastWordIndex + 1; // +1 to skip the space
+      }
+      return startIndex;
+    } 
+    
+    // Case 2: User typed partial multi-word suggestion
+    // Example: Typed "INNER JO", selecting "INNER JOIN"
+    // We should replace the entire "INNER JO" with "INNER JOIN"
+    else {
+      // Find how many of the beginning words match
+      int matchingTokens = 0;
+      for (int i = 0; i < replacedTokens.length - 1; i++) {
+        if (i < selectedTokens.length && 
+            selectedTokens[i].toLowerCase() == replacedTokens[i].toLowerCase()) {
+          matchingTokens++;
+        } else {
+          break;
+        }
+      }
+      
+      // If at least the first word matches and we typed part of a multi-word phrase,
+      // replace from the start of the matching phrase
+      if (matchingTokens > 0 || 
+          (replacedTokens.length == 1 && 
+           selectedTokens.length > 1 && 
+           selectedTokens[0].toLowerCase().startsWith(replacedTokens[0].toLowerCase()))) {
+        return startIndex;
+      }
+      
+      // For cases where we typed something unrelated, just replace the last word
+      final lastWordIndex = textBeingReplaced.lastIndexOf(' ');
+      if (lastWordIndex >= 0) {
+        return startIndex + lastWordIndex + 1; // +1 to skip the space
+      }
+      return startIndex;
     }
   }
 
