@@ -270,6 +270,61 @@ class _CodeFieldState extends State<CodeField> {
     widget.controller.addListener(_onTextChanged);
     widget.controller.addListener(_updatePopupOffset);
     widget.controller.popupController.addListener(_onPopupStateChanged);
+    
+    // Check for SQL-specific changes that should reposition the popup
+    _monitorSqlSpecificChanges(oldWidget.controller.text, widget.controller.text);
+  }
+
+  /// Monitors text changes for SQL-specific patterns that should trigger popup repositioning
+  void _monitorSqlSpecificChanges(String oldText, String newText) {
+    // Don't process if inserting a word programmatically
+    if (widget.controller.isInsertingWord) return;
+    
+    // Skip if no popup is showing
+    if (!widget.controller.popupController.shouldShow) return;
+    
+    final cursorPosition = widget.controller.selection.baseOffset;
+    if (cursorPosition <= 0 || cursorPosition > newText.length) return;
+    
+    // Check for SQL-specific triggers that should cause popup to update
+    bool shouldUpdate = false;
+    
+    // Just typed a dot (table.column notation)
+    if (cursorPosition > 0 && 
+        cursorPosition <= newText.length && 
+        newText[cursorPosition - 1] == '.' &&
+        (oldText.length < cursorPosition || oldText[cursorPosition - 1] != '.')) {
+      shouldUpdate = true;
+    }
+    
+    // Just completed an SQL keyword
+    if (cursorPosition > 1 && 
+        cursorPosition <= newText.length && 
+        newText[cursorPosition - 1] == ' ') {
+      
+      // Try to extract the last word
+      int wordStart = cursorPosition - 2;
+      while (wordStart >= 0 && 
+             newText[wordStart] != ' ' && 
+             newText[wordStart] != '\n') {
+        wordStart--;
+      }
+      
+      final lastWord = newText.substring(wordStart + 1, cursorPosition - 1).toUpperCase();
+      
+      // Check if it's an SQL keyword that would trigger suggestions
+      const sqlKeywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'ON', 'GROUP', 'HAVING', 'ORDER'];
+      if (sqlKeywords.contains(lastWord)) {
+        shouldUpdate = true;
+      }
+    }
+    
+    // Immediately update popup if needed
+    if (shouldUpdate) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updatePopupOffset();
+      });
+    }
   }
 
   void rebuild() {
@@ -288,6 +343,13 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   void _onTextChanged() {
+    // Don't process if we're currently inserting a word
+    // This prevents unnecessary calculations during autocomplete insertion
+    if (widget.controller.isInsertingWord) return;
+    
+    // Cache the current cursor position before any changes
+    final cursorPosition = widget.controller.selection.baseOffset;
+    
     // Rebuild line number
     final str = widget.controller.text.split('\n');
     final buf = <String>[];
@@ -302,14 +364,60 @@ class _CodeFieldState extends State<CodeField> {
       if (line.length > longestLine.length) longestLine = line;
     });
 
+    // Get editor position in global coordinates
     if (_codeScroll != null && _editorKey.currentContext != null) {
       final box = _editorKey.currentContext!.findRenderObject() as RenderBox?;
-      // Get the editor position in global coordinates WITHOUT scroll adjustment
       _editorOffset = box?.localToGlobal(Offset.zero);
-      // Don't add scroll offset here - we'll handle it in the popup position calculation
+    }
+    
+    // For SQL editing specifically - check if we need immediate popup update
+    if (_shouldUpdatePopupImmediately(cursorPosition)) {
+      _updatePopupOffset();
     }
 
     rebuild();
+  }
+  
+  /// Determines if popup position should be updated immediately based on text context
+  bool _shouldUpdatePopupImmediately(int cursorPosition) {
+    if (cursorPosition <= 0 || cursorPosition > widget.controller.text.length) {
+      return false;
+    }
+    
+    // Check for SQL-specific conditions that should trigger immediate updates
+    
+    // 1. When cursor is right after a dot (table.column context)
+    if (cursorPosition > 0 && 
+        widget.controller.text[cursorPosition - 1] == '.') {
+      return true;
+    }
+    
+    // 2. When cursor is after a space following SQL keywords
+    if (cursorPosition > 0 && widget.controller.text[cursorPosition - 1] == ' ') {
+      // Get the word before the space
+      int wordStart = cursorPosition - 2;
+      while (wordStart >= 0 && 
+             widget.controller.text[wordStart] != ' ' && 
+             widget.controller.text[wordStart] != '\n') {
+        wordStart--;
+      }
+      
+      if (wordStart < cursorPosition - 2) {
+        final word = widget.controller.text.substring(wordStart + 1, cursorPosition - 1).toUpperCase();
+        
+        // Check if it's a SQL keyword that often precedes suggestions
+        const sqlContextKeywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'ON', 'GROUP', 'ORDER', 'HAVING'];
+        return sqlContextKeywords.contains(word);
+      }
+    }
+    
+    // 3. Cursor at the beginning of a line (for multi-line SQL)
+    final lineStart = widget.controller.text.lastIndexOf('\n', cursorPosition - 1) + 1;
+    if (cursorPosition == lineStart) {
+      return true;
+    }
+    
+    return false;
   }
 
   // Wrap the codeField in a horizontal scrollView
@@ -496,9 +604,9 @@ class _CodeFieldState extends State<CodeField> {
     final normalTopOffset = _getPopupTopOffset(textPainter, caretHeight);
     
     // Calculate flipped position (for when popup would appear above the cursor)
-    // Add dynamic adjustment based on the number of suggestions
+    // Use exact height calculation of 34 pixels per item with a small gap
     final suggestionHeight = min(numberOfSuggestions, 4) * 34.0;
-    final flippedTopOffset = normalTopOffset - (suggestionHeight + caretHeight + 26);
+    final flippedTopOffset = normalTopOffset - (suggestionHeight + caretHeight + 12);
     
     // Store both positioning options
     setState(() {
@@ -562,15 +670,59 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   double _getPopupLeftOffset(TextPainter textPainter) {
-    return max(
-      widget.isMobile
-          ? (40)
-          : _getCaretOffset(textPainter).dx +
-              widget.padding.left -
-              (_horizontalCodeScroll?.offset ?? 0) +
-              (_editorOffset?.dx ?? 0),
-      0,
-    );
+    // Get base position
+    final rawOffset = widget.isMobile 
+        ? 40.0
+        : _getCaretOffset(textPainter).dx +
+          widget.padding.left -
+          (_horizontalCodeScroll?.offset ?? 0) +
+          (_editorOffset?.dx ?? 0);
+    
+    // Apply SQL-specific adjustments if needed
+    final adjustedOffset = _applySqlLeftOffsetAdjustments(rawOffset);
+    
+    // Ensure we never go below 0
+    return max(0, adjustedOffset);
+  }
+
+  /// Apply SQL-specific adjustments to the horizontal position of the popup
+  double _applySqlLeftOffsetAdjustments(double baseOffset) {
+    final cursorPosition = widget.controller.selection.baseOffset;
+    if (cursorPosition <= 0 || cursorPosition >= widget.controller.text.length) {
+      return baseOffset;
+    }
+    
+    // Check if we're in dot notation (table.column)
+    // In this case, we want to align with the start of the column name
+    if (cursorPosition > 0 && widget.controller.text[cursorPosition - 1] == '.') {
+      // We're just after a dot - keep it as is to align perfectly
+      return baseOffset;
+    }
+    
+    // Check if we're in the middle of typing a table/column name
+    // after a dot - we want to align with the start of the name
+    int dotIndex = -1;
+    for (int i = cursorPosition - 1; i >= 0; i--) {
+      if (widget.controller.text[i] == '.') {
+        dotIndex = i;
+        break;
+      } else if (widget.controller.text[i] == ' ' || 
+                widget.controller.text[i] == '\n' ||
+                widget.controller.text[i] == '(' ||
+                widget.controller.text[i] == ',') {
+        // Stop looking if we encounter a word boundary
+        break;
+      }
+    }
+    
+    // If we found a dot and we're right after it (typing a column name)
+    // we should try to align with where the column name starts
+    if (dotIndex >= 0 && dotIndex < cursorPosition - 1) {
+      // We're in the middle of typing a column name - no adjustment needed
+      // The alignment with the text is already handled by the caret position
+    }
+    
+    return baseOffset;
   }
 
   double _getPopupTopOffset(TextPainter textPainter, double caretHeight) {
@@ -580,16 +732,21 @@ class _CodeFieldState extends State<CodeField> {
     // Get editor position
     final editorDy = _editorOffset?.dy ?? 0;
     
-    // Calculate popup position, properly accounting for scroll
-    return max(
-      baseCaretDy +
-          caretHeight +
-          16 +
-          widget.padding.top -
-          (_codeScroll?.offset ?? 0) +
-          editorDy,
-      0,
-    );
+    // Check if we're in SQL mode
+    final isSqlMode = widget.controller.language != null && 
+                     widget.controller.language.toString().toLowerCase().contains('sql');
+    
+    // Calculate raw popup position, with a smaller gap for SQL
+    final rawOffset = baseCaretDy +
+        caretHeight +
+        // Use a smaller offset for SQL to position closer to cursor
+        (isSqlMode ? 6 : 8) +
+        widget.padding.top -
+        (_codeScroll?.offset ?? 0) +
+        editorDy;
+    
+    // Ensure we never go below 0
+    return max(0, rawOffset);
   }
 
   void _onPopupStateChanged() {

@@ -87,45 +87,27 @@ class PopupState extends State<Popup> {
     // Adjust if popup would go off the left edge
     adjustedLeft = max(16, adjustedLeft); // 16px minimum margin
     
-    // Calculate actual height based on number of suggestions
-    final actualHeight = min(
-      min(widget.controller.suggestions.length, 5) * 34.0, // Height per suggestion item
-      Sizes.autocompletePopupMaxHeight
-    );
+    // Calculate popup height - ensure minimum height for empty suggestions
+    // Each item is exactly 34px high
+    final int itemCount = max(1, widget.controller.suggestions.length);
+    // Limit to 5 items max height, with minimum of 1 item
+    final int visibleItemCount = min(5, itemCount);
+    final double actualHeight = visibleItemCount * 34.0;
 
     return PageStorage(
       bucket: pageStorageBucket,
       child: Positioned(
         left: adjustedLeft,
         top: positionOffset.dy,
-        child: Container(
-          alignment: Alignment.topCenter,
-          constraints: BoxConstraints(
-            maxHeight: actualHeight,
-            maxWidth: maxPopUpWidth,
-          ),
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-          ),
-          // Container is used because the vertical borders
-          // in DecoratedBox are hidden under scroll.
-          // ignore: use_decorated_box
+        child: Material(
+          elevation: 8,
+          borderRadius: BorderRadius.circular(8),
+          clipBehavior: Clip.antiAlias,
           child: Container(
+            height: actualHeight, // Explicitly set height to ensure consistency
+            width: maxPopUpWidth,
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(9, 45, 83, .2),
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-                BoxShadow(
-                  color: Color.fromRGBO(9, 45, 83, .15),
-                  blurRadius: 32,
-                  spreadRadius: 2,
-                  offset: Offset(0, 4),
-                ),
-              ],
               borderRadius: const BorderRadius.all(Radius.circular(8)),
               border: Border.all(
                 color: const Color(0xffDAE0E5),
@@ -152,11 +134,10 @@ class PopupState extends State<Popup> {
     // Get the screen size
     final screenSize = MediaQuery.of(context).size;
     
-    // Get popup height based on number of suggestions (with a minimum)
-    final popupHeight = min(
-      max(widget.controller.suggestions.length, 1) * 34.0,
-      Sizes.autocompletePopupMaxHeight
-    );
+    // Calculate exact height based on number of items (each is 34px)
+    final int itemCount = max(1, widget.controller.suggestions.length);
+    final int visibleItemCount = min(5, itemCount);
+    final double popupHeight = visibleItemCount * 34.0;
     
     // Check if popup would extend below the bottom of the screen
     final wouldOverflowBottom = widget.normalOffset.dy + popupHeight > screenSize.height - 16;
@@ -185,50 +166,54 @@ class PopupState extends State<Popup> {
         hoverColor: Colors.grey.withOpacity(0.1),
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
-        child: ColoredBox(
-          color: widget.controller.selectedIndex == index
-              ? const Color(0xff1D73C9).withOpacity(0.3)
-              : Colors.transparent,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Image.asset(
-                  getZingIcon(widget.controller.suggestions[index].keys.first),
-                  width: 16,
-                  height: 16,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.controller.suggestions[index].values.first
-                            .replaceAll('"', '')
-                            .replaceAll('`', ''),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                        style: widget.style.copyWith(fontSize: 12),
-                      ),
-                      Text(
-                        widget.controller.suggestions[index].keys.first,
-                        textAlign: TextAlign.right,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                        style: widget.style.copyWith(
-                          fontSize: 11,
-                          color: Theme.of(context).colorScheme.secondary,
-                          fontFamily: 'NotoSans',
-                          wordSpacing: 1,
-                        ),
-                      ),
-                    ],
+        child: SizedBox(
+          height: 34, // Fixed height for each suggestion item
+          child: ColoredBox(
+            color: widget.controller.selectedIndex == index
+                ? const Color(0xff1D73C9).withOpacity(0.3)
+                : Colors.transparent,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    getZingIcon(widget.controller.suggestions[index].keys.first),
+                    width: 16,
+                    height: 16,
+                    fit: BoxFit.contain,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.controller.suggestions[index].values.first
+                              .replaceAll('"', '')
+                              .replaceAll('`', ''),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: widget.style.copyWith(fontSize: 12),
+                        ),
+                        Text(
+                          widget.controller.suggestions[index].keys.first,
+                          textAlign: TextAlign.right,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: widget.style.copyWith(
+                            fontSize: 11,
+                            color: Theme.of(context).colorScheme.secondary,
+                            fontFamily: 'NotoSans',
+                            wordSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
