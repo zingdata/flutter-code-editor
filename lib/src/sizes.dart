@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class Sizes {
   static const double autocompletePopupMaxHeight = 160;
   static const double autocompletePopupMaxWidth = 320;
+  static const double autocompleteItemHeight = 40;
   static const caretPadding = 10;
 }
 
