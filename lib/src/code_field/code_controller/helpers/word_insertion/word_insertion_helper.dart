@@ -12,18 +12,21 @@ class WordInsertionHelper {
 
   /// Inserts the currently selected word from autocomplete popup
   /// into the code editor at the appropriate position
-  void insertSelectedWord() {
+  void insertSelectedWord({
+    String? keyword,
+    bool? isKeywordColumn,
+  }) {
     // Safety check - return if no valid selection
-    if (controller.popupController.selectedIndex < 0) {
+    if (controller.popupController.selectedIndex < 0 && keyword == null) {
       return;
     }
     // Mark that we're inserting a word to prevent triggering other listeners
     controller.isInsertingWord = true;
 
     final previousSelection = controller.selection;
-    final selectedWord = controller.popupController.getSelectedWord();
-    final isColumn = controller.popupController.isColumn();
-    
+    final selectedWord = keyword ?? controller.popupController.getSelectedWord();
+    final isColumn = isKeywordColumn ?? controller.popupController.isColumn();
+
     try {
       // Handle case where we don't have a defined prefix start index
       if (controller.lastPrefixStartIndex == null) {
@@ -33,16 +36,16 @@ class WordInsertionHelper {
 
       // Check if the selected word contains spaces (multi-word identifier)
       final containsSpaces = selectedWord.contains(' ');
-      
+
       // For multi-word identifiers, we need to extend the prefix start to include
       // any partial words before the current start index
       int startIndex = controller.lastPrefixStartIndex!;
       final endIndex = previousSelection.baseOffset;
-      
+
       if (containsSpaces && startIndex < endIndex) {
         // Get the text before the cursor
         final textBeforeCursor = controller.text.substring(0, endIndex);
-        
+
         // Check if we're already in the middle of typing a multi-word phrase
         if (startIndex > 0 && textBeforeCursor[startIndex - 1] == ' ') {
           // Find the start of the entire phrase by looking for word boundaries
@@ -52,7 +55,7 @@ class WordInsertionHelper {
             startIndex = phraseStart;
           }
         }
-        
+
         // Also handle case where the user has typed the first word and part of the second
         // For example "pet ty" for "Pet Type"
         final partialTyped = textBeforeCursor.substring(startIndex, endIndex);
@@ -64,7 +67,7 @@ class WordInsertionHelper {
           }
         }
       }
-      
+
       // Normal insertion with adjusted start index
       _handleNormalInsertion(previousSelection, isColumn, selectedWord, startIndex, endIndex);
     } finally {
@@ -101,8 +104,8 @@ class WordInsertionHelper {
 
   /// Handles normal insertion with a valid prefix start index
   void _handleNormalInsertion(
-    TextSelection previousSelection, 
-    bool isColumn, 
+    TextSelection previousSelection,
+    bool isColumn,
     String selectedWord,
     int startIndex,
     int endIndex,

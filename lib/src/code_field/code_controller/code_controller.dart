@@ -332,8 +332,8 @@ class CodeController extends TextEditingController {
   ];
 
   /// Inserts the currently selected word from autocomplete popup
-  void insertSelectedWord() {
-    _wordInsertionHelper.insertSelectedWord();
+  void insertSelectedWord({String? keyword, bool? isKeywordColumn}) {
+    _wordInsertionHelper.insertSelectedWord(keyword: keyword, isKeywordColumn: isKeywordColumn);
   }
 
   /// Generates suggestions based on the current text and cursor position
