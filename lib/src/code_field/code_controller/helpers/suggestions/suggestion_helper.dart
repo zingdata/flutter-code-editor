@@ -82,23 +82,27 @@ class SuggestionHelper {
     
     // Process messages from the main isolate
     receivePort.listen((message) async {
-      if (message is _SuggestionRequest) {
-        if (message.prefix.isNotEmpty) {
+      if (message is List) {
+        // First element is the request, second is the response port
+        final request = message[0] as _SuggestionRequest;
+        final responsePort = message[1] as SendPort;
+        
+        if (request.prefix.isNotEmpty) {
           // Handle fetching suggestions for a prefix
           final suggestions = await _isolateFetchSuggestions(
-            message.prefix,
-            message.customWords,
-            message.suggestions,
+            request.prefix,
+            request.customWords,
+            request.suggestions,
           );
-          mainSendPort.send(_SuggestionResult(suggestions: suggestions));
+          responsePort.send(_SuggestionResult(suggestions: suggestions));
         } else {
           // Handle finding longest matching prefix
           final prefixInfo = await _isolateGetLongestMatchingPrefix(
-            message.text,
-            message.customWords,
-            message.suggestions,
+            request.text,
+            request.customWords,
+            request.suggestions,
           );
-          mainSendPort.send(_SuggestionResult(prefixInfo: prefixInfo));
+          responsePort.send(_SuggestionResult(prefixInfo: prefixInfo));
         }
       } else if (message == 'shutdown') {
         Isolate.exit();
@@ -486,12 +490,15 @@ class SuggestionHelper {
       }
       
       // Send the request to the isolate
-      sendPort.send(_SuggestionRequest(
-        text: text.substring(0, cursorPosition),
-        prefix: '', // Empty prefix indicates we want longest matching prefix
-        customWords: customWords,
-        suggestions: suggestionMap,
-      ));
+      sendPort.send([
+        _SuggestionRequest(
+          text: text.substring(0, cursorPosition),
+          prefix: '', // Empty prefix indicates we want longest matching prefix
+          customWords: customWords,
+          suggestions: suggestionMap,
+        ),
+        responsePort.sendPort // Send the response port so isolate knows where to reply
+      ]);
       
       // Wait for the response
       final result = await responsePort.first as _SuggestionResult;
@@ -644,12 +651,15 @@ class SuggestionHelper {
       }
       
       // Send the request to the isolate
-      sendPort.send(_SuggestionRequest(
-        text: '',
-        prefix: prefix,
-        customWords: customWords,
-        suggestions: suggestionMap,
-      ));
+      sendPort.send([
+        _SuggestionRequest(
+          text: '',
+          prefix: prefix,
+          customWords: customWords,
+          suggestions: suggestionMap,
+        ),
+        responsePort.sendPort // Send the response port so isolate knows where to reply
+      ]);
       
       // Wait for the response
       final result = await responsePort.first as _SuggestionResult;
