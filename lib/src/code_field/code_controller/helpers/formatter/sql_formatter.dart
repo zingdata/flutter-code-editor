@@ -71,9 +71,11 @@ class SqlFormatter {
 
     // Detect if we're continuing an existing function call
     final isInFunctionContext = isInsideFunctionCall(prefixText);
-    
+
     // Detect if the selectedWord contains spaces (multi-word identifier)
     final containsSpaces = selectedWord.contains(' ');
+
+    final isSqlKeyword = sqlKeywords.contains(selectedWord.toUpperCase());
 
     // Check if we need to add a space after the inserted text
     bool addSpace = !suffixText.startsWith(' ') &&
@@ -112,7 +114,7 @@ class SqlFormatter {
         suffixText: suffixText,
         needsQuotes: containsSpaces, // Auto-quote columns with spaces
       );
-    } else if (containsSpaces || (needsQuotes && !sqlKeywords.contains(selectedWord.toUpperCase()))) {
+    } else if ((containsSpaces && !isSqlKeyword) || (needsQuotes && !isSqlKeyword)) {
       // Always quote identifiers with spaces, regardless of the needsQuotes setting
       return _formatQuotedIdentifier(
         originalText: originalText,
@@ -212,7 +214,7 @@ class SqlFormatter {
     // Add quotes for multi-word column names
     String insertionText;
     int adjustedOffset;
-    
+
     if (needsQuotes && !selectedWord.startsWith('"') && !selectedWord.endsWith('"')) {
       insertionText = '"$selectedWord"';
       adjustedOffset = startIndex + selectedWord.length + 2; // +2 for quotes
@@ -340,11 +342,11 @@ class SqlFormatter {
   /// This is useful for detecting when the user has typed part of a multi-word identifier
   static int findMultiWordPhraseStart(String text, int endPosition) {
     if (endPosition <= 0 || text.isEmpty) return endPosition;
-    
+
     // Start from the end position and move backward
     int position = endPosition;
     bool foundSpace = false;
-    
+
     // Check if we're in the middle of a quoted identifier
     int quotePos = text.lastIndexOf('"', position - 1);
     if (quotePos >= 0) {
@@ -354,21 +356,21 @@ class SqlFormatter {
         return quotePos;
       }
     }
-    
+
     // Otherwise, try to find a phrase with spaces
     while (position > 0) {
       position--;
-      
+
       // Check for word boundary characters that would end our search
       if (",.;:(){}[]\"\'`=+-*/\\".contains(text[position])) {
         return position + 1; // Start after the boundary character
       }
-      
+
       // Track if we've seen a space
       if (text[position] == ' ') {
         foundSpace = true;
       }
-      
+
       // If we've found a space and then a non-space, we might be in a multi-word phrase
       if (foundSpace && text[position] != ' ' && position > 0 && text[position - 1] == ' ') {
         // Check if previous word is part of the same phrase or a boundary
@@ -376,20 +378,19 @@ class SqlFormatter {
         while (prevWordStart > 0 && text[prevWordStart - 1] == ' ') {
           prevWordStart--;
         }
-        
+
         int wordBoundary = prevWordStart;
-        while (wordBoundary > 0 && 
-               !",;:(){}[]\"\'`=+-*/\\".contains(text[wordBoundary - 1])) {
+        while (wordBoundary > 0 && !",;:(){}[]\"\'`=+-*/\\".contains(text[wordBoundary - 1])) {
           wordBoundary--;
         }
-        
+
         // If we found a word before our space, include it in the phrase
         if (wordBoundary < prevWordStart) {
           position = wordBoundary;
         }
       }
     }
-    
+
     return position;
   }
 
