@@ -1,14 +1,291 @@
 import 'dart:math' as math;
+import 'dart:isolate';
+import 'dart:async';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_code_editor/src/code/string.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/formatter/sql_formatter.dart';
+
+/// Data class for isolate communication
+class _SuggestionRequest {
+  
+  _SuggestionRequest({
+    required this.text,
+    required this.prefix,
+    required this.customWords,
+    required this.suggestions,
+  });
+  final String text;
+  final String prefix;
+  final List<String> customWords;
+  final Map<String, List<String>> suggestions;
+}
+
+/// Data class for isolate results
+class _SuggestionResult {
+  
+  _SuggestionResult({this.prefixInfo, this.suggestions});
+  final Map<String, dynamic>? prefixInfo;
+  final Set<String>? suggestions;
+}
 
 /// Helper class for handling autocomplete suggestions logic
 class SuggestionHelper {
   /// Create a suggestion helper for a specific code controller
   SuggestionHelper(this.controller);
   final CodeController controller;
+  
+  // Cache for running isolates
+  Isolate? _isolate;
+  SendPort? _sendPort;
+  Completer<SendPort>? _portCompleter;
+  
+  /// Gets or creates a send port for the suggestions isolate
+  Future<SendPort> _getSendPort() async {
+    if (_sendPort != null) return _sendPort!;
+    
+    // If we're already creating a port, wait for that to complete
+    if (_portCompleter != null) return _portCompleter!.future;
+    
+    // Create a new port
+    _portCompleter = Completer<SendPort>();
+    
+    // Create a receive port for the initial communication
+    final receivePort = ReceivePort();
+    
+    // Create the isolate
+    _isolate = await Isolate.spawn(
+      _suggestionsIsolateEntryPoint,
+      receivePort.sendPort,
+    );
+    
+    // The first message from the isolate will be the send port we can use for communication
+    _sendPort = await receivePort.first as SendPort;
+    _portCompleter!.complete(_sendPort);
+    return _sendPort!;
+  }
+  
+  /// Dispose of the isolate when no longer needed
+  void dispose() {
+    _isolate?.kill(priority: Isolate.immediate);
+    _isolate = null;
+    _sendPort = null;
+    _portCompleter = null;
+  }
+  
+  /// Isolate entry point that handles suggestion processing
+  static void _suggestionsIsolateEntryPoint(SendPort mainSendPort) {
+    final receivePort = ReceivePort();
+    
+    // Send the port to the main isolate so it can send us messages
+    mainSendPort.send(receivePort.sendPort);
+    
+    // Process messages from the main isolate
+    receivePort.listen((message) async {
+      if (message is _SuggestionRequest) {
+        if (message.prefix.isNotEmpty) {
+          // Handle fetching suggestions for a prefix
+          final suggestions = await _isolateFetchSuggestions(
+            message.prefix,
+            message.customWords,
+            message.suggestions,
+          );
+          mainSendPort.send(_SuggestionResult(suggestions: suggestions));
+        } else {
+          // Handle finding longest matching prefix
+          final prefixInfo = await _isolateGetLongestMatchingPrefix(
+            message.text,
+            message.customWords,
+            message.suggestions,
+          );
+          mainSendPort.send(_SuggestionResult(prefixInfo: prefixInfo));
+        }
+      } else if (message == 'shutdown') {
+        Isolate.exit();
+      }
+    });
+  }
+  
+  /// Version of fetchSuggestions that runs in an isolate
+  static Future<Set<String>> _isolateFetchSuggestions(
+    String prefix,
+    List<String> customWords,
+    Map<String, List<String>> suggestions,
+  ) async {
+    final result = <String>{};
+    
+    // Add suggestions with case variations
+    final variations = [
+      prefix,
+      prefix.toLowerCase(),
+      prefix.toUpperCase(),
+      prefix.isNotEmpty ? prefix[0].toUpperCase() + prefix.substring(1).toLowerCase() : '',
+    ];
+    
+    for (final variation in variations) {
+      if (variation.isEmpty) continue;
+      
+      // Check all suggestion categories
+      for (final category in suggestions.entries) {
+        for (final word in category.value) {
+          if (word.toLowerCase().startsWith(variation.toLowerCase())) {
+            result.add(word);
+          }
+        }
+      }
+    }
+    
+    // Check custom words
+    if (result.isEmpty) {
+      final customMatches = customWords
+          .where((element) => element.stringWithoutQuotes.toLowerCase().contains(prefix.toLowerCase()))
+          .toList()
+        ..sort();
+      result.addAll(customMatches);
+    }
+    
+    return result;
+  }
+  
+  /// Version of getLongestMatchingPrefix that runs in an isolate
+  static Future<Map<String, dynamic>?> _isolateGetLongestMatchingPrefix(
+    String text,
+    List<String> customWords,
+    Map<String, List<String>> suggestions,
+  ) async {
+    if (text.isEmpty) {
+      return null;
+    }
+    
+    final cursorPosition = text.length;
+    
+    // Word boundary characters
+    bool isWordBoundary(String char) {
+      return ' ,.;:(){}[]"\'`=+-*/\\'.contains(char);
+    }
+    
+    // Find the current word at cursor position
+    var wordStart = cursorPosition;
+    while (wordStart > 0) {
+      final char = text[wordStart - 1];
+      if (isWordBoundary(char)) {
+        break;
+      }
+      wordStart--;
+    }
+    
+    // If we have identified a complete word
+    if (wordStart < cursorPosition) {
+      final currentWord = text.substring(wordStart, cursorPosition);
+      
+      // Try to find suggestions for the complete word
+      final wordSuggestions = await _isolateFetchSuggestions(
+        currentWord,
+        customWords,
+        suggestions,
+      );
+      
+      if (wordSuggestions.isNotEmpty) {
+        return {
+          'prefix': currentWord,
+          'startIndex': wordStart,
+          'suggestions': wordSuggestions,
+        };
+      }
+      
+      // If no suggestions for the complete word, ONLY look for prefixes that
+      // start at word boundaries, not partial matches within the word
+      final partialMatches = <Map<String, dynamic>>[];
+   
+      // Check spaces within the current word for multi-word identifiers
+      for (int i = wordStart + 1; i < cursorPosition; i++) {
+        if (text[i - 1] == ' ') {
+          final subWord = text.substring(i, cursorPosition);
+          if (subWord.isNotEmpty) {
+            final subWordSuggestions = await _isolateFetchSuggestions(
+              subWord,
+              customWords,
+              suggestions,
+            );
+            
+            if (subWordSuggestions.isNotEmpty) {
+              partialMatches.add({
+                'prefix': subWord,
+                'startIndex': i,
+                'suggestions': subWordSuggestions,
+                'length': subWord.length,
+              });
+            }
+          }
+        }
+      }
+      
+      // Check positions before the word start for context
+      final checkLimit = math.max(0, wordStart - 20);
+      for (int i = wordStart - 1; i >= checkLimit; i--) {
+        if (i == 0 || isWordBoundary(text[i - 1])) {
+          final potentialPrefix = text.substring(i, cursorPosition);
+          if (potentialPrefix.isNotEmpty && !potentialPrefix.startsWith(' ')) {
+            final prefixSuggestions = await _isolateFetchSuggestions(
+              potentialPrefix,
+              customWords,
+              suggestions,
+            );
+            
+            if (prefixSuggestions.isNotEmpty) {
+              partialMatches.add({
+                'prefix': potentialPrefix,
+                'startIndex': i,
+                'suggestions': prefixSuggestions,
+                'length': potentialPrefix.length,
+              });
+            }
+          }
+        }
+      }
+      
+      // Sort by length (prefer longer matches)
+      partialMatches.sort((a, b) {
+        final aLength = a['length'] as int;
+        final bLength = b['length'] as int;
+        return bLength.compareTo(aLength);
+      });
+      
+      if (partialMatches.isNotEmpty) {
+        final bestMatch = partialMatches.first;
+        return {
+          'prefix': bestMatch['prefix'],
+          'startIndex': bestMatch['startIndex'],
+          'suggestions': bestMatch['suggestions'],
+        };
+      }
+      
+      // If no matches found, just use the whole word to ensure
+      // we don't get partial word replacements
+      return {
+        'prefix': currentWord,
+        'startIndex': wordStart,
+        'suggestions': <String>{},  // Empty suggestions will hide the popup
+      };
+    }
+    
+    // Fallback to basic search
+    final fallbackSuggestions = await _isolateFetchSuggestions(
+      text.substring(math.max(0, cursorPosition - 10), cursorPosition),
+      customWords,
+      suggestions,
+    );
+    
+    if (fallbackSuggestions.isNotEmpty) {
+      return {
+        'prefix': text.substring(math.max(0, cursorPosition - 10), cursorPosition),
+        'startIndex': math.max(0, cursorPosition - 10),
+        'suggestions': fallbackSuggestions,
+      };
+    }
+    
+    return null;
+  }
   
   /// Generates and displays appropriate suggestions based on current cursor position and text
   Future<void> generateSuggestions() async {
@@ -185,9 +462,51 @@ class SuggestionHelper {
     controller.lastPrefixStartIndex = startIndex;
   }
 
-  /// Find the longest matching prefix for suggestion purposes, 
-  /// prioritizing word boundaries over partial matches
+  /// Find the longest matching prefix for suggestion purposes using isolate for heavy computation
   Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
+    final cursorPosition = controller.selection.baseOffset;
+    if (cursorPosition <= 0 || text.isEmpty) {
+      return null;
+    }
+    
+    try {
+      // Get a send port to communicate with the isolate
+      final sendPort = await _getSendPort();
+      
+      // Create a receive port for the response
+      final responsePort = ReceivePort();
+      
+      // Prepare customWords and suggestions for isolate
+      final customWords = controller.autocompleter.customWords.toList();
+      
+      // Convert suggestion categories to a simple map for isolate
+      final Map<String, List<String>> suggestionMap = {};
+      for (final category in controller.popupController.suggestionCategories) {
+        suggestionMap[category.keys.first] = category.values.first.toList();
+      }
+      
+      // Send the request to the isolate
+      sendPort.send(_SuggestionRequest(
+        text: text.substring(0, cursorPosition),
+        prefix: '', // Empty prefix indicates we want longest matching prefix
+        customWords: customWords,
+        suggestions: suggestionMap,
+      ));
+      
+      // Wait for the response
+      final result = await responsePort.first as _SuggestionResult;
+      responsePort.close();
+      
+      // Return the result
+      return result.prefixInfo;
+    } catch (e) {
+      // If an error occurs with the isolate, fall back to the original implementation
+      return _getLongestMatchingPrefixOnMainThread(text);
+    }
+  }
+  
+  /// Fallback implementation that runs on the main thread if isolate fails
+  Future<Map<String, dynamic>?> _getLongestMatchingPrefixOnMainThread(String text) async {
     final cursorPosition = controller.selection.baseOffset;
     if (cursorPosition <= 0 || text.isEmpty) {
       return null;
@@ -302,8 +621,50 @@ class SuggestionHelper {
     return null;
   }
 
-  /// Fetch suggestions for a specific prefix
+  /// Fetch suggestions for a specific prefix using isolate for heavy computation
   Future<Set<String>> fetchSuggestions(String prefix) async {
+    if (prefix.isEmpty) {
+      return {};
+    }
+    
+    try {
+      // Get a send port to communicate with the isolate
+      final sendPort = await _getSendPort();
+      
+      // Create a receive port for the response
+      final responsePort = ReceivePort();
+      
+      // Prepare customWords and suggestions for isolate
+      final customWords = controller.autocompleter.customWords.toList();
+      
+      // Convert suggestion categories to a simple map for isolate
+      final Map<String, List<String>> suggestionMap = {};
+      for (final category in controller.popupController.suggestionCategories) {
+        suggestionMap[category.keys.first] = category.values.first.toList();
+      }
+      
+      // Send the request to the isolate
+      sendPort.send(_SuggestionRequest(
+        text: '',
+        prefix: prefix,
+        customWords: customWords,
+        suggestions: suggestionMap,
+      ));
+      
+      // Wait for the response
+      final result = await responsePort.first as _SuggestionResult;
+      responsePort.close();
+      
+      // Return the result
+      return result.suggestions ?? {};
+    } catch (e) {
+      // If an error occurs with the isolate, fall back to the original implementation
+      return _fetchSuggestionsOnMainThread(prefix);
+    }
+  }
+  
+  /// Fallback implementation that runs on the main thread if isolate fails
+  Future<Set<String>> _fetchSuggestionsOnMainThread(String prefix) async {
     final suggestions = <String>{
       ...await controller.autocompleter.getSuggestions(prefix),
       ...await controller.autocompleter.getSuggestions(prefix.toLowerCase()),

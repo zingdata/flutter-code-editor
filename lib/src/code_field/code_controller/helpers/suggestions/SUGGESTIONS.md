@@ -23,7 +23,13 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - Considers various letter case combinations (lowercase, uppercase, title case)
    - Falls back to word-boundary-only matches when no direct word matches are found
 
-4. **Integration with PopupController**
+4. **Off-Main-Thread Processing**
+   - Performs computationally intensive suggestion operations in a separate Dart isolate
+   - Prevents UI freezes during complex suggestion generation
+   - Includes graceful fallbacks to main thread if isolate communication fails
+   - Automatically manages isolate lifecycle (creation and disposal)
+
+5. **Integration with PopupController**
    - Manages when and where to display the suggestion popup
    - Controls the content and filtering of suggestions
    - Handles popup visibility based on context
@@ -42,15 +48,41 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - If no dot is found, try to detect the SQL context from FROM/JOIN clauses
    - Set the detected table as context for future suggestions
 
-4. **Word Boundary Analysis**
+4. **Word Boundary Analysis (Off-Main-Thread)**
+   - The text analysis is delegated to a background isolate
    - First find the complete word at the current cursor position
    - Generate suggestions for the complete word if possible
    - Only fall back to partial matches at proper word boundaries, never mid-word
    - Maintain word integrity for replacement operations
 
 5. **Displaying Suggestions**
+   - Results from the isolate are received back on the main thread
    - Show the popup with relevant suggestions
    - Hide the popup if no valid suggestions are found
+
+## Off-Main-Thread Implementation
+
+The suggestion system uses Dart isolates to move heavy computation off the main thread:
+
+1. **Isolate Communication**
+   - Uses a persistent isolate for suggestion operations
+   - Communicates through message passing with typed request/response objects
+   - Maintains a cached send port for efficient communication
+
+2. **Parallel Processing**
+   - The main text analysis and suggestion filtering occurs in parallel
+   - Word boundary detection and prefix matching happen in the background
+   - Only UI operations (showing/hiding the popup) run on the main thread
+
+3. **Graceful Degradation**
+   - If isolate creation or communication fails, automatically falls back to main thread
+   - Preserves all functionality even in environments where isolates aren't available
+   - Ensures suggestion quality isn't compromised even in fallback mode
+
+4. **Resource Management**
+   - Isolate is properly disposed when the controller is disposed
+   - Handles edge cases like rapid suggestion requests
+   - Uses a single persistent isolate to avoid creation overhead
 
 ## Word Matching Logic
 
@@ -96,8 +128,10 @@ The `SuggestionHelper` is initialized within the `CodeController` and takes a re
    - Better handling of multi-word phrases and expressions
 
 4. **Performance Optimization**
-   - Focused, targeted suggestions minimize processing overhead
+   - Offloads computationally intensive operations to background threads
+   - Ensures UI responsiveness even with large suggestion sets
    - Smart caching of word positions and boundaries
+   - Persistent isolate reduces startup overhead
 
 ## Future Extensions
 
@@ -111,4 +145,9 @@ The `SuggestionHelper` is initialized within the `CodeController` and takes a re
 
 3. **Learning from User Input**
    - Track frequently used completions
-   - Prioritize suggestions based on user behavior 
+   - Prioritize suggestions based on user behavior
+
+4. **Further Performance Optimizations**
+   - Implement batched suggestion requests
+   - Fine-tune isolate communication for minimal latency
+   - Add adaptive processing based on suggestion complexity 

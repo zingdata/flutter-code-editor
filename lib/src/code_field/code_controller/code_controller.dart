@@ -776,6 +776,7 @@ class CodeController extends TextEditingController {
   void dispose() {
     _debounce?.cancel();
     historyController.dispose();
+    _suggestionHelper.dispose(); // Clean up the isolate when the controller is disposed
 
     super.dispose();
   }
