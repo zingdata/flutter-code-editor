@@ -23,13 +23,20 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - Considers various letter case combinations (lowercase, uppercase, title case)
    - Falls back to word-boundary-only matches when no direct word matches are found
 
-4. **Off-Main-Thread Processing**
+4. **Multi-Word Field Support**
+   - Identifies and processes multi-word fields (e.g., "Customer Name", "Order Date")
+   - Supports matching against individual tokens within multi-word identifiers
+   - Allows matching "Name" to suggest "Customer Name" when appropriate
+   - Performs comprehensive scanning to find the start of multi-word phrases
+   - Handles quoted multi-word identifiers properly (e.g., "First Name", 'Total Amount')
+
+5. **Off-Main-Thread Processing**
    - Performs computationally intensive suggestion operations in a separate Dart isolate
    - Prevents UI freezes during complex suggestion generation
    - Includes graceful fallbacks to main thread if isolate communication fails
    - Automatically manages isolate lifecycle (creation and disposal)
 
-5. **Integration with PopupController**
+6. **Integration with PopupController**
    - Manages when and where to display the suggestion popup
    - Controls the content and filtering of suggestions
    - Handles popup visibility based on context
@@ -48,10 +55,12 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - If no dot is found, try to detect the SQL context from FROM/JOIN clauses
    - Set the detected table as context for future suggestions
 
-4. **Word Boundary Analysis (Off-Main-Thread)**
+4. **Word Boundary and Multi-Word Analysis (Off-Main-Thread)**
    - The text analysis is delegated to a background isolate
    - First find the complete word at the current cursor position
-   - Generate suggestions for the complete word if possible
+   - For multi-word fields, identify potential phrases by looking backward from cursor
+   - Generate suggestions for the complete word/phrase if possible
+   - If no direct matches, look for token-based matches within multi-word identifiers
    - Only fall back to partial matches at proper word boundaries, never mid-word
    - Maintain word integrity for replacement operations
 
@@ -93,13 +102,27 @@ The suggestion system uses a sophisticated word matching algorithm that:
    - Extracts the complete word where the cursor is positioned
    - Prevents suggestions from replacing only parts of words
 
-2. **Prioritized Matching Hierarchy**
-   - First attempts to match the complete word at cursor position
-   - Next checks spaces within multi-word phrases
-   - Then looks for matches at proper word boundaries
-   - Sorts matches by length, preferring longer matches
+2. **Multi-Word Phrase Detection**
+   - Scans backward to identify the start of multi-word phrases
+   - Handles quoted identifiers and complex SQL structures
+   - Recognizes field names with spaces (e.g., "Customer Name")
+   - Properly extracts complete phrases for matching
 
-3. **Fallback Safety Mechanism**
+3. **Token-Based Matching**
+   - For multi-word identifiers, checks each token against the input
+   - Allows typing "Name" to get "Customer Name" as a suggestion
+   - Provides more natural suggestions for multi-word fields
+   - Intelligently prioritizes matches based on token position and relevance
+
+4. **Prioritized Matching Hierarchy**
+   - First attempts to match the complete word at cursor position
+   - Next tries to match complete phrases starting before the cursor
+   - Then looks for token matches within multi-word identifiers
+   - Falls back to looking at spaces within the current word
+   - Finally checks for matches at proper word boundaries
+   - Sorts matches by priority and length, preferring more relevant matches
+
+5. **Fallback Safety Mechanism**
    - Even when no suggestions are found, tracks the complete word
    - Ensures the entire word is replaced, not just parts of it
    - Maintains contextual awareness for table/column detection
@@ -126,6 +149,7 @@ The `SuggestionHelper` is initialized within the `CodeController` and takes a re
    - Natural word-aware suggestions that respect word boundaries
    - Prevents unexpected partial word replacements
    - Better handling of multi-word phrases and expressions
+   - Intelligently suggests complete identifiers from partial input
 
 4. **Performance Optimization**
    - Offloads computationally intensive operations to background threads

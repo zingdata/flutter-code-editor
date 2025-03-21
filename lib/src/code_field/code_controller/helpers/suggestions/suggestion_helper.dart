@@ -23,7 +23,6 @@ class _SuggestionRequest {
 
 /// Data class for isolate results
 class _SuggestionResult {
-  
   _SuggestionResult({this.prefixInfo, this.suggestions});
   final Map<String, dynamic>? prefixInfo;
   final Set<String>? suggestions;
@@ -110,7 +109,7 @@ class SuggestionHelper {
     });
   }
   
-  /// Version of fetchSuggestions that runs in an isolate
+  /// Version of fetchSuggestions that runs in an isolate with enhanced multi-word support
   static Future<Set<String>> _isolateFetchSuggestions(
     String prefix,
     List<String> customWords,
@@ -126,32 +125,127 @@ class SuggestionHelper {
       prefix.isNotEmpty ? prefix[0].toUpperCase() + prefix.substring(1).toLowerCase() : '',
     ];
     
-    for (final variation in variations) {
-      if (variation.isEmpty) continue;
-      
-      // Check all suggestion categories
-      for (final category in suggestions.entries) {
-        for (final word in category.value) {
-          if (word.stringWithoutQuotes.toLowerCase().startsWith(variation.toLowerCase())) {
-            result.add(word);
+    // Token-based matching for multi-word fields
+    for (final category in suggestions.entries) {
+      for (final word in category.value) {
+        final wordWithoutQuotes = _getStringWithoutQuotes(word);
+        
+        // Check if this is a multi-word identifier
+        if (wordWithoutQuotes.contains(' ')) {
+          // Split into tokens and check if any token matches the prefix
+          final tokens = wordWithoutQuotes.split(' ');
+          
+          // Handle full identifier match (starts with whole prefix)
+          for (final variation in variations) {
+            if (variation.isEmpty) continue;
+            
+            if (wordWithoutQuotes.toLowerCase().startsWith(variation.toLowerCase())) {
+              result.add(word);
+              break;
+            }
+          }
+          
+          // Check if we're matching a partial word within the multi-word identifier
+          // This allows matching "Name" in "Customer Name" or "cat" in "Product Category"
+          bool tokenMatch = false;
+          for (final token in tokens) {
+            for (final variation in variations) {
+              if (variation.isEmpty) continue;
+              
+              if (token.toLowerCase().startsWith(variation.toLowerCase())) {
+                result.add(word);
+                tokenMatch = true;
+                break;
+              }
+            }
+            if (tokenMatch) break;
+          }
+        } 
+        // Standard matching for single-word identifiers
+        else {
+          for (final variation in variations) {
+            if (variation.isEmpty) continue;
+            
+            if (wordWithoutQuotes.toLowerCase().startsWith(variation.toLowerCase())) {
+              result.add(word);
+              break;
+            }
           }
         }
       }
     }
     
-    // Check custom words
+    // Check custom words with similar multi-word awareness
     if (result.isEmpty) {
-      final customMatches = customWords
-          .where((element) => element.stringWithoutQuotes.toLowerCase().contains(prefix.toLowerCase()))
-          .toList()
-        ..sort();
-      result.addAll(customMatches);
+      for (final word in customWords) {
+        final wordWithoutQuotes = _getStringWithoutQuotes(word);
+        
+        // Check for token matches in multi-word identifiers
+        if (wordWithoutQuotes.contains(' ')) {
+          final tokens = wordWithoutQuotes.split(' ');
+          
+          bool tokenMatch = false;
+          for (final token in tokens) {
+            if (token.toLowerCase().contains(prefix.toLowerCase())) {
+              result.add(word);
+              tokenMatch = true;
+              break;
+            }
+          }
+          
+          // Also check if the whole identifier contains the prefix
+          if (!tokenMatch && wordWithoutQuotes.toLowerCase().contains(prefix.toLowerCase())) {
+            result.add(word);
+          }
+        } 
+        // Standard matching for single-word identifiers
+        else if (wordWithoutQuotes.toLowerCase().contains(prefix.toLowerCase())) {
+          result.add(word);
+        }
+      }
+      
+      // Sort results by relevance - exact matches first, then by length
+      final sortedResults = result.toList()
+        ..sort((a, b) {
+          final aWithoutQuotes = _getStringWithoutQuotes(a);
+          final bWithoutQuotes = _getStringWithoutQuotes(b);
+          
+          // Exact matches get priority
+          final aExactMatch = aWithoutQuotes.toLowerCase() == prefix.toLowerCase();
+          final bExactMatch = bWithoutQuotes.toLowerCase() == prefix.toLowerCase();
+          
+          if (aExactMatch && !bExactMatch) return -1;
+          if (!aExactMatch && bExactMatch) return 1;
+          
+          // Then starts-with matches
+          final aStartsWith = aWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase());
+          final bStartsWith = bWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase());
+          
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          
+          // Then by length (shorter suggestions first)
+          return aWithoutQuotes.length.compareTo(bWithoutQuotes.length);
+        });
+      
+      result.clear();
+      result.addAll(sortedResults);
     }
     
     return result;
   }
   
-  /// Version of getLongestMatchingPrefix that runs in an isolate
+  /// Helper function to extract string without quotes
+  static String _getStringWithoutQuotes(String input) {
+    if ((input.startsWith('"') && input.endsWith('"')) ||
+        (input.startsWith("'") && input.endsWith("'"))) {
+      return input.substring(1, input.length - 1);
+    }
+    return input;
+  }
+  
+  /// Enhanced version of getLongestMatchingPrefix that runs in an isolate
+  /// with improved support for multi-word identifiers
   static Future<Map<String, dynamic>?> _isolateGetLongestMatchingPrefix(
     String text,
     List<String> customWords,
@@ -163,7 +257,7 @@ class SuggestionHelper {
     
     final cursorPosition = text.length;
     
-    // Word boundary characters
+    // Enhanced word boundary characters
     bool isWordBoundary(String char) {
       return ' ,.;:(){}[]"\'`=+-*/\\'.contains(char);
     }
@@ -182,7 +276,7 @@ class SuggestionHelper {
     if (wordStart < cursorPosition) {
       final currentWord = text.substring(wordStart, cursorPosition);
       
-      // Try to find suggestions for the complete word
+      // 1. Try to find suggestions for the complete word
       final wordSuggestions = await _isolateFetchSuggestions(
         currentWord,
         customWords,
@@ -197,11 +291,62 @@ class SuggestionHelper {
         };
       }
       
-      // If no suggestions for the complete word, ONLY look for prefixes that
-      // start at word boundaries, not partial matches within the word
-      final partialMatches = <Map<String, dynamic>>[];
-   
-      // Check spaces within the current word for multi-word identifiers
+      // 2. Try to match multi-word phrases by looking for the start of a phrase
+      final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
+      if (multiWordStart != wordStart) {
+        final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+        final phraseMatches = await _isolateFetchSuggestions(
+          multiWordPhrase,
+          customWords,
+          suggestions,
+        );
+        
+        if (phraseMatches.isNotEmpty) {
+          return {
+            'prefix': multiWordPhrase,
+            'startIndex': multiWordStart,
+            'suggestions': phraseMatches,
+          };
+        }
+      }
+      
+      // 3. Look for partial token matches within multi-word identifiers
+      final tokenMatches = <Map<String, dynamic>>[];
+      
+      // Get all potential suggestion strings
+      final allSuggestionStrings = <String>[];
+      for (final category in suggestions.entries) {
+        allSuggestionStrings.addAll(category.value);
+      }
+      allSuggestionStrings.addAll(customWords);
+      
+      // Find tokens within multi-word suggestions that match our current word
+      for (final suggestion in allSuggestionStrings) {
+        final suggestionWithoutQuotes = _getStringWithoutQuotes(suggestion);
+        
+        // Only process multi-word suggestions
+        if (suggestionWithoutQuotes.contains(' ')) {
+          final tokens = suggestionWithoutQuotes.split(' ');
+          
+          for (int i = 0; i < tokens.length; i++) {
+            final token = tokens[i];
+            
+            // If the token starts with our current word
+            if (token.toLowerCase().startsWith(currentWord.toLowerCase())) {
+              // If this is a good match, add to token matches
+              tokenMatches.add({
+                'prefix': currentWord,
+                'startIndex': wordStart,
+                'suggestions': <String>{suggestion},
+                'priority': i, // Lower index = higher priority
+                'length': currentWord.length,
+              });
+            }
+          }
+        }
+      }
+      
+      // 4. Check spaces within the current word for additional multi-word support
       for (int i = wordStart + 1; i < cursorPosition; i++) {
         if (text[i - 1] == ' ') {
           final subWord = text.substring(i, cursorPosition);
@@ -213,10 +358,11 @@ class SuggestionHelper {
             );
             
             if (subWordSuggestions.isNotEmpty) {
-              partialMatches.add({
+              tokenMatches.add({
                 'prefix': subWord,
                 'startIndex': i,
                 'suggestions': subWordSuggestions,
+                'priority': 100, // Lower priority than exact token matches
                 'length': subWord.length,
               });
             }
@@ -224,9 +370,10 @@ class SuggestionHelper {
         }
       }
       
-      // Check positions before the word start for context
-      final checkLimit = math.max(0, wordStart - 20);
+      // 5. Check for context before the current word
+      final checkLimit = math.max(0, wordStart - 30); // Extend look-behind range
       for (int i = wordStart - 1; i >= checkLimit; i--) {
+        // Look for potential phrase start points
         if (i == 0 || isWordBoundary(text[i - 1])) {
           final potentialPrefix = text.substring(i, cursorPosition);
           if (potentialPrefix.isNotEmpty && !potentialPrefix.startsWith(' ')) {
@@ -237,10 +384,11 @@ class SuggestionHelper {
             );
             
             if (prefixSuggestions.isNotEmpty) {
-              partialMatches.add({
+              tokenMatches.add({
                 'prefix': potentialPrefix,
                 'startIndex': i,
                 'suggestions': prefixSuggestions,
+                'priority': 200, // Lowest priority
                 'length': potentialPrefix.length,
               });
             }
@@ -248,15 +396,23 @@ class SuggestionHelper {
         }
       }
       
-      // Sort by length (prefer longer matches)
-      partialMatches.sort((a, b) {
-        final aLength = a['length'] as int;
-        final bLength = b['length'] as int;
-        return bLength.compareTo(aLength);
-      });
-      
-      if (partialMatches.isNotEmpty) {
-        final bestMatch = partialMatches.first;
+      // 6. Sort token matches by priority then length
+      if (tokenMatches.isNotEmpty) {
+        tokenMatches.sort((a, b) {
+          // First sort by priority (lower is better)
+          final aPriority = a['priority'] as int;
+          final bPriority = b['priority'] as int;
+          final priorityCompare = aPriority.compareTo(bPriority);
+          
+          if (priorityCompare != 0) return priorityCompare;
+          
+          // Then sort by length (longer is better)
+          final aLength = a['length'] as int;
+          final bLength = b['length'] as int;
+          return bLength.compareTo(aLength);
+        });
+        
+        final bestMatch = tokenMatches.first;
         return {
           'prefix': bestMatch['prefix'],
           'startIndex': bestMatch['startIndex'],
@@ -264,7 +420,7 @@ class SuggestionHelper {
         };
       }
       
-      // If no matches found, just use the whole word to ensure
+      // 7. If no matches found, just use the whole word to ensure
       // we don't get partial word replacements
       return {
         'prefix': currentWord,
@@ -273,7 +429,7 @@ class SuggestionHelper {
       };
     }
     
-    // Fallback to basic search
+    // 8. Fallback to basic search for edge cases
     final fallbackSuggestions = await _isolateFetchSuggestions(
       text.substring(math.max(0, cursorPosition - 10), cursorPosition),
       customWords,
@@ -289,6 +445,62 @@ class SuggestionHelper {
     }
     
     return null;
+  }
+  
+  /// Helper method to find the start of a multi-word phrase
+  static int _findMultiWordPhraseStart(String text, int currentWordStart) {
+    // Start looking from before the current word
+    int phraseStart = currentWordStart;
+    
+    // SQL identifiers might be quoted
+    bool inQuotes = false;
+    String? quoteChar;
+    
+    // Look backward for the start of a phrase
+    for (int i = currentWordStart - 1; i >= 0; i--) {
+      final char = text[i];
+      
+      // Handle quotes
+      if ((char == '"' || char == "'") && (quoteChar == null || char == quoteChar)) {
+        inQuotes = !inQuotes;
+        if (quoteChar == null && inQuotes) {
+          quoteChar = char;
+        } else if (!inQuotes) {
+          quoteChar = null;
+        }
+        
+        // If we just entered quotes, this might be the start of an identifier
+        if (inQuotes && i > 0 && (text[i-1] == ' ' || text[i-1] == '=' || text[i-1] == ',')) {
+          phraseStart = i;
+          break;
+        }
+      }
+      
+      // If we're in quotes, keep going
+      if (inQuotes) continue;
+      
+      // If we hit a significant boundary, stop looking
+      if ('.;:,(){}[]'.contains(char)) {
+        break;
+      }
+      
+      // If we hit a space after a word, this might be part of a multi-word phrase
+      if (char == ' ' && i > 0 && !_isWordBoundaryChar(text[i-1])) {
+        phraseStart = i - 1;
+        
+        // Look backward for the start of this word
+        while (phraseStart > 0 && !_isWordBoundaryChar(text[phraseStart-1])) {
+          phraseStart--;
+        }
+      }
+    }
+    
+    return phraseStart;
+  }
+  
+  /// Helper to check if a character is a word boundary
+  static bool _isWordBoundaryChar(String char) {
+    return ' ,.;:(){}[]"\'`=+-*/\\'.contains(char);
   }
   
   /// Generates and displays appropriate suggestions based on current cursor position and text
@@ -400,8 +612,28 @@ class SuggestionHelper {
       // Find categories related to columns of this table
       if (key == 'Column in $tableName' || key == 'Columns') {
         for (final column in category.values.first) {
-          // Add columns that match the prefix
-          if (column.toLowerCase().startsWith(prefix.toLowerCase())) {
+          final columnWithoutQuotes = _getStringWithoutQuotes(column);
+          
+          // For multi-word columns, check if any token starts with the prefix
+          if (columnWithoutQuotes.contains(' ')) {
+            final tokens = columnWithoutQuotes.split(' ');
+            
+            // Check if the whole column name starts with prefix
+            if (columnWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase())) {
+              result.add(column);
+              continue;
+            }
+            
+            // Check if any token starts with prefix
+            for (final token in tokens) {
+              if (token.toLowerCase().startsWith(prefix.toLowerCase())) {
+                result.add(column);
+                break;
+              }
+            }
+          } 
+          // For single-word columns, use normal prefix matching
+          else if (columnWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase())) {
             result.add(column);
           }
         }
@@ -410,7 +642,28 @@ class SuggestionHelper {
     
     // Also check mainTableFields for backward compatibility
     for (final field in controller.mainTableFields) {
-      if (field.toLowerCase().startsWith(prefix.toLowerCase())) {
+      final fieldWithoutQuotes = _getStringWithoutQuotes(field);
+      
+      // Handle multi-word fields
+      if (fieldWithoutQuotes.contains(' ')) {
+        final tokens = fieldWithoutQuotes.split(' ');
+        
+        // Check if the whole field name starts with prefix
+        if (fieldWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase())) {
+          result.add(field);
+          continue;
+        }
+        
+        // Check if any token starts with prefix
+        for (final token in tokens) {
+          if (token.toLowerCase().startsWith(prefix.toLowerCase())) {
+            result.add(field);
+            break;
+          }
+        }
+      } 
+      // Single-word field handling
+      else if (fieldWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase())) {
         result.add(field);
       }
     }
@@ -548,8 +801,22 @@ class SuggestionHelper {
         };
       }
       
-      // 3. If no suggestions for the complete word, ONLY look for prefixes that
-      // start at word boundaries, not partial matches within the word
+      // 3. Try to match multi-word phrases
+      final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
+      if (multiWordStart != wordStart) {
+        final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+        final phraseMatches = await fetchSuggestions(multiWordPhrase);
+        
+        if (phraseMatches.isNotEmpty) {
+          return {
+            'prefix': multiWordPhrase,
+            'startIndex': multiWordStart,
+            'suggestions': phraseMatches,
+          };
+        }
+      }
+      
+      // 4. Check partial matches at word boundaries
       final partialMatches = <Map<String, dynamic>>[];
    
       // Add additional checks at spaces within the current word
@@ -564,14 +831,15 @@ class SuggestionHelper {
                 'startIndex': i,
                 'suggestions': subWordSuggestions,
                 'length': subWord.length,
+                'priority': 1,  // Higher priority
               });
             }
           }
         }
       }
       
-      // 4. Check a few positions before the word start to handle edge cases
-      final checkLimit = math.max(0, wordStart - 20);
+      // 5. Check a few positions before the word start to handle edge cases
+      final checkLimit = math.max(0, wordStart - 30);
       for (int i = wordStart - 1; i >= checkLimit; i--) {
         if (i == 0 || isWordBoundary(text[i - 1])) {
           final potentialPrefix = text.substring(i, cursorPosition);
@@ -583,20 +851,27 @@ class SuggestionHelper {
                 'startIndex': i,
                 'suggestions': suggestions,
                 'length': potentialPrefix.length,
+                'priority': 2,  // Lower priority
               });
             }
           }
         }
       }
       
-      // 5. Sort by length (prefer longer matches)
-      partialMatches.sort((a, b) {
-        final aLength = a['length'] as int;
-        final bLength = b['length'] as int;
-        return bLength.compareTo(aLength);
-      });
-      
+      // 6. Sort by priority first, then length
       if (partialMatches.isNotEmpty) {
+        partialMatches.sort((a, b) {
+          final aPriority = a['priority'] as int;
+          final bPriority = b['priority'] as int;
+          final priorityCompare = aPriority.compareTo(bPriority);
+          
+          if (priorityCompare != 0) return priorityCompare;
+          
+          final aLength = a['length'] as int;
+          final bLength = b['length'] as int;
+          return bLength.compareTo(aLength);
+        });
+        
         final bestMatch = partialMatches.first;
         return {
           'prefix': bestMatch['prefix'],
@@ -675,23 +950,45 @@ class SuggestionHelper {
   
   /// Fallback implementation that runs on the main thread if isolate fails
   Future<Set<String>> _fetchSuggestionsOnMainThread(String prefix) async {
-    final suggestions = <String>{
-      ...await controller.autocompleter.getSuggestions(prefix),
-      ...await controller.autocompleter.getSuggestions(prefix.toLowerCase()),
-      ...await controller.autocompleter.getSuggestions(prefix.toUpperCase()),
-      ...await controller.autocompleter.getSuggestions(
-        prefix[0].toUpperCase() + prefix.substring(1).toLowerCase(),
-      ),
-    };
+    final suggestions = <String>{};
+    
+    // Process with variations for case-insensitivity
+    final variations = [
+      prefix,
+      prefix.toLowerCase(),
+      prefix.toUpperCase(),
+      prefix.isNotEmpty ? prefix[0].toUpperCase() + prefix.substring(1).toLowerCase() : '',
+    ];
+    
+    // Get suggestions from autocompleter with each variation
+    for (final variation in variations) {
+      if (variation.isEmpty) continue;
+      
+      final variationSuggestions = await controller.autocompleter.getSuggestions(variation);
+      suggestions.addAll(variationSuggestions);
+    }
 
+    // If no direct matches, look for token matches in multi-word fields
     if (suggestions.isEmpty) {
-      final suggestions0 = controller.autocompleter.customWords
-          .where(
-            (element) => element.stringWithoutQuotes.toLowerCase().contains(prefix.toLowerCase()),
-          )
-          .toList()
-        ..sort();
-      suggestions.addAll(suggestions0);
+      for (final word in controller.autocompleter.customWords) {
+        final wordWithoutQuotes = _getStringWithoutQuotes(word);
+        
+        // For multi-word fields, check each token
+        if (wordWithoutQuotes.contains(' ')) {
+          final tokens = wordWithoutQuotes.split(' ');
+          
+          for (final token in tokens) {
+            if (token.toLowerCase().startsWith(prefix.toLowerCase())) {
+              suggestions.add(word);
+              break;
+            }
+          }
+        } 
+        // For single-word fields, use contains for more flexible matching
+        else if (wordWithoutQuotes.toLowerCase().contains(prefix.toLowerCase())) {
+          suggestions.add(word);
+        }
+      }
     }
 
     return suggestions;

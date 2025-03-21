@@ -6,25 +6,24 @@ import 'dart:core';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:highlight/highlight_core.dart';
-
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_code_editor/src/autocomplete/autocompleter.dart';
 import 'package:flutter_code_editor/src/code/code_edit_result.dart';
-import 'package:flutter_code_editor/src/history/code_history_controller.dart';
-import 'package:flutter_code_editor/src/history/code_history_record.dart';
-import 'package:flutter_code_editor/src/single_line_comments/parser/single_line_comments.dart';
-import 'package:flutter_code_editor/src/wip/autocomplete/popup_controller.dart';
 import 'package:flutter_code_editor/src/code_field/actions/comment_uncomment.dart';
 import 'package:flutter_code_editor/src/code_field/actions/copy.dart';
 import 'package:flutter_code_editor/src/code_field/actions/indent.dart';
 import 'package:flutter_code_editor/src/code_field/actions/outdent.dart';
 import 'package:flutter_code_editor/src/code_field/actions/redo.dart';
 import 'package:flutter_code_editor/src/code_field/actions/undo.dart';
-import 'package:flutter_code_editor/src/code_field/span_builder.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/formatter/sql_formatter.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/suggestion_helper.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/word_insertion/word_insertion_helper.dart';
+import 'package:flutter_code_editor/src/code_field/span_builder.dart';
+import 'package:flutter_code_editor/src/history/code_history_controller.dart';
+import 'package:flutter_code_editor/src/history/code_history_record.dart';
+import 'package:flutter_code_editor/src/single_line_comments/parser/single_line_comments.dart';
+import 'package:flutter_code_editor/src/wip/autocomplete/popup_controller.dart';
+import 'package:highlight/highlight_core.dart';
 
 class CodeController extends TextEditingController {
   CodeController({
@@ -43,7 +42,7 @@ class CodeController extends TextEditingController {
       TabModifier(),
     ],
   })  : _analyzer = analyzer,
-        readOnlySectionNames = readOnlySectionNames,
+        _readOnlySectionNames = readOnlySectionNames,
         _code = Code.empty,
         _isTabReplacementEnabled = modifiers.any((e) => e is TabModifier) {
     setLanguage(language, analyzer: analyzer);
@@ -102,7 +101,12 @@ class CodeController extends TextEditingController {
   Timer? _debounce;
 
   final AbstractNamedSectionParser? namedSectionParser;
-  Set<String> readOnlySectionNames;
+  Set<String> _readOnlySectionNames;
+  set readOnlySectionNames(Set<String> value) {
+    _readOnlySectionNames = value;
+  }
+  // ignore: unnecessary_getters_setters
+  Set<String> get readOnlySectionNames => _readOnlySectionNames;
 
   bool needsQoutes = false;
   bool needDotForTable = true;
@@ -730,7 +734,7 @@ class CodeController extends TextEditingController {
       language: language,
       highlighted: highlight.parse(text, language: _languageId),
       namedSectionParser: namedSectionParser,
-      readOnlySectionNames: readOnlySectionNames,
+      readOnlySectionNames: _readOnlySectionNames,
       visibleSectionNames: _visibleSectionNames,
     );
   }
