@@ -244,6 +244,144 @@ class SuggestionHelper {
     return input;
   }
   
+  /// Helper method to find the start of a multi-word phrase
+  static int _findMultiWordPhraseStart(String text, int currentWordStart) {
+    // Start looking from before the current word
+    int phraseStart = currentWordStart;
+    
+    // SQL identifiers might be quoted
+    bool inQuotes = false;
+    String? quoteChar;
+    
+    // Check if we're dealing with SQL keywords
+    bool potentialSqlContext = false;
+    final commonSqlKeywords = ['SELECT', 'FROM', 'WHERE', 'GROUP', 'ORDER', 'JOIN', 'HAVING', 'INSERT', 'UPDATE', 'DELETE'];
+    
+    // Look for SQL context by checking if any keywords appear before the current position
+    for (final keyword in commonSqlKeywords) {
+      if (text.toUpperCase().contains(keyword)) {
+        potentialSqlContext = true;
+        break;
+      }
+    }
+    
+    // Look backward for the start of a phrase, with special handling for SQL contexts
+    int i = currentWordStart - 1;
+    int lastWordStart = currentWordStart;
+    int lastNonSpaceCharPos = -1;
+    bool foundSpace = false;
+    
+    while (i >= 0) {
+      final char = text[i];
+      
+      // Track non-space characters for SQL multi-word detection
+      if (char != ' ' && lastNonSpaceCharPos == -1) {
+        lastNonSpaceCharPos = i;
+      }
+      
+      // Handle quotes
+      if ((char == '"' || char == "'") && (quoteChar == null || char == quoteChar)) {
+        inQuotes = !inQuotes;
+        if (quoteChar == null && inQuotes) {
+          quoteChar = char;
+        } else if (!inQuotes) {
+          quoteChar = null;
+        }
+        
+        // If we just entered quotes, this might be the start of an identifier
+        if (inQuotes && i > 0 && (text[i-1] == ' ' || text[i-1] == '=' || text[i-1] == ',')) {
+          phraseStart = i;
+          break;
+        }
+      }
+      
+      // If we're in quotes, keep going
+      if (inQuotes) {
+        i--;
+        continue;
+      }
+      
+      // If we hit a significant boundary, stop looking unless in SQL context
+      if ('.;:,(){}[]'.contains(char)) {
+        // In SQL context, we can cross some boundaries for multi-word keywords
+        if (potentialSqlContext && (char == '(' || char == ')')) {
+          i--;
+          continue;
+        }
+        break;
+      }
+      
+      // Special handling for SQL contexts - more aggressively track multi-word phrases
+      if (potentialSqlContext) {
+        // If we find a space, note it for SQL multi-word detection
+        if (char == ' ') {
+          foundSpace = true;
+          
+          // If we've already found a space and now hit another word, check if it's
+          // the start of a multi-word phrase (like "ORDER BY" or "GROUP BY")
+          if (lastNonSpaceCharPos > i) {
+            // Calculate the potential word start before this space
+            int potentialWordStart = i - 1;
+            while (potentialWordStart >= 0 && !_isWordBoundaryChar(text[potentialWordStart])) {
+              potentialWordStart--;
+            }
+            potentialWordStart++; // Adjust to the actual start
+            
+            // Extract the potential word before this space
+            if (potentialWordStart < i) {
+              final previousWord = text.substring(potentialWordStart, i).trim().toUpperCase();
+              
+              // If this looks like a SQL keyword that might precede a field name, update phraseStart
+              if (commonSqlKeywords.contains(previousWord) || 
+                  previousWord == "BY" || previousWord == "AS" || previousWord == "ON") {
+                lastWordStart = i + 1; // After the space
+                // Continue looking for more context
+              }
+            }
+          }
+          
+          // Always track where the last word started
+          if (i + 1 < text.length && !_isWordBoundaryChar(text[i + 1])) {
+            lastWordStart = i + 1;
+          }
+        }
+        
+        // If we've found a space and now we're at a word boundary before the space
+        if (foundSpace && (i == 0 || _isWordBoundaryChar(text[i-1]))) {
+          // In SQL context, often we want to include preceding words in autocomplete
+          // E.g., "SELECT Order da" -> suggest "Order Date" (replace "Order da" with "Order Date")
+          phraseStart = lastWordStart;
+          break;
+        }
+      }
+      
+      // Standard multi-word phrase detection (unchanged from before)
+      if (char == ' ' && i > 0 && !_isWordBoundaryChar(text[i-1])) {
+        phraseStart = i - 1;
+        
+        // Look backward for the start of this word
+        while (phraseStart > 0 && !_isWordBoundaryChar(text[phraseStart-1])) {
+          phraseStart--;
+        }
+      }
+      
+      i--;
+    }
+    
+    // Special SQL context case: if we found spaces but didn't identify a clear phrase start,
+    // try to use the last word start we tracked
+    if (potentialSqlContext && foundSpace && phraseStart == currentWordStart) {
+      return lastWordStart;
+    }
+    
+    return phraseStart;
+  }
+  
+  /// Helper to check if a character is a word boundary
+  static bool _isWordBoundaryChar(String char) {
+    return ' ,.;:(){}[]"\'`=+-*/\\'.contains(char);
+  }
+  
   /// Enhanced version of getLongestMatchingPrefix that runs in an isolate
   /// with improved support for multi-word identifiers
   static Future<Map<String, dynamic>?> _isolateGetLongestMatchingPrefix(
@@ -276,37 +414,85 @@ class SuggestionHelper {
     if (wordStart < cursorPosition) {
       final currentWord = text.substring(wordStart, cursorPosition);
       
-      // 1. Try to find suggestions for the complete word
-      final wordSuggestions = await _isolateFetchSuggestions(
-        currentWord,
-        customWords,
-        suggestions,
-      );
-      
-      if (wordSuggestions.isNotEmpty) {
-        return {
-          'prefix': currentWord,
-          'startIndex': wordStart,
-          'suggestions': wordSuggestions,
-        };
+      // 0. Check if we're in SQL context - if so, we prioritize multi-word matching
+      bool sqlContext = false;
+      final commonSqlKeywords = ['SELECT', 'FROM', 'WHERE', 'GROUP', 'ORDER', 'JOIN', 'HAVING'];
+      for (final keyword in commonSqlKeywords) {
+        if (text.toUpperCase().contains(keyword)) {
+          sqlContext = true;
+          break;
+        }
       }
       
-      // 2. Try to match multi-word phrases by looking for the start of a phrase
-      final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
-      if (multiWordStart != wordStart) {
-        final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
-        final phraseMatches = await _isolateFetchSuggestions(
-          multiWordPhrase,
+      // For SQL context, try multi-word matching first
+      if (sqlContext) {
+        // 1. Look for multi-word phrases first in SQL context
+        final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
+        if (multiWordStart != wordStart) {
+          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final phraseMatches = await _isolateFetchSuggestions(
+            multiWordPhrase,
+            customWords,
+            suggestions,
+          );
+          
+          if (phraseMatches.isNotEmpty) {
+            return {
+              'prefix': multiWordPhrase,
+              'startIndex': multiWordStart,
+              'suggestions': phraseMatches,
+            };
+          }
+        }
+        
+        // 2. Try to match complete word if multi-word matching didn't find anything
+        final wordSuggestions = await _isolateFetchSuggestions(
+          currentWord,
           customWords,
           suggestions,
         );
         
-        if (phraseMatches.isNotEmpty) {
+        if (wordSuggestions.isNotEmpty) {
           return {
-            'prefix': multiWordPhrase,
-            'startIndex': multiWordStart,
-            'suggestions': phraseMatches,
+            'prefix': currentWord,
+            'startIndex': wordStart,
+            'suggestions': wordSuggestions,
           };
+        }
+      } else {
+        // For non-SQL context, try word matching first
+        // 1. Try to find suggestions for the complete word
+        final wordSuggestions = await _isolateFetchSuggestions(
+          currentWord,
+          customWords,
+          suggestions,
+        );
+        
+        if (wordSuggestions.isNotEmpty) {
+          return {
+            'prefix': currentWord,
+            'startIndex': wordStart,
+            'suggestions': wordSuggestions,
+          };
+        }
+        
+        // 2. Then try to match multi-word phrases 
+        final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
+        if (multiWordStart != wordStart) {
+          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final phraseMatches = await _isolateFetchSuggestions(
+            multiWordPhrase,
+            customWords,
+            suggestions,
+          );
+          
+          if (phraseMatches.isNotEmpty) {
+            return {
+              'prefix': multiWordPhrase,
+              'startIndex': multiWordStart,
+              'suggestions': phraseMatches,
+            };
+          }
         }
       }
       
@@ -446,63 +632,7 @@ class SuggestionHelper {
     
     return null;
   }
-  
-  /// Helper method to find the start of a multi-word phrase
-  static int _findMultiWordPhraseStart(String text, int currentWordStart) {
-    // Start looking from before the current word
-    int phraseStart = currentWordStart;
-    
-    // SQL identifiers might be quoted
-    bool inQuotes = false;
-    String? quoteChar;
-    
-    // Look backward for the start of a phrase
-    for (int i = currentWordStart - 1; i >= 0; i--) {
-      final char = text[i];
-      
-      // Handle quotes
-      if ((char == '"' || char == "'") && (quoteChar == null || char == quoteChar)) {
-        inQuotes = !inQuotes;
-        if (quoteChar == null && inQuotes) {
-          quoteChar = char;
-        } else if (!inQuotes) {
-          quoteChar = null;
-        }
-        
-        // If we just entered quotes, this might be the start of an identifier
-        if (inQuotes && i > 0 && (text[i-1] == ' ' || text[i-1] == '=' || text[i-1] == ',')) {
-          phraseStart = i;
-          break;
-        }
-      }
-      
-      // If we're in quotes, keep going
-      if (inQuotes) continue;
-      
-      // If we hit a significant boundary, stop looking
-      if ('.;:,(){}[]'.contains(char)) {
-        break;
-      }
-      
-      // If we hit a space after a word, this might be part of a multi-word phrase
-      if (char == ' ' && i > 0 && !_isWordBoundaryChar(text[i-1])) {
-        phraseStart = i - 1;
-        
-        // Look backward for the start of this word
-        while (phraseStart > 0 && !_isWordBoundaryChar(text[phraseStart-1])) {
-          phraseStart--;
-        }
-      }
-    }
-    
-    return phraseStart;
-  }
-  
-  /// Helper to check if a character is a word boundary
-  static bool _isWordBoundaryChar(String char) {
-    return ' ,.;:(){}[]"\'`=+-*/\\'.contains(char);
-  }
-  
+
   /// Generates and displays appropriate suggestions based on current cursor position and text
   Future<void> generateSuggestions() async {
     controller.tableNameBeforeDot = null;
@@ -791,88 +921,167 @@ class SuggestionHelper {
     if (wordStart < cursorPosition) {
       final currentWord = text.substring(wordStart, cursorPosition);
       
-      // 2. Try to find suggestions for the complete word
-      final wordSuggestions = await fetchSuggestions(currentWord);
-      if (wordSuggestions.isNotEmpty) {
-        return {
-          'prefix': currentWord,
-          'startIndex': wordStart,
-          'suggestions': wordSuggestions,
-        };
-      }
-      
-      // 3. Try to match multi-word phrases
-      final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
-      if (multiWordStart != wordStart) {
-        final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
-        final phraseMatches = await fetchSuggestions(multiWordPhrase);
-        
-        if (phraseMatches.isNotEmpty) {
-          return {
-            'prefix': multiWordPhrase,
-            'startIndex': multiWordStart,
-            'suggestions': phraseMatches,
-          };
+      // 0. Check if we're in SQL context - if so, we prioritize multi-word matching
+      bool sqlContext = false;
+      final commonSqlKeywords = ['SELECT', 'FROM', 'WHERE', 'GROUP', 'ORDER', 'JOIN', 'HAVING'];
+      for (final keyword in commonSqlKeywords) {
+        if (text.toUpperCase().contains(keyword)) {
+          sqlContext = true;
+          break;
         }
       }
       
-      // 4. Check partial matches at word boundaries
-      final partialMatches = <Map<String, dynamic>>[];
-   
-      // Add additional checks at spaces within the current word
+      // For SQL context, try multi-word matching first
+      if (sqlContext) {
+        // 1. Look for multi-word phrases first in SQL context
+        final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
+        if (multiWordStart != wordStart) {
+          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final phraseMatches = await fetchSuggestions(multiWordPhrase);
+          
+          if (phraseMatches.isNotEmpty) {
+            return {
+              'prefix': multiWordPhrase,
+              'startIndex': multiWordStart,
+              'suggestions': phraseMatches,
+            };
+          }
+        }
+        
+        // 2. Try to match complete word if multi-word matching didn't find anything
+        final wordSuggestions = await fetchSuggestions(currentWord);
+        
+        if (wordSuggestions.isNotEmpty) {
+          return {
+            'prefix': currentWord,
+            'startIndex': wordStart,
+            'suggestions': wordSuggestions,
+          };
+        }
+      } else {
+        // For non-SQL context, try word matching first
+        // 1. Try to find suggestions for the complete word
+        final wordSuggestions = await fetchSuggestions(currentWord);
+        
+        if (wordSuggestions.isNotEmpty) {
+          return {
+            'prefix': currentWord,
+            'startIndex': wordStart,
+            'suggestions': wordSuggestions,
+          };
+        }
+        
+        // 2. Then try to match multi-word phrases 
+        final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
+        if (multiWordStart != wordStart) {
+          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final phraseMatches = await fetchSuggestions(multiWordPhrase);
+          
+          if (phraseMatches.isNotEmpty) {
+            return {
+              'prefix': multiWordPhrase,
+              'startIndex': multiWordStart,
+              'suggestions': phraseMatches,
+            };
+          }
+        }
+      }
+      
+      // 3. Look for partial token matches within multi-word identifiers
+      final tokenMatches = <Map<String, dynamic>>[];
+      
+      // Get all potential suggestion strings
+      final allSuggestionStrings = <String>[];
+      for (final category in controller.popupController.suggestionCategories) {
+        allSuggestionStrings.addAll(category.values.first);
+      }
+      allSuggestionStrings.addAll(controller.autocompleter.customWords);
+      
+      // Find tokens within multi-word suggestions that match our current word
+      for (final suggestion in allSuggestionStrings) {
+        final suggestionWithoutQuotes = _getStringWithoutQuotes(suggestion);
+        
+        // Only process multi-word suggestions
+        if (suggestionWithoutQuotes.contains(' ')) {
+          final tokens = suggestionWithoutQuotes.split(' ');
+          
+          for (int i = 0; i < tokens.length; i++) {
+            final token = tokens[i];
+            
+            // If the token starts with our current word
+            if (token.toLowerCase().startsWith(currentWord.toLowerCase())) {
+              // If this is a good match, add to token matches
+              tokenMatches.add({
+                'prefix': currentWord,
+                'startIndex': wordStart,
+                'suggestions': <String>{suggestion},
+                'priority': i, // Lower index = higher priority
+                'length': currentWord.length,
+              });
+            }
+          }
+        }
+      }
+      
+      // 4. Check spaces within the current word for additional multi-word support
       for (int i = wordStart + 1; i < cursorPosition; i++) {
         if (text[i - 1] == ' ') {
           final subWord = text.substring(i, cursorPosition);
           if (subWord.isNotEmpty) {
             final subWordSuggestions = await fetchSuggestions(subWord);
+            
             if (subWordSuggestions.isNotEmpty) {
-              partialMatches.add({
+              tokenMatches.add({
                 'prefix': subWord,
                 'startIndex': i,
                 'suggestions': subWordSuggestions,
+                'priority': 100, // Lower priority than exact token matches
                 'length': subWord.length,
-                'priority': 1,  // Higher priority
               });
             }
           }
         }
       }
       
-      // 5. Check a few positions before the word start to handle edge cases
-      final checkLimit = math.max(0, wordStart - 30);
+      // 5. Check for context before the current word
+      final checkLimit = math.max(0, wordStart - 30); // Extend look-behind range
       for (int i = wordStart - 1; i >= checkLimit; i--) {
+        // Look for potential phrase start points
         if (i == 0 || isWordBoundary(text[i - 1])) {
           final potentialPrefix = text.substring(i, cursorPosition);
           if (potentialPrefix.isNotEmpty && !potentialPrefix.startsWith(' ')) {
-            final suggestions = await fetchSuggestions(potentialPrefix);
-            if (suggestions.isNotEmpty) {
-              partialMatches.add({
+            final prefixSuggestions = await fetchSuggestions(potentialPrefix);
+            
+            if (prefixSuggestions.isNotEmpty) {
+              tokenMatches.add({
                 'prefix': potentialPrefix,
                 'startIndex': i,
-                'suggestions': suggestions,
+                'suggestions': prefixSuggestions,
+                'priority': 200, // Lowest priority
                 'length': potentialPrefix.length,
-                'priority': 2,  // Lower priority
               });
             }
           }
         }
       }
       
-      // 6. Sort by priority first, then length
-      if (partialMatches.isNotEmpty) {
-        partialMatches.sort((a, b) {
+      // 6. Sort token matches by priority then length
+      if (tokenMatches.isNotEmpty) {
+        tokenMatches.sort((a, b) {
+          // First sort by priority (lower is better)
           final aPriority = a['priority'] as int;
           final bPriority = b['priority'] as int;
           final priorityCompare = aPriority.compareTo(bPriority);
           
           if (priorityCompare != 0) return priorityCompare;
           
+          // Then sort by length (longer is better)
           final aLength = a['length'] as int;
           final bLength = b['length'] as int;
           return bLength.compareTo(aLength);
         });
         
-        final bestMatch = partialMatches.first;
+        final bestMatch = tokenMatches.first;
         return {
           'prefix': bestMatch['prefix'],
           'startIndex': bestMatch['startIndex'],
@@ -880,7 +1089,7 @@ class SuggestionHelper {
         };
       }
       
-      // If no matches found, just use the whole word to ensure
+      // 7. If no matches found, just use the whole word to ensure
       // we don't get partial word replacements
       return {
         'prefix': currentWord,
@@ -889,9 +1098,11 @@ class SuggestionHelper {
       };
     }
     
-    // If no word found at cursor (rare case), fall back to basic search
-    // This should almost never happen, but we keep it as a fallback
-    final fallbackSuggestions = await fetchSuggestions(text.substring(math.max(0, cursorPosition - 10), cursorPosition));
+    // 8. Fallback to basic search for edge cases
+    final fallbackSuggestions = await fetchSuggestions(
+      text.substring(math.max(0, cursorPosition - 10), cursorPosition)
+    );
+    
     if (fallbackSuggestions.isNotEmpty) {
       return {
         'prefix': text.substring(math.max(0, cursorPosition - 10), cursorPosition),
