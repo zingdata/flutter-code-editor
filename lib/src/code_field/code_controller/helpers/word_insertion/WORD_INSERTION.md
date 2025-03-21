@@ -1,125 +1,130 @@
-# Word Insertion Helper
-
-This document explains the Word Insertion Helper implementation in the Flutter Code Editor, which handles the insertion of autocomplete suggestions into the editor.
+# Word Insertion Helper Implementation
 
 ## Overview
 
-The `WordInsertionHelper` class is responsible for inserting selected autocomplete suggestions into the code editor at the appropriate position. It encapsulates the complex logic of:
-
-1. Determining the correct insertion position
-2. Formatting the inserted text according to SQL syntax rules
-3. Maintaining the cursor position after insertion
-4. Triggering appropriate follow-up suggestions (like showing columns after inserting a table name)
-5. Handling multi-word identifiers (like "Customer Address" or "Order Date")
+The `WordInsertionHelper` class is responsible for handling the insertion of autocomplete suggestions into the code editor. It provides a clean, encapsulated way to manage the logic of replacing text with selected suggestions while maintaining proper cursor positioning and formatting.
 
 ## Key Components
 
-### WordInsertionHelper Class
+1. **Context-Aware Insertion Logic**
+   - Intelligently determines which text to replace based on context
+   - Handles SQL-specific scenarios like field names after clauses
+   - Detects and properly replaces multi-word identifiers
+   - Maintains SQL syntax awareness for better replacements
 
-The primary class responsible for handling word insertion. It:
+2. **SQL-Specific Text Replacement**
+   - Recognizes SQL clauses (SELECT, FROM, WHERE, etc.)
+   - Handles field names with spaces in SQL queries
+   - Properly replaces complete phrases like "order da" with "Order Date"
+   - Preserves SQL query structure during replacements
 
-- Takes a reference to the CodeController
-- Provides methods to insert autocomplete selections
-- Handles different insertion scenarios
-- Manages suggestion popup visibility
+3. **Multi-Word Identifier Handling**
+   - Intelligently determines the start position for multi-word phrases
+   - Handles quoted identifiers containing spaces
+   - Supports replacing complete phrases rather than just parts 
+   - Uses token comparison to ensure accurate replacements
 
-### Two Main Insertion Paths
+4. **Formatting Integration**
+   - Works with the `SqlFormatter` to format inserted text properly
+   - Handles quoting and SQL syntax requirements
+   - Ensures consistent formatting throughout the document
 
-The helper handles two distinct insertion scenarios:
-
-1. **With Prefix Index**: When we have a clear start position for the word being replaced
-   - Used when the user has typed part of a word and then selected a suggestion
-   - Replaces the text from the prefix start to the current cursor position
-
-2. **Without Prefix Index**: When we don't have a defined start position
-   - Used as a fallback when the system can't identify the prefix
-   - Inserts the word at the current cursor position without replacing existing text
-
-### Multi-Word Identifier Handling
-
-A critical feature is properly handling multi-word identifiers that are common in SQL:
-
-- **Complete Phrase Replacement**: When a user types partial text like "pet ty" and selects "Pet Type", the entire phrase "pet ty" is replaced, not just "ty"
-- **Word Boundary Detection**: Uses word boundary analysis to identify the start of multi-word phrases
-- **Space-Aware Matching**: Recognizes spaces as part of identifiers in specific contexts
-- **Coherent Replacement**: Ensures the entire semantic unit is replaced, maintaining code correctness
-
-### SQL Formatting Integration
-
-The helper leverages the SQL formatter to handle SQL-specific formatting concerns:
-
-- For SQL keywords, functions, and identifiers
-- Adds appropriate spaces, quotes, or parentheses based on context
-- Sets proper cursor position (e.g., inside parentheses for functions)
-- Properly formats multi-word identifiers with appropriate quoting
+5. **Cursor Positioning**
+   - Places the cursor at the appropriate position after insertion
+   - Handles cases like function calls with parameters
+   - Ensures a smooth editing experience
 
 ## Process Flow
 
-1. **Insertion Triggered**
-   - User selects a suggestion or presses Enter/Tab on a highlighted suggestion
-   - `insertSelectedWord()` method is called
+1. **Identifying Replacement Range**
+   - Determine where the selected suggestion should be inserted
+   - For multi-word fields, find the true start position
+   - Use SQL context awareness to determine full phrase boundaries
 
-2. **Prepare for Insertion**
-   - Sets a flag to prevent triggering suggestion generation during insertion
-   - Gets the selected word from the popup controller
+2. **Special Case: SQL Context Detection**
+   - Detect SQL context by finding keywords like SELECT, FROM, etc.
+   - Find the preceding SQL clause to determine context
+   - For table/column names, handle quoting and formatting
 
-3. **Determine Insertion Mode and Range**
-   - If prefix start index is available, use normal insertion
-   - For multi-word identifiers, extend the start index backward to include the entire phrase
-   - Otherwise, fall back to insertion without prefix
+3. **Text Replacement**
+   - Replace the identified text range with the formatted suggestion
+   - Format the text according to SQL rules if needed
+   - Position the cursor after the inserted text
 
-4. **Format and Insert**
-   - Format the word using SQL formatter
-   - Calculate appropriate cursor position
-   - Update the editor text and selection
+4. **Post-Insertion Actions**
+   - Show column suggestions if a table name was inserted
+   - Handle function call insertion specially
+   - Hide the suggestion popup in other cases
 
-5. **Handle Follow-up Suggestions**
-   - If the inserted word is a table name, show column suggestions
-   - If the inserted word is a function with parentheses, show parameter suggestions
+## Multi-Word Field Handling
 
-6. **Clean Up**
-   - Reset flags and prepare for next interaction
+The WordInsertionHelper includes sophisticated logic for handling multi-word fields, particularly in SQL contexts:
 
-## Multi-Word Identifier Example
+1. **SQL Context Detection**
+   - Identifies when text is being edited in an SQL query
+   - Detects SQL clauses like SELECT, FROM, WHERE, etc.
+   - Adjusts behavior based on clause type
 
-When working with an identifier like "Pet Type":
+2. **Field Name Recognition**
+   - Distinguishes between SQL keywords and field names
+   - Identifies multi-word field names after SQL clauses
+   - Detects partial typing of multi-word fields
 
-1. User types "pet ty"
-2. Suggestion system shows "Pet Type" as an option
-3. User selects the suggestion
-4. System analyzes and identifies "pet ty" as a multi-word partial match
-5. The entire "pet ty" is replaced with "Pet Type" (with appropriate formatting)
-6. Cursor is positioned after the inserted text
+3. **Token-Based Analysis**
+   - Compares tokens in both the typed text and suggestion
+   - Identifies partial matches in multi-word fields
+   - Determines appropriate replacement boundaries
 
-## Integration with CodeController
+4. **Special Cases**
+   - Handles cases like "SELECT order da" → "SELECT Order Date"
+   - Properly replaces multi-word field names after clauses
+   - Maintains SQL syntax correctness during replacements
 
-The `WordInsertionHelper` is instantiated by the `CodeController` and maintained as a private field. The controller delegates word insertion logic to the helper, maintaining a clean separation of concerns:
+## Example Scenarios
 
-```dart
-void insertSelectedWord() {
-  _wordInsertionHelper.insertSelectedWord();
-}
-```
+1. **Basic Word Replacement:**
+   - User types: "SEL"
+   - Suggestion: "SELECT"
+   - Result: "SELECT" replaces "SEL"
+
+2. **SQL Keyword Replacement:**
+   - User types: "INNER JO"
+   - Suggestion: "INNER JOIN"
+   - Result: Entire "INNER JO" is replaced with "INNER JOIN"
+
+3. **Multi-Word Field After Clause:**
+   - User types: "SELECT order da"
+   - Suggestion: "Order Date"
+   - Result: Entire "order da" is replaced with "Order Date"
+
+4. **Partial Field Name Match:**
+   - User types: "customer na"
+   - Suggestion: "Customer Name"
+   - Result: Entire "customer na" is replaced with "Customer Name"
+
+## Integration with Controller
+
+The `WordInsertionHelper` is initialized within the `CodeController` and takes a reference to it. This allows it to:
+
+1. Access the current text and selection
+2. Update the text and cursor position
+3. Control the suggestion popup's visibility
+4. Interact with formatting components
 
 ## Design Benefits
 
-This refactoring provides several advantages:
+1. **Separation of Concerns**
+   - Isolates word insertion logic from the main controller
+   - Makes the insertion algorithm more testable and maintainable
 
-1. **Separation of Concerns**: Word insertion logic is isolated from the main controller
-2. **Improved Testability**: The helper can be tested independently
-3. **Better Error Handling**: Ensures flags are reset even if exceptions occur
-4. **More Maintainable**: Changes to word insertion logic only affect the helper class
-5. **Cleaner Code**: Reduces the size and complexity of the CodeController class
-6. **Better Multi-Word Support**: Handles complex identifiers that contain spaces
+2. **Improved User Experience**
+   - More accurate replacements, especially for multi-word phrases
+   - Better handling of SQL-specific syntax
+   - Smoother editing experience for complex code
 
-## Future Extensibility
-
-The design allows for future enhancements:
-
-1. Support for different formatting strategies for different languages
-2. More sophisticated context detection
-3. Custom insertion behavior for specific types of suggestions
-4. Improved handling of multi-word suggestions in various programming contexts
-5. Support for quoted identifiers with special characters
+3. **Context Awareness**
+   - SQL syntax awareness improves suggestion relevance
+   - Better handling of complex identifiers and quoted strings
+   - More intelligent cursor positioning
 
 This helper is a key component in providing a rich autocompletion experience for SQL and other languages in the Flutter Code Editor. 
