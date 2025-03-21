@@ -132,7 +132,7 @@ class SuggestionHelper {
       // Check all suggestion categories
       for (final category in suggestions.entries) {
         for (final word in category.value) {
-          if (word.toLowerCase().startsWith(variation.toLowerCase())) {
+          if (word.stringWithoutQuotes.toLowerCase().startsWith(variation.toLowerCase())) {
             result.add(word);
           }
         }
