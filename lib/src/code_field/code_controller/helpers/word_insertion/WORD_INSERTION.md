@@ -24,12 +24,18 @@ The `WordInsertionHelper` class is responsible for handling the insertion of aut
    - Supports replacing complete phrases rather than just parts 
    - Uses token comparison to ensure accurate replacements
 
-4. **Formatting Integration**
+4. **Quoted Identifier Support**
+   - Properly handles identifiers with double quotes (`"Column Name"`)
+   - Supports backtick-quoted identifiers (`` `Column Name` ``)
+   - Uses `stringWithoutQuotes` for quote-agnostic comparisons
+   - Tries multiple quoting styles when searching for identifiers
+
+5. **Formatting Integration**
    - Works with the `SqlFormatter` to format inserted text properly
    - Handles quoting and SQL syntax requirements
    - Ensures consistent formatting throughout the document
 
-5. **Cursor Positioning**
+6. **Cursor Positioning**
    - Places the cursor at the appropriate position after insertion
    - Handles cases like function calls with parameters
    - Ensures a smooth editing experience
@@ -46,12 +52,18 @@ The `WordInsertionHelper` class is responsible for handling the insertion of aut
    - Find the preceding SQL clause to determine context
    - For table/column names, handle quoting and formatting
 
-3. **Text Replacement**
+3. **Quote-Aware Text Processing**
+   - Use `stringWithoutQuotes` for comparing identifiers
+   - Try multiple quoting styles when searching for phrases
+   - Support identifier matching regardless of quote style
+   - Properly handle both quoted and unquoted columns
+
+4. **Text Replacement**
    - Replace the identified text range with the formatted suggestion
    - Format the text according to SQL rules if needed
    - Position the cursor after the inserted text
 
-4. **Post-Insertion Actions**
+5. **Post-Insertion Actions**
    - Show column suggestions if a table name was inserted
    - Handle function call insertion specially
    - Hide the suggestion popup in other cases
@@ -69,16 +81,19 @@ The WordInsertionHelper includes sophisticated logic for handling multi-word fie
    - Distinguishes between SQL keywords and field names
    - Identifies multi-word field names after SQL clauses
    - Detects partial typing of multi-word fields
+   - Handles quoted field names with `"` or `` ` `` characters
 
 3. **Token-Based Analysis**
    - Compares tokens in both the typed text and suggestion
    - Identifies partial matches in multi-word fields
    - Determines appropriate replacement boundaries
+   - Uses quote-agnostic comparison for proper matching
 
 4. **Special Cases**
    - Handles cases like "SELECT order da" → "SELECT Order Date"
    - Properly replaces multi-word field names after clauses
    - Maintains SQL syntax correctness during replacements
+   - Supports quoted identifiers like "SELECT `First na`" → "SELECT `First Name`"
 
 ## Example Scenarios
 
@@ -97,10 +112,15 @@ The WordInsertionHelper includes sophisticated logic for handling multi-word fie
    - Suggestion: "Order Date"
    - Result: Entire "order da" is replaced with "Order Date"
 
-4. **Partial Field Name Match:**
-   - User types: "customer na"
-   - Suggestion: "Customer Name"
-   - Result: Entire "customer na" is replaced with "Customer Name"
+4. **Quoted Column Name Handling:**
+   - User types: "SELECT `customer na`"
+   - Suggestion: "`Customer Name`"
+   - Result: Entire "`customer na`" is replaced with "`Customer Name`"
+
+5. **Double-Quoted Identifier Handling:**
+   - User types: 'SELECT "first na"'
+   - Suggestion: '"First Name"'
+   - Result: Entire '"first na"' is replaced with '"First Name"'
 
 ## Integration with Controller
 
@@ -119,7 +139,7 @@ The `WordInsertionHelper` is initialized within the `CodeController` and takes a
 
 2. **Improved User Experience**
    - More accurate replacements, especially for multi-word phrases
-   - Better handling of SQL-specific syntax
+   - Better handling of SQL-specific syntax and quoted identifiers
    - Smoother editing experience for complex code
 
 3. **Context Awareness**

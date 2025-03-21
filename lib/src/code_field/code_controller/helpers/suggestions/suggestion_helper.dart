@@ -1,8 +1,8 @@
-import 'dart:math' as math;
-import 'dart:isolate';
 import 'dart:async';
+import 'dart:isolate';
+import 'dart:math' as math;
+
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_code_editor/src/code/string.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/formatter/sql_formatter.dart';
 
