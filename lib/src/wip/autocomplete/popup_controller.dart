@@ -25,6 +25,10 @@ class PopupController extends ChangeNotifier {
   int get selectedIndex => _selectedIndex;
 
   void show(String? tableName, List<String> suggestions) {
+    if (suggestions.isEmpty) {
+      hide();
+      return;
+    }
     final List<Map<String, String>> suggestions0 = [];
 
     for (final e in suggestions) {
@@ -87,7 +91,10 @@ class PopupController extends ChangeNotifier {
         }
       });
     }
-
+    if (suggestions0.isEmpty) {
+      hide();
+      return;
+    }
     suggestions = suggestions0;
 
     _selectedIndex = -1;
