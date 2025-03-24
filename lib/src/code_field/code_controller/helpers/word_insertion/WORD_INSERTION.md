@@ -24,20 +24,27 @@ The `WordInsertionHelper` class is responsible for handling the insertion of aut
    - Supports replacing complete phrases rather than just parts 
    - Uses token comparison to ensure accurate replacements
 
-4. **Quoted Identifier Support**
+4. **SQL Aggregation Function Support**
+   - Automatically adds parentheses to functions like SUM, AVG, COUNT
+   - Positions cursor inside the parentheses for immediate parameter entry
+   - Detects context to only add parentheses in SQL contexts
+   - Supports common aggregation functions like MIN, MAX, MEDIAN, etc.
+
+5. **Quoted Identifier Support**
    - Properly handles identifiers with double quotes (`"Column Name"`)
    - Supports backtick-quoted identifiers (`` `Column Name` ``)
    - Uses `stringWithoutQuotes` for quote-agnostic comparisons
    - Tries multiple quoting styles when searching for identifiers
 
-5. **Formatting Integration**
+6. **Formatting Integration**
    - Works with the `SqlFormatter` to format inserted text properly
    - Handles quoting and SQL syntax requirements
    - Ensures consistent formatting throughout the document
 
-6. **Cursor Positioning**
+7. **Cursor Positioning**
    - Places the cursor at the appropriate position after insertion
    - Handles cases like function calls with parameters
+   - Positions cursor inside aggregation function parentheses
    - Ensures a smooth editing experience
 
 ## Process Flow
@@ -51,6 +58,7 @@ The `WordInsertionHelper` class is responsible for handling the insertion of aut
    - Detect SQL context by finding keywords like SELECT, FROM, etc.
    - Find the preceding SQL clause to determine context
    - For table/column names, handle quoting and formatting
+   - Identify SQL aggregation functions for special handling
 
 3. **Quote-Aware Text Processing**
    - Use `stringWithoutQuotes` for comparing identifiers
@@ -58,12 +66,19 @@ The `WordInsertionHelper` class is responsible for handling the insertion of aut
    - Support identifier matching regardless of quote style
    - Properly handle both quoted and unquoted columns
 
-4. **Text Replacement**
+4. **Function-Aware Text Processing**
+   - Detect SQL aggregation functions like SUM, AVG, COUNT
+   - Automatically append parentheses to function names
+   - Adjust cursor positioning to facilitate parameter entry
+   - Support common SQL aggregation functions
+
+5. **Text Replacement**
    - Replace the identified text range with the formatted suggestion
    - Format the text according to SQL rules if needed
-   - Position the cursor after the inserted text
+   - Position the cursor after the inserted text or inside parentheses
+   - Add function-specific syntax elements as needed
 
-5. **Post-Insertion Actions**
+6. **Post-Insertion Actions**
    - Show column suggestions if a table name was inserted
    - Handle function call insertion specially
    - Hide the suggestion popup in other cases
@@ -122,6 +137,11 @@ The WordInsertionHelper includes sophisticated logic for handling multi-word fie
    - Suggestion: '"First Name"'
    - Result: Entire '"first na"' is replaced with '"First Name"'
 
+6. **SQL Aggregation Function:**
+   - User types: "SELECT SU"
+   - Suggestion: "SUM"
+   - Result: "SUM()" with cursor positioned inside the parentheses
+
 ## Integration with Controller
 
 The `WordInsertionHelper` is initialized within the `CodeController` and takes a reference to it. This allows it to:
@@ -140,11 +160,13 @@ The `WordInsertionHelper` is initialized within the `CodeController` and takes a
 2. **Improved User Experience**
    - More accurate replacements, especially for multi-word phrases
    - Better handling of SQL-specific syntax and quoted identifiers
+   - Automated function parentheses addition saves keystrokes
    - Smoother editing experience for complex code
 
 3. **Context Awareness**
    - SQL syntax awareness improves suggestion relevance
    - Better handling of complex identifiers and quoted strings
+   - Function-aware insertion reduces manual typing
    - More intelligent cursor positioning
 
 This helper is a key component in providing a rich autocompletion experience for SQL and other languages in the Flutter Code Editor. 

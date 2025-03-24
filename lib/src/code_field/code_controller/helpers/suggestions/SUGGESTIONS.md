@@ -30,13 +30,20 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - Performs comprehensive scanning to find the start of multi-word phrases
    - Handles quoted multi-word identifiers properly (e.g., "First Name", 'Total Amount')
 
-5. **Off-Main-Thread Processing**
+5. **Cross-Platform Processing Strategy**
+   - Automatically detects platform capabilities and adjusts processing strategy
+   - Uses isolates for efficient off-main-thread processing on mobile/desktop platforms
+   - Seamlessly falls back to main thread processing on web platforms where isolates aren't supported
+   - Maintains consistent behavior and suggestion quality across all platforms
+   - Handles platform differences transparently without requiring configuration
+
+6. **Off-Main-Thread Processing (Mobile/Desktop)**
    - Performs computationally intensive suggestion operations in a separate Dart isolate
    - Prevents UI freezes during complex suggestion generation
    - Includes graceful fallbacks to main thread if isolate communication fails
    - Automatically manages isolate lifecycle (creation and disposal)
 
-6. **Integration with PopupController**
+7. **Integration with PopupController**
    - Manages when and where to display the suggestion popup
    - Controls the content and filtering of suggestions
    - Handles popup visibility based on context
@@ -55,8 +62,13 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - If no dot is found, try to detect the SQL context from FROM/JOIN clauses
    - Set the detected table as context for future suggestions
 
-4. **Word Boundary and Multi-Word Analysis (Off-Main-Thread)**
-   - The text analysis is delegated to a background isolate
+4. **Platform-Aware Processing Strategy**
+   - Detect current platform using Flutter's `kIsWeb` constant
+   - For mobile/desktop platforms, delegate text analysis to a background isolate
+   - For web platforms, perform the analysis directly on the main thread
+   - Maintain identical suggestion logic and quality regardless of platform
+
+5. **Word Boundary and Multi-Word Analysis**
    - First find the complete word at the current cursor position
    - For multi-word fields, identify potential phrases by looking backward from cursor
    - Generate suggestions for the complete word/phrase if possible
@@ -64,34 +76,42 @@ The `SuggestionHelper` class is responsible for generating code completion sugge
    - Only fall back to partial matches at proper word boundaries, never mid-word
    - Maintain word integrity for replacement operations
 
-5. **Displaying Suggestions**
-   - Results from the isolate are received back on the main thread
+6. **Displaying Suggestions**
+   - Results from processing (either isolate or main thread) are used
    - Show the popup with relevant suggestions
    - Hide the popup if no valid suggestions are found
 
-## Off-Main-Thread Implementation
+## Cross-Platform Implementation
 
-The suggestion system uses Dart isolates to move heavy computation off the main thread:
+The suggestion system uses platform detection to ensure optimal performance across all platforms:
 
-1. **Isolate Communication**
-   - Uses a persistent isolate for suggestion operations
+1. **Platform Detection**
+   - Uses Flutter's `kIsWeb` constant to detect web platform
+   - Automatically selects the appropriate processing strategy
+   - No manual configuration required for different platforms
+
+2. **Isolate Strategy (Mobile/Desktop)**
+   - Uses Dart isolates for computation-heavy operations
    - Communicates through message passing with typed request/response objects
    - Maintains a cached send port for efficient communication
-
-2. **Parallel Processing**
-   - The main text analysis and suggestion filtering occurs in parallel
-   - Word boundary detection and prefix matching happen in the background
+   - Performs text analysis and suggestion filtering in parallel
    - Only UI operations (showing/hiding the popup) run on the main thread
 
-3. **Graceful Degradation**
-   - If isolate creation or communication fails, automatically falls back to main thread
-   - Preserves all functionality even in environments where isolates aren't available
-   - Ensures suggestion quality isn't compromised even in fallback mode
+3. **Main Thread Strategy (Web)**
+   - Performs all operations directly on the main thread for web compatibility
+   - Uses identical suggestion logic to ensure consistent behavior
+   - Optimizes operations to minimize performance impact on the main thread
+   - Maintains the same suggestion quality and behavior as isolate-based processing
 
-4. **Resource Management**
-   - Isolate is properly disposed when the controller is disposed
-   - Handles edge cases like rapid suggestion requests
-   - Uses a single persistent isolate to avoid creation overhead
+4. **Graceful Degradation**
+   - Even on platforms that support isolates, automatically falls back to main thread if needed
+   - Ensures suggestion functionality is never compromised
+   - Handles edge cases like rapid suggestion requests safely
+
+5. **Resource Management**
+   - Platform-appropriate resource cleanup
+   - Only creates isolates when needed and supported
+   - Properly disposes resources when the controller is disposed
 
 ## Word Matching Logic
 
@@ -145,17 +165,23 @@ The `SuggestionHelper` is initialized within the `CodeController` and takes a re
    - Easy to add support for new languages or suggestion types
    - Can be extended to support more complex SQL analysis
 
-3. **Improved Usability**
+3. **Cross-Platform Compatibility**
+   - Works consistently across all Flutter-supported platforms
+   - Optimized for each platform's capabilities
+   - No special configuration required for different deployment targets
+   - Same code base works on mobile, desktop, and web
+
+4. **Improved Usability**
    - Natural word-aware suggestions that respect word boundaries
    - Prevents unexpected partial word replacements
    - Better handling of multi-word phrases and expressions
    - Intelligently suggests complete identifiers from partial input
 
-4. **Performance Optimization**
-   - Offloads computationally intensive operations to background threads
+5. **Performance Optimization**
+   - Uses appropriate threading model for each platform
+   - Offloads computationally intensive operations when possible
    - Ensures UI responsiveness even with large suggestion sets
    - Smart caching of word positions and boundaries
-   - Persistent isolate reduces startup overhead
 
 ## Future Extensions
 
@@ -171,7 +197,8 @@ The `SuggestionHelper` is initialized within the `CodeController` and takes a re
    - Track frequently used completions
    - Prioritize suggestions based on user behavior
 
-4. **Further Performance Optimizations**
+4. **Further Platform Optimizations**
+   - Fine-tune web platform performance with additional optimizations
    - Implement batched suggestion requests
-   - Fine-tune isolate communication for minimal latency
-   - Add adaptive processing based on suggestion complexity 
+   - Further reduce main thread impact for web
+   - Add adaptive processing based on suggestion complexity and platform capabilities 

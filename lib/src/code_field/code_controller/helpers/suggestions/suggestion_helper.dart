@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/formatter/sql_formatter.dart';
@@ -39,8 +40,17 @@ class SuggestionHelper {
   SendPort? _sendPort;
   Completer<SendPort>? _portCompleter;
   
+  /// Flag to check if we should use isolates or not
+  bool get _canUseIsolates => !kIsWeb;
+  
   /// Gets or creates a send port for the suggestions isolate
   Future<SendPort> _getSendPort() async {
+    // If we can't use isolates (web platform), throw an error
+    // to trigger the fallback to main thread implementation
+    if (!_canUseIsolates) {
+      throw UnsupportedError('Isolates are not supported on this platform');
+    }
+    
     if (_sendPort != null) return _sendPort!;
     
     // If we're already creating a port, wait for that to complete
@@ -66,10 +76,12 @@ class SuggestionHelper {
   
   /// Dispose of the isolate when no longer needed
   void dispose() {
-    _isolate?.kill(priority: Isolate.immediate);
-    _isolate = null;
-    _sendPort = null;
-    _portCompleter = null;
+    if (_canUseIsolates) {
+      _isolate?.kill(priority: Isolate.immediate);
+      _isolate = null;
+      _sendPort = null;
+      _portCompleter = null;
+    }
   }
   
   /// Isolate entry point that handles suggestion processing
@@ -849,53 +861,62 @@ class SuggestionHelper {
     controller.lastPrefixStartIndex = startIndex;
   }
 
-  /// Find the longest matching prefix for suggestion purposes using isolate for heavy computation
+  /// Find the longest matching prefix for suggestion purposes
+  /// Uses isolate for heavy computation on mobile platforms,
+  /// falls back to main thread implementation on web
   Future<Map<String, dynamic>?> getLongestMatchingPrefix(String text) async {
     final cursorPosition = controller.selection.baseOffset;
     if (cursorPosition <= 0 || text.isEmpty) {
       return null;
     }
     
-    try {
-      // Get a send port to communicate with the isolate
-      final sendPort = await _getSendPort();
-      
-      // Create a receive port for the response
-      final responsePort = ReceivePort();
-      
-      // Prepare customWords and suggestions for isolate
-      final customWords = controller.autocompleter.customWords.toList();
-      
-      // Convert suggestion categories to a simple map for isolate
-      final Map<String, List<String>> suggestionMap = {};
-      for (final category in controller.popupController.suggestionCategories) {
-        suggestionMap[category.keys.first] = category.values.first.toList();
+    // Check if we can use isolates
+    if (_canUseIsolates) {
+      try {
+        // Get a send port to communicate with the isolate
+        final sendPort = await _getSendPort();
+        
+        // Create a receive port for the response
+        final responsePort = ReceivePort();
+        
+        // Prepare customWords and suggestions for isolate
+        final customWords = controller.autocompleter.customWords.toList();
+        
+        // Convert suggestion categories to a simple map for isolate
+        final Map<String, List<String>> suggestionMap = {};
+        for (final category in controller.popupController.suggestionCategories) {
+          suggestionMap[category.keys.first] = category.values.first.toList();
+        }
+        
+        // Send the request to the isolate
+        sendPort.send([
+          _SuggestionRequest(
+            text: text.substring(0, cursorPosition),
+            prefix: '', // Empty prefix indicates we want longest matching prefix
+            customWords: customWords,
+            suggestions: suggestionMap,
+          ),
+          responsePort.sendPort // Send the response port so isolate knows where to reply
+        ]);
+        
+        // Wait for the response
+        final result = await responsePort.first as _SuggestionResult;
+        responsePort.close();
+        
+        // Return the result
+        return result.prefixInfo;
+      } catch (e) {
+        // If an error occurs with the isolate, fall back to the main thread implementation
+        return _getLongestMatchingPrefixOnMainThread(text);
       }
-      
-      // Send the request to the isolate
-      sendPort.send([
-        _SuggestionRequest(
-          text: text.substring(0, cursorPosition),
-          prefix: '', // Empty prefix indicates we want longest matching prefix
-          customWords: customWords,
-          suggestions: suggestionMap,
-        ),
-        responsePort.sendPort // Send the response port so isolate knows where to reply
-      ]);
-      
-      // Wait for the response
-      final result = await responsePort.first as _SuggestionResult;
-      responsePort.close();
-      
-      // Return the result
-      return result.prefixInfo;
-    } catch (e) {
-      // If an error occurs with the isolate, fall back to the original implementation
+    } else {
+      // Web platform or other environment where isolates aren't supported
       return _getLongestMatchingPrefixOnMainThread(text);
     }
   }
   
   /// Fallback implementation that runs on the main thread if isolate fails
+  /// or on web platform where isolates aren't supported
   Future<Map<String, dynamic>?> _getLongestMatchingPrefixOnMainThread(String text) async {
     final cursorPosition = controller.selection.baseOffset;
     if (cursorPosition <= 0 || text.isEmpty) {
@@ -1114,52 +1135,61 @@ class SuggestionHelper {
     return null;
   }
 
-  /// Fetch suggestions for a specific prefix using isolate for heavy computation
+  /// Fetch suggestions for a specific prefix
+  /// Uses isolate for heavy computation on mobile platforms,
+  /// falls back to main thread implementation on web
   Future<Set<String>> fetchSuggestions(String prefix) async {
     if (prefix.isEmpty) {
       return {};
     }
     
-    try {
-      // Get a send port to communicate with the isolate
-      final sendPort = await _getSendPort();
-      
-      // Create a receive port for the response
-      final responsePort = ReceivePort();
-      
-      // Prepare customWords and suggestions for isolate
-      final customWords = controller.autocompleter.customWords.toList();
-      
-      // Convert suggestion categories to a simple map for isolate
-      final Map<String, List<String>> suggestionMap = {};
-      for (final category in controller.popupController.suggestionCategories) {
-        suggestionMap[category.keys.first] = category.values.first.toList();
+    // Check if we can use isolates
+    if (_canUseIsolates) {
+      try {
+        // Get a send port to communicate with the isolate
+        final sendPort = await _getSendPort();
+        
+        // Create a receive port for the response
+        final responsePort = ReceivePort();
+        
+        // Prepare customWords and suggestions for isolate
+        final customWords = controller.autocompleter.customWords.toList();
+        
+        // Convert suggestion categories to a simple map for isolate
+        final Map<String, List<String>> suggestionMap = {};
+        for (final category in controller.popupController.suggestionCategories) {
+          suggestionMap[category.keys.first] = category.values.first.toList();
+        }
+        
+        // Send the request to the isolate
+        sendPort.send([
+          _SuggestionRequest(
+            text: '',
+            prefix: prefix,
+            customWords: customWords,
+            suggestions: suggestionMap,
+          ),
+          responsePort.sendPort // Send the response port so isolate knows where to reply
+        ]);
+        
+        // Wait for the response
+        final result = await responsePort.first as _SuggestionResult;
+        responsePort.close();
+        
+        // Return the result
+        return result.suggestions ?? {};
+      } catch (e) {
+        // If an error occurs with the isolate, fall back to the main thread implementation
+        return _fetchSuggestionsOnMainThread(prefix);
       }
-      
-      // Send the request to the isolate
-      sendPort.send([
-        _SuggestionRequest(
-          text: '',
-          prefix: prefix,
-          customWords: customWords,
-          suggestions: suggestionMap,
-        ),
-        responsePort.sendPort // Send the response port so isolate knows where to reply
-      ]);
-      
-      // Wait for the response
-      final result = await responsePort.first as _SuggestionResult;
-      responsePort.close();
-      
-      // Return the result
-      return result.suggestions ?? {};
-    } catch (e) {
-      // If an error occurs with the isolate, fall back to the original implementation
+    } else {
+      // Web platform or other environment where isolates aren't supported
       return _fetchSuggestionsOnMainThread(prefix);
     }
   }
   
   /// Fallback implementation that runs on the main thread if isolate fails
+  /// or on web platform where isolates aren't supported
   Future<Set<String>> _fetchSuggestionsOnMainThread(String prefix) async {
     final suggestions = <String>{};
     

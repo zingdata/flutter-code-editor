@@ -9,6 +9,21 @@ class WordInsertionHelper {
   WordInsertionHelper(this.controller);
   final CodeController controller;
 
+  /// List of SQL aggregation functions that should have brackets after them
+  final List<String> _sqlAggregationFunctions = [
+    'SUM',
+    'AVG',
+    'COUNT',
+    'MAX',
+    'MIN',
+    'AVERAGE',
+    'FIRST',
+    'LAST',
+    'MEDIAN',
+    'STDDEV',
+    'VARIANCE'
+  ];
+
   /// Inserts the currently selected word from autocomplete popup
   /// into the code editor at the appropriate position
   void insertSelectedWord({
@@ -53,7 +68,6 @@ class WordInsertionHelper {
       controller.isInsertingWord = false;
     }
   }
-
   /// Determines the appropriate start index for multi-word identifier replacements
   int _determineMultiWordReplacementStart(
       int startIndex, int endIndex, String selectedWord, String textBeingReplaced) {
@@ -395,6 +409,11 @@ class WordInsertionHelper {
 
     return sqlKeywords.contains(upperWord);
   }
+  
+  /// Checks if the given word is an SQL aggregation function
+  bool _isSqlAggregationFunction(String word) {
+    return _sqlAggregationFunctions.contains(word.toUpperCase());
+  }
 
   /// Checks if a character is a word boundary
   bool _isWordBoundary(String char) {
@@ -405,20 +424,34 @@ class WordInsertionHelper {
   void _handleInsertionWithoutPrefixIndex(
       TextSelection previousSelection, bool isColumn, String selectedWord) {
     final cursorPosition = previousSelection.baseOffset;
+    String wordToInsert = selectedWord;
+    int cursorAdjustment = 0;
+    
+    // Check if this is an aggregation function and add brackets if needed
+    if (_isInSqlContext(controller.text) && _isSqlAggregationFunction(selectedWord)) {
+      wordToInsert = "$selectedWord()";
+      cursorAdjustment = -1; // Position cursor inside the brackets
+    }
 
     // Format the text and adjust the cursor offset
     var formatResult = controller.formatAndAdjustOffset(
       originalText: controller.text,
-      selectedWord: selectedWord,
+      selectedWord: wordToInsert,
       startIndex: cursorPosition,
       endIndex: cursorPosition,
       isColumn: isColumn,
     );
 
+    // Apply additional cursor adjustment for aggregation functions
+    int finalOffset = formatResult.adjustedOffset;
+    if (cursorAdjustment != 0) {
+      finalOffset += cursorAdjustment;
+    }
+
     // Update the controller's value
     controller.value = TextEditingValue(
       text: formatResult.formattedText,
-      selection: TextSelection.collapsed(offset: formatResult.adjustedOffset),
+      selection: TextSelection.collapsed(offset: finalOffset),
     );
 
     controller.popupController.hide();
@@ -435,19 +468,34 @@ class WordInsertionHelper {
     int startIndex,
     int endIndex,
   ) {
+    String wordToInsert = selectedWord;
+    int cursorAdjustment = 0;
+    
+    // Check if this is an aggregation function and add brackets if needed
+    if (_isInSqlContext(controller.text) && _isSqlAggregationFunction(selectedWord)) {
+      wordToInsert = "$selectedWord()";
+      cursorAdjustment = -1; // Position cursor inside the brackets
+    }
+
     // Format the text and adjust the cursor offset
     var formatResult = controller.formatAndAdjustOffset(
       originalText: controller.text,
-      selectedWord: selectedWord,
+      selectedWord: wordToInsert,
       startIndex: startIndex,
       endIndex: endIndex,
       isColumn: isColumn,
     );
 
+    // Apply additional cursor adjustment for aggregation functions
+    int finalOffset = formatResult.adjustedOffset;
+    if (cursorAdjustment != 0) {
+      finalOffset += cursorAdjustment;
+    }
+
     // Update the controller's value
     controller.value = TextEditingValue(
       text: formatResult.formattedText,
-      selection: TextSelection.collapsed(offset: formatResult.adjustedOffset),
+      selection: TextSelection.collapsed(offset: finalOffset),
     );
 
     // Show or hide the popup based on conditions
