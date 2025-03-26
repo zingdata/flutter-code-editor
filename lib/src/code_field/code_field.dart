@@ -500,9 +500,13 @@ class _CodeFieldState extends State<CodeField> {
     }
     
     final textPainter = _getTextPainter(widget.controller.text);
-    final caretHeight = _getCaretHeight(textPainter);
+    
+    // Get the font metrics to calculate an accurate line height
+    final fontSize = textStyle.fontSize ?? 14.0;
+    final lineHeight = fontSize * (textStyle.height ?? 1.2);
     
     // Get caret position in global coordinates - this is absolute screen position
+    // This now accounts for soft wrapping
     final Offset cursorOffset = _getCaretOffset(textPainter);
     
     // Calculate how many suggestions we'll show (for height calculation)
@@ -511,20 +515,16 @@ class _CodeFieldState extends State<CodeField> {
         : 4;
     final popupHeight = suggestionCount * Sizes.autocompleteItemHeight;
     
-    // Get the viewport height and caret position relative to viewport
+    // Get the viewport height 
     final viewportHeight = windowSize?.height ?? 0;
-    final scrollOffset = _codeScroll?.offset ?? 0;
-    final horizontalScrollOffset = _horizontalCodeScroll?.offset ?? 0;
-    final relativeToViewport = cursorOffset.dy - scrollOffset;
     
     // Calculate positions for normal (below cursor) and flipped (above cursor) popup
-    final normalTopOffset = cursorOffset.dy + caretHeight + 2; // Add small vertical offset for better appearance
-    final flippedTopOffset = cursorOffset.dy - popupHeight - 2; // Small negative offset for spacing
+    // Using the actual line height for better positioning
+    final normalTopOffset = cursorOffset.dy + lineHeight + 2; // Position just below the current line
+    final flippedTopOffset = cursorOffset.dy - popupHeight - 2; // Position above the current line
     
     // Calculate horizontal position - right at the cursor
-    // We're explicitly using cursor position instead of adding gutter width
-    // Add small offset for better visual appearance
-    final leftOffset = cursorOffset.dx + 2;
+    final leftOffset = cursorOffset.dx + 2; // Small offset for better visual appearance
     
     setState(() {
       _caretDataOffset = cursorOffset;
@@ -552,49 +552,41 @@ class _CodeFieldState extends State<CodeField> {
       return renderBox.localToGlobal(Offset.zero);
     }
     
-    // Find the line where the cursor is located
-    int cursorLine = 0;
-    int lineStartOffset = 0;
+    // Instead of calculating line position based on newlines,
+    // we'll use the TextPainter's getOffsetForCaret method which
+    // properly accounts for text wrapping
     
-    // Calculate which line the cursor is on
-    for (int i = 0; i < cursorPosition.offset; i++) {
-      if (i >= text.length) break;
-      if (text[i] == '\n') {
-        cursorLine++;
-        lineStartOffset = i + 1;
-      }
-    }
-    
-    // Get the text of the current line up to the cursor
-    final String currentLineText = text.substring(
-      lineStartOffset, 
-      min(cursorPosition.offset, text.length)
-    );
-    
-    // Create a text painter just for the current line
-    final TextPainter linePainter = TextPainter(
-      text: TextSpan(text: currentLineText, style: textStyle),
+    // Create a text painter for the entire text
+    final fullTextPainter = TextPainter(
+      text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
+      // Enable text wrapping with unlimited lines
+      maxLines: null,
+      textWidthBasis: TextWidthBasis.parent,
     );
     
     // Get available width for layout
     final double availableWidth = renderBox.size.width - widget.padding.horizontal;
-    linePainter.layout(maxWidth: availableWidth);
+    fullTextPainter.layout(maxWidth: availableWidth);
     
-    // Get the width of text up to cursor in current line
-    // Note: Do NOT add gutter width here as we only want position within the editor
-    final double cursorX = linePainter.width;
+    // Get the offset at cursor position (this accounts for wrapping)
+    final Offset rawOffset = fullTextPainter.getOffsetForCaret(
+      cursorPosition, 
+      Rect.zero,
+    );
     
-    // Get line height
-    final double lineHeight = getLineHeight() * (textStyle.fontSize ?? 14.0);
+    // Get horizontal scroll offset to adjust for horizontal scrolling
+    final horizontalScrollOffset = _horizontalCodeScroll?.offset ?? 0;
     
-    // Calculate Y position based on line number
-    // Adjust for scroll position and ensure we're at the bottom of the line
-    final double scrollY = _codeScroll?.offset ?? 0;
-    final double cursorY = (cursorLine * lineHeight) - scrollY;
+    // Get vertical scroll offset to adjust position
+    final scrollY = _codeScroll?.offset ?? 0;
+    
+    // Apply scroll offsets
+    final double adjustedX = rawOffset.dx - horizontalScrollOffset;
+    final double adjustedY = rawOffset.dy - scrollY;
     
     // Convert to global coordinates
-    return renderBox.localToGlobal(Offset(cursorX, cursorY));
+    return renderBox.localToGlobal(Offset(adjustedX, adjustedY));
   }
 
   double _getCaretHeight(TextPainter textPainter) {
