@@ -8,7 +8,6 @@ import 'package:flutter_code_editor/src/wip/autocomplete/popup_controller.dart';
 
 /// Popup window displaying the list of possible completions
 class Popup extends StatefulWidget {
-
   const Popup({
     super.key,
     required this.controller,
@@ -66,12 +65,12 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 120),
     );
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeOutCubic,
     );
-    
+
     // Initialize slide animation - direction will be set in build
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -0.05),
@@ -80,7 +79,7 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     // Slight delay before starting animation for a more natural feel
     Future.delayed(const Duration(milliseconds: 10), () {
       if (mounted) {
@@ -98,15 +97,14 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final maxPopUpWidth =
-        Sizes.autocompletePopupMaxWidth + (widget.isMobile ? 0 : 100);
+    final maxPopUpWidth = Sizes.autocompletePopupMaxWidth + (widget.isMobile ? 0 : 100);
 
     // Calculate available space on screen
     final screenSize = MediaQuery.of(context).size;
-    
+
     // Determine if we need to flip the popup to show above cursor
     final bool shouldFlip = _shouldFlipPopup(context);
-    
+
     // Update slide animation direction based on flip
     _slideAnimation = Tween<Offset>(
       begin: Offset(0, shouldFlip ? 0.05 : -0.05), // Slide down if flipped, up if normal
@@ -115,17 +113,17 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     // Use the appropriate offset based on whether the popup should be flipped
     var useOffset = shouldFlip ? widget.flippedOffset : widget.normalOffset;
-    
+
     // Get the editor's position and dimensions to adjust for side panels and boundaries
     final editorLeft = widget.editorOffset?.dx ?? 0;
-    
+
     // Calculate editor's right boundary based on its width
     final editorWidth = widget.editingWindowSize.width;
     final editorRight = editorLeft + editorWidth;
-    
+
     // Determine side panel width based on screen size
     double sidePanelWidth = 0;
     if (ScreenSize.isExtraWide(context)) {
@@ -135,21 +133,22 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
     } else if (ScreenSize.isMobile(context)) {
       sidePanelWidth = 0;
     }
-    
+
     // The caretDataOffset is the cursor position in global coordinates
     // Adjust for side panel width
     final adjustedLeftPosition = useOffset.dx - sidePanelWidth;
-    
+
     // Constrain to screen and editor bounds
     final rightEdgePosition = adjustedLeftPosition + maxPopUpWidth;
     double finalLeftPosition = adjustedLeftPosition;
-    
+
     // First check if popup extends beyond editor's right boundary
     if (rightEdgePosition > editorRight) {
       // Keep popup within editor bounds
       finalLeftPosition = max(editorLeft, editorRight - maxPopUpWidth - 4);
+      useOffset = Offset(useOffset.dx, useOffset.dy + 6);
     }
-    
+
     // Then check if popup extends beyond screen's right boundary
     if (rightEdgePosition > screenSize.width) {
       // Keep popup within screen bounds
@@ -215,11 +214,11 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
     // Calculate available space below cursor
     final screenHeight = MediaQuery.of(context).size.height;
     final spaceBelow = screenHeight - widget.normalOffset.dy;
-    
+
     // Calculate popup height based on number of suggestions
     final suggestionsCount = widget.controller.suggestions.length;
     final popupHeight = min(suggestionsCount, 4) * Sizes.autocompleteItemHeight;
-    
+
     // If not enough space below cursor but enough space above, flip the popup
     final spaceAbove = widget.flippedOffset.dy;
     return spaceBelow < popupHeight && spaceAbove > popupHeight;
@@ -227,7 +226,7 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
 
   Widget _buildListItem(int index) {
     final isSelected = widget.controller.selectedIndex == index;
-    
+
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
@@ -247,9 +246,7 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           curve: Curves.easeOutCubic,
-          color: isSelected
-              ? const Color(0xff1D73C9).withOpacity(0.15)
-              : Colors.transparent,
+          color: isSelected ? const Color(0xff1D73C9).withOpacity(0.15) : Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
@@ -279,9 +276,7 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
                         style: widget.style.copyWith(
                           fontSize: 13,
                           height: 1.2,
-                          color: isSelected
-                              ? const Color(0xff1D73C9)
-                              : widget.style.color,
+                          color: isSelected ? const Color(0xff1D73C9) : widget.style.color,
                         ),
                       ),
                       const SizedBox(height: 2),
