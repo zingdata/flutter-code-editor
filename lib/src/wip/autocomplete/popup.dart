@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -49,84 +51,100 @@ class Popup extends StatefulWidget {
   PopupState createState() => PopupState();
 }
 
-class PopupState extends State<Popup> {
+class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
   final pageStorageBucket = PageStorageBucket();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
     widget.controller.addListener(rebuild);
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+    
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(rebuild);
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final maxPopUpWidth =
-        Sizes.autocompletePopupMaxWidth + (ScreenSize.isMobile(context) ? 0 : 100);
-    double leftAvailableSpace = widget.caretDataOffset.dx;
-    final rightAvailableSpace =
-        MediaQuery.of(context).size.width - leftAvailableSpace - maxPopUpWidth;
-    if (!ScreenSize.isMobile(context)) {
-      leftAvailableSpace -= ScreenSize.isExtraWide(context) ? 185 : 80;
-    }
-    if (rightAvailableSpace < 0) {
-      leftAvailableSpace += rightAvailableSpace - 4;
+        Sizes.autocompletePopupMaxWidth + (widget.isMobile ? 0 : 100);
+
+    // Calculate available space on screen
+    final screenSize = MediaQuery.of(context).size;
+    
+    // Determine if we need to flip the popup to show above cursor
+    final bool shouldFlip = _shouldFlipPopup(context);
+    
+    // Use the appropriate offset based on whether the popup should be flipped
+    final useOffset = shouldFlip ? widget.flippedOffset : widget.normalOffset;
+    
+    // Adjust left position to ensure popup stays on screen
+    double leftPosition = useOffset.dx;
+    final rightEdgePosition = leftPosition + maxPopUpWidth;
+    
+    // If popup would go off right edge of screen, adjust leftward
+    if (rightEdgePosition > screenSize.width) {
+      leftPosition = max(0, screenSize.width - maxPopUpWidth - 4);
     }
 
     return PageStorage(
       bucket: pageStorageBucket,
       child: Positioned(
-        left: leftAvailableSpace,
-        top: widget.caretDataOffset.dy + (ScreenSize.isMobile(context) ? 40 : 30),
-        child: Container(
-          alignment: Alignment.topCenter,
-          constraints: BoxConstraints(
-            maxHeight: ScreenSize.isMobile(context)
-                ? Sizes.autocompletePopupMaxHeight
-                : Sizes.autocompletePopupMaxHeight + 100,
-            maxWidth: maxPopUpWidth,
-          ),
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-          ),
-          // Container is used because the vertical borders
-          // in DecoratedBox are hidden under scroll.
-          // ignore: use_decorated_box
+        left: leftPosition,
+        top: useOffset.dy,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
           child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: const [
-                BoxShadow(
-                  color: Color.fromRGBO(9, 45, 83, .2),
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-                BoxShadow(
-                  color: Color.fromRGBO(9, 45, 83, .15),
-                  blurRadius: 32,
-                  spreadRadius: 2,
-                  offset: Offset(0, 4),
-                ),
-              ],
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
-              border: Border.all(
-                color: const Color(0xffDAE0E5),
-              ),
+            alignment: Alignment.topCenter,
+            constraints: BoxConstraints(
+              maxHeight: widget.isMobile
+                  ? Sizes.autocompletePopupMaxHeight
+                  : Sizes.autocompletePopupMaxHeight + 100,
+              maxWidth: maxPopUpWidth,
             ),
-            clipBehavior: Clip.hardEdge,
-            child: ScrollablePositionedList.builder(
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              itemScrollController: widget.controller.itemScrollController,
-              itemPositionsListener: widget.controller.itemPositionsListener,
-              itemCount: widget.controller.suggestions.length,
-              itemBuilder: (context, index) {
-                return _buildListItem(index);
-              },
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+            child: Material(
+              elevation: 8.0,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: widget.backgroundColor ?? Colors.white,
+                  borderRadius: const BorderRadius.all(Radius.circular(8)),
+                  border: Border.all(
+                    color: const Color(0xffDAE0E5),
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: ScrollablePositionedList.builder(
+                  shrinkWrap: true,
+                  physics: const ClampingScrollPhysics(),
+                  itemScrollController: widget.controller.itemScrollController,
+                  itemPositionsListener: widget.controller.itemPositionsListener,
+                  itemCount: widget.controller.suggestions.length,
+                  itemBuilder: (context, index) {
+                    return _buildListItem(index);
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -134,15 +152,19 @@ class PopupState extends State<Popup> {
     );
   }
 
-//   bool _isVerticalFlipRequired() {
-//     final isPopupShorterThanWindow =
-//         Sizes.autocompletePopupMaxHeight < widget.editingWindowSize.height;
-//     final isPopupOverflowingHeight =
-//         widget.normalOffset.dy + Sizes.autocompletePopupMaxHeight - (widget.editorOffset?.dy ?? 0) >
-//             widget.editingWindowSize.height;
-
-//     return isPopupOverflowingHeight && isPopupShorterThanWindow;
-//   }
+  bool _shouldFlipPopup(BuildContext context) {
+    // Calculate available space below cursor
+    final screenHeight = MediaQuery.of(context).size.height;
+    final spaceBelow = screenHeight - widget.normalOffset.dy;
+    
+    // Calculate popup height based on number of suggestions
+    final suggestionsCount = widget.controller.suggestions.length;
+    final popupHeight = min(suggestionsCount, 4) * Sizes.autocompleteItemHeight;
+    
+    // If not enough space below cursor but enough space above, flip the popup
+    final spaceAbove = widget.flippedOffset.dy;
+    return spaceBelow < popupHeight && spaceAbove > popupHeight;
+  }
 
   Widget _buildListItem(int index) {
     return Material(
@@ -229,6 +251,10 @@ class PopupState extends State<Popup> {
   }
 
   void rebuild() {
-    setState(() {});
+    setState(() {
+      if (widget.controller.shouldShow && !_animationController.isAnimating) {
+        _animationController.forward(from: 0.0);
+      }
+    });
   }
 }

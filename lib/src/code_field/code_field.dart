@@ -521,85 +521,108 @@ class _CodeFieldState extends State<CodeField> {
 
   Offset _getCaretOffset(TextPainter textPainter) {
     final RenderBox? renderBox = _editorKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
-      final TextPosition textPosition = widget.controller.selection.base;
-      
-      // Get the text up to the cursor position to correctly calculate line positions
-      final String textUpToCursor = widget.controller.text.length >= textPosition.offset 
-          ? widget.controller.text.substring(0, textPosition.offset)
-          : '';
-      
-      // Count newlines to determine which line we're on
-      final int lineCount = '\n'.allMatches(textUpToCursor).length;
-      
-      // Create a text span just for the text up to cursor for more accurate measurement
-      final TextSpan textSpan = TextSpan(
-        text: textUpToCursor,
-        style: widget.textStyle,
-      );
-      
-      final TextPainter cursorPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      );
-
-      cursorPainter.layout(maxWidth: renderBox.size.width);
-      
-      // Get the offset at cursor position
-      final Offset caretOffset = cursorPainter.getOffsetForCaret(textPosition, Rect.zero);
-      
-      // Convert to global coordinates
-      return renderBox.localToGlobal(caretOffset);
+    if (renderBox == null) return Offset.zero;
+    
+    final TextPosition cursorPosition = widget.controller.selection.base;
+    final String text = widget.controller.text;
+    
+    // Handle empty text case
+    if (text.isEmpty) {
+      return renderBox.localToGlobal(Offset.zero);
     }
-    return Offset.zero;
+    
+    // Find the line where the cursor is located
+    int cursorLine = 0;
+    int lineStartOffset = 0;
+    
+    // Calculate which line the cursor is on
+    for (int i = 0; i < cursorPosition.offset; i++) {
+      if (i >= text.length) break;
+      if (text[i] == '\n') {
+        cursorLine++;
+        lineStartOffset = i + 1;
+      }
+    }
+    
+    // Get the text of the current line up to the cursor
+    final String currentLineText = text.substring(
+      lineStartOffset, 
+      min(cursorPosition.offset, text.length)
+    );
+    
+    // Create a text painter just for the current line
+    final TextPainter linePainter = TextPainter(
+      text: TextSpan(text: currentLineText, style: textStyle),
+      textDirection: TextDirection.ltr,
+    );
+    
+    // Get available width for layout
+    final double availableWidth = renderBox.size.width - widget.padding.horizontal;
+    linePainter.layout(maxWidth: availableWidth);
+    
+    // Get the width of text up to cursor in current line
+    final double cursorX = linePainter.width + widget.gutterStyle.width;
+    
+    // Get line height
+    final double lineHeight = getLineHeight() * (textStyle.fontSize ?? 14.0);
+    
+    // Calculate Y position based on line number
+    // Adjust for scroll position and ensure we're at the bottom of the line
+    final double scrollY = _codeScroll?.offset ?? 0;
+    final double cursorY = (cursorLine * lineHeight) - scrollY;
+    
+    // Convert to global coordinates
+    return renderBox.localToGlobal(Offset(cursorX, cursorY));
   }
 
   double _getCaretHeight(TextPainter textPainter) {
-    final double caretFullHeight = textPainter.getFullHeightForCaret(
-      widget.controller.selection.base,
-      Rect.zero,
-    );
-    return caretFullHeight;
+    return textStyle.fontSize! * (getLineHeight());
+  }
+
+  double getLineHeight() {
+    // Default line height multiple if not specified in the style
+    return textStyle.height ?? 1.2;
   }
 
   double _getPopupLeftOffset(TextPainter textPainter) {
-    return max(
-      widget.isMobile
-          ? (40)
-          : _getCaretOffset(textPainter).dx +
-              widget.padding.left -
-              (_horizontalCodeScroll?.offset ?? 0) +
-              (_editorOffset?.dx ?? 0),
-      0,
-    );
+    // Get the horizontal position right after the cursor
+    final cursorOffset = _getCaretOffset(textPainter);
+    final horizontalScrollOffset = _horizontalCodeScroll?.offset ?? 0;
+    
+    // Position the popup at the cursor's right edge
+    final leftPosition = cursorOffset.dx + widget.padding.left - horizontalScrollOffset;
+    
+    // Ensure popup doesn't go off the left edge of the screen
+    return max(leftPosition, 0);
   }
 
   double _getPopupTopOffset(TextPainter textPainter, double caretHeight) {
-    // Get cursor position in editor coordinates
-    final Offset caretOffset = _getCaretOffset(textPainter);
+    // Get cursor position
+    final cursorOffset = _getCaretOffset(textPainter);
     
-    // Get visible area bounds
-    final double scrollOffset = _codeScroll?.offset ?? 0;
-    final double editorTop = (_editorOffset?.dy ?? 0);
-    final double viewportHeight = windowSize?.height ?? 0;
+    // Get the vertical scroll offset
+    final scrollOffset = _codeScroll?.offset ?? 0;
     
-    // Calculate raw position (where popup would ideally appear)
-    final double rawTopOffset = caretOffset.dy + caretHeight + Sizes.caretPadding;
+    // Get editor bounds
+    final editorTop = (_editorOffset?.dy ?? 0);
+    final viewportHeight = windowSize?.height ?? 0;
     
-    // Calculate position relative to viewport
-    final double relativeToViewport = rawTopOffset - scrollOffset;
+    // Position popup just below the cursor line
+    final rawTopOffset = cursorOffset.dy + caretHeight;
     
-    // Ensure the popup stays within the visible area
-    if (relativeToViewport < 0) {
-      // If would appear above visible area, position at top of visible area
-      return editorTop;
-    } else if (relativeToViewport > viewportHeight - Sizes.autocompletePopupMaxHeight) {
-      // If would appear below visible area, use flipped popup instead
-      // This is handled via flippedOffset in the Popup widget
+    // Check if popup would go off the bottom of the viewport
+    final availableSpace = viewportHeight - (rawTopOffset - scrollOffset);
+    final popupHeight = min(
+      widget.controller.popupController.suggestions.length, 
+      4
+    ) * Sizes.autocompleteItemHeight;
+    
+    if (availableSpace < popupHeight) {
+      // If not enough space below, the popup will be flipped to appear above
+      // This is handled via flippedOffset
       return rawTopOffset;
     }
     
-    // Normal case - just under the cursor
     return rawTopOffset;
   }
 
