@@ -514,10 +514,8 @@ class _CodeFieldState extends State<CodeField> {
     // Get the viewport height and caret position relative to viewport
     final viewportHeight = windowSize?.height ?? 0;
     final scrollOffset = _codeScroll?.offset ?? 0;
+    final horizontalScrollOffset = _horizontalCodeScroll?.offset ?? 0;
     final relativeToViewport = cursorOffset.dy - scrollOffset;
-    
-    // Get editor's left position to account for side panels in web
-    final editorLeft = _editorOffset?.dx ?? 0;
     
     // Calculate positions for normal (below cursor) and flipped (above cursor) popup
     final normalTopOffset = cursorOffset.dy + caretHeight + 2; // Add small vertical offset for better appearance
@@ -525,7 +523,8 @@ class _CodeFieldState extends State<CodeField> {
     
     // Calculate horizontal position - right at the cursor
     // We're explicitly using cursor position instead of adding gutter width
-    final leftOffset = cursorOffset.dx + 2; // Small offset for better appearance
+    // Add small offset for better visual appearance
+    final leftOffset = cursorOffset.dx + 2;
     
     setState(() {
       _caretDataOffset = cursorOffset;

@@ -119,18 +119,39 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
     // Use the appropriate offset based on whether the popup should be flipped
     final useOffset = shouldFlip ? widget.flippedOffset : widget.normalOffset;
     
-    // Get the editor's position to adjust for side panels if necessary
+    // Get the editor's position and dimensions to adjust for side panels and boundaries
     final editorLeft = widget.editorOffset?.dx ?? 0;
     
-    // The caretDataOffset is the cursor position in global coordinates
-    // Let's see if we need any adjustment based on side panel
-    final adjustedLeftPosition = useOffset.dx;
+    // Calculate editor's right boundary based on its width
+    final editorWidth = widget.editingWindowSize.width;
+    final editorRight = editorLeft + editorWidth;
     
-    // Constrain to screen bounds
-    final rightEdge = adjustedLeftPosition + maxPopUpWidth;
+    // Determine side panel width based on screen size
+    double sidePanelWidth = 0;
+    if (ScreenSize.isExtraWide(context)) {
+      sidePanelWidth = 224;
+    } else if (ScreenSize.isTablet(context)) {
+      sidePanelWidth = 80.5;
+    } else if (ScreenSize.isMobile(context)) {
+      sidePanelWidth = 0;
+    }
+    
+    // The caretDataOffset is the cursor position in global coordinates
+    // Adjust for side panel width
+    final adjustedLeftPosition = useOffset.dx - sidePanelWidth;
+    
+    // Constrain to screen and editor bounds
+    final rightEdgePosition = adjustedLeftPosition + maxPopUpWidth;
     double finalLeftPosition = adjustedLeftPosition;
     
-    if (rightEdge > screenSize.width) {
+    // First check if popup extends beyond editor's right boundary
+    if (rightEdgePosition > editorRight) {
+      // Keep popup within editor bounds
+      finalLeftPosition = max(editorLeft, editorRight - maxPopUpWidth - 4);
+    }
+    
+    // Then check if popup extends beyond screen's right boundary
+    if (rightEdgePosition > screenSize.width) {
       // Keep popup within screen bounds
       finalLeftPosition = max(0, screenSize.width - maxPopUpWidth - 8);
     }
@@ -305,16 +326,19 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
 
   void rebuild() {
     setState(() {
-      if (widget.controller.shouldShow && !_animationController.isAnimating) {
-        // Reset animations
+      if (widget.controller.shouldShow) {
+        if (_animationController.isDismissed) {
+          // Only animate when the popup is first appearing
+          // Use a small delay to avoid visual glitches during quick typing
+          Future.delayed(const Duration(milliseconds: 5), () {
+            if (mounted && widget.controller.shouldShow) {
+              _animationController.forward(from: 0.0);
+            }
+          });
+        }
+      } else {
+        // If popup is being hidden, reset animation
         _animationController.value = 0.0;
-        
-        // Use a small delay to avoid visual glitches during quick typing
-        Future.delayed(const Duration(milliseconds: 5), () {
-          if (mounted && widget.controller.shouldShow) {
-            _animationController.forward(from: 0.0);
-          }
-        });
       }
     });
   }
