@@ -116,7 +116,7 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
 
     // Use the appropriate offset based on whether the popup should be flipped
     var useOffset = shouldFlip ? widget.flippedOffset : widget.normalOffset;
-
+    useOffset = Offset(useOffset.dx, useOffset.dy + 10);
     // Get the editor's position and dimensions to adjust for side panels and boundaries
     final editorLeft = widget.editorOffset?.dx ?? 0;
 
@@ -146,14 +146,12 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
     if (rightEdgePosition > editorRight) {
       // Keep popup within editor bounds
       finalLeftPosition = max(editorLeft, editorRight - maxPopUpWidth - 4);
-      useOffset = Offset(useOffset.dx, useOffset.dy + 6);
     }
 
     // Then check if popup extends beyond screen's right boundary
     if (rightEdgePosition > screenSize.width) {
       // Keep popup within screen bounds
       finalLeftPosition = max(0, screenSize.width - maxPopUpWidth - 8);
-      useOffset = Offset(useOffset.dx, useOffset.dy + 6);
     }
 
     return PageStorage(
