@@ -3,22 +3,18 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:linked_scroll_controller/linked_scroll_controller.dart';
-
-// Conditionally import dart:js
-import 'package:flutter_code_editor/src/code_field/browser_detection.dart';
-
-import 'package:flutter_code_editor/src/code_theme/code_theme.dart';
-import 'package:flutter_code_editor/src/gutter/gutter.dart';
-import 'package:flutter_code_editor/src/line_numbers/gutter_style.dart';
-import 'package:flutter_code_editor/src/sizes.dart';
-import 'package:flutter_code_editor/src/wip/autocomplete/popup.dart';
 import 'package:flutter_code_editor/src/code_field/actions/comment_uncomment.dart';
 import 'package:flutter_code_editor/src/code_field/actions/indent.dart';
 import 'package:flutter_code_editor/src/code_field/actions/outdent.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 import 'package:flutter_code_editor/src/code_field/default_styles.dart';
 import 'package:flutter_code_editor/src/code_field/disable_spell_check/disable_spell_check.dart';
+import 'package:flutter_code_editor/src/code_theme/code_theme.dart';
+import 'package:flutter_code_editor/src/gutter/gutter.dart';
+import 'package:flutter_code_editor/src/line_numbers/gutter_style.dart';
+import 'package:flutter_code_editor/src/sizes.dart';
+import 'package:flutter_code_editor/src/wip/autocomplete/popup.dart';
+import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
 
 
@@ -560,9 +556,6 @@ class _CodeFieldState extends State<CodeField> {
     final fullTextPainter = TextPainter(
       text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
-      // Enable text wrapping with unlimited lines
-      maxLines: null,
-      textWidthBasis: TextWidthBasis.parent,
     );
     
     // Get available width for layout
@@ -589,57 +582,13 @@ class _CodeFieldState extends State<CodeField> {
     return renderBox.localToGlobal(Offset(adjustedX, adjustedY));
   }
 
-  double _getCaretHeight(TextPainter textPainter) {
-    return textStyle.fontSize! * (getLineHeight());
-  }
+
 
   double getLineHeight() {
     // Default line height multiple if not specified in the style
     return textStyle.height ?? 1.2;
   }
 
-  double _getPopupLeftOffset(TextPainter textPainter) {
-    // Get the horizontal position right after the cursor
-    final cursorOffset = _getCaretOffset(textPainter);
-    final horizontalScrollOffset = _horizontalCodeScroll?.offset ?? 0;
-    
-    // Position the popup at the cursor's right edge
-    // Add a small offset for better visual appearance
-    final leftPosition = cursorOffset.dx + 2 - horizontalScrollOffset;
-    
-    // Ensure popup doesn't go off the left edge of the screen
-    return max(leftPosition, 0);
-  }
-
-  double _getPopupTopOffset(TextPainter textPainter, double caretHeight) {
-    // Get cursor position
-    final cursorOffset = _getCaretOffset(textPainter);
-    
-    // Get the vertical scroll offset
-    final scrollOffset = _codeScroll?.offset ?? 0;
-    
-    // Get editor bounds
-    final editorTop = (_editorOffset?.dy ?? 0);
-    final viewportHeight = windowSize?.height ?? 0;
-    
-    // Position popup just below the cursor line
-    final rawTopOffset = cursorOffset.dy + caretHeight;
-    
-    // Check if popup would go off the bottom of the viewport
-    final availableSpace = viewportHeight - (rawTopOffset - scrollOffset);
-    final popupHeight = min(
-      widget.controller.popupController.suggestions.length, 
-      4
-    ) * Sizes.autocompleteItemHeight;
-    
-    if (availableSpace < popupHeight) {
-      // If not enough space below, the popup will be flipped to appear above
-      // This is handled via flippedOffset
-      return rawTopOffset;
-    }
-    
-    return rawTopOffset;
-  }
 
   void _onPopupStateChanged() {
     final shouldShow = widget.controller.popupController.shouldShow && windowSize != null;
