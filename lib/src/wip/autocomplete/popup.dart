@@ -55,6 +55,7 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
   final pageStorageBucket = PageStorageBucket();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
@@ -63,15 +64,29 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
 
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 120),
     );
     
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOutCubic,
     );
     
-    _animationController.forward();
+    // Initialize slide animation - direction will be set in build
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    // Slight delay before starting animation for a more natural feel
+    Future.delayed(const Duration(milliseconds: 10), () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
   }
 
   @override
@@ -92,57 +107,79 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
     // Determine if we need to flip the popup to show above cursor
     final bool shouldFlip = _shouldFlipPopup(context);
     
+    // Update slide animation direction based on flip
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, shouldFlip ? 0.05 : -0.05), // Slide down if flipped, up if normal
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    
     // Use the appropriate offset based on whether the popup should be flipped
     final useOffset = shouldFlip ? widget.flippedOffset : widget.normalOffset;
     
-    // Adjust left position to ensure popup stays on screen
-    double leftPosition = useOffset.dx;
-    final rightEdgePosition = leftPosition + maxPopUpWidth;
+    // Get the editor's position to adjust for side panels if necessary
+    final editorLeft = widget.editorOffset?.dx ?? 0;
     
-    // If popup would go off right edge of screen, adjust leftward
-    if (rightEdgePosition > screenSize.width) {
-      leftPosition = max(0, screenSize.width - maxPopUpWidth - 4);
+    // The caretDataOffset is the cursor position in global coordinates
+    // Let's see if we need any adjustment based on side panel
+    final adjustedLeftPosition = useOffset.dx;
+    
+    // Constrain to screen bounds
+    final rightEdge = adjustedLeftPosition + maxPopUpWidth;
+    double finalLeftPosition = adjustedLeftPosition;
+    
+    if (rightEdge > screenSize.width) {
+      // Keep popup within screen bounds
+      finalLeftPosition = max(0, screenSize.width - maxPopUpWidth - 8);
     }
 
     return PageStorage(
       bucket: pageStorageBucket,
       child: Positioned(
-        left: leftPosition,
+        left: finalLeftPosition,
         top: useOffset.dy,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Container(
-            alignment: Alignment.topCenter,
-            constraints: BoxConstraints(
-              maxHeight: widget.isMobile
-                  ? Sizes.autocompletePopupMaxHeight
-                  : Sizes.autocompletePopupMaxHeight + 100,
-              maxWidth: maxPopUpWidth,
-            ),
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
-            child: Material(
-              elevation: 8.0,
-              borderRadius: const BorderRadius.all(Radius.circular(8)),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: widget.backgroundColor ?? Colors.white,
-                  borderRadius: const BorderRadius.all(Radius.circular(8)),
-                  border: Border.all(
-                    color: const Color(0xffDAE0E5),
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Container(
+              alignment: Alignment.topCenter,
+              constraints: BoxConstraints(
+                maxHeight: widget.isMobile
+                    ? Sizes.autocompletePopupMaxHeight
+                    : Sizes.autocompletePopupMaxHeight + 100,
+                maxWidth: maxPopUpWidth,
+              ),
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              child: Material(
+                elevation: 8.0,
+                color: Colors.transparent,
+                shadowColor: Colors.black.withOpacity(0.14),
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: widget.backgroundColor ?? Colors.white,
+                    borderRadius: const BorderRadius.all(Radius.circular(8)),
+                    border: Border.all(
+                      color: const Color(0xffDAE0E5),
+                      width: 0.5,
+                    ),
                   ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: ScrollablePositionedList.builder(
-                  shrinkWrap: true,
-                  physics: const ClampingScrollPhysics(),
-                  itemScrollController: widget.controller.itemScrollController,
-                  itemPositionsListener: widget.controller.itemPositionsListener,
-                  itemCount: widget.controller.suggestions.length,
-                  itemBuilder: (context, index) {
-                    return _buildListItem(index);
-                  },
+                  clipBehavior: Clip.antiAlias,
+                  child: ScrollablePositionedList.builder(
+                    shrinkWrap: true,
+                    physics: const ClampingScrollPhysics(),
+                    itemScrollController: widget.controller.itemScrollController,
+                    itemPositionsListener: widget.controller.itemPositionsListener,
+                    itemCount: widget.controller.suggestions.length,
+                    itemBuilder: (context, index) {
+                      return _buildListItem(index);
+                    },
+                  ),
                 ),
               ),
             ),
@@ -167,6 +204,8 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildListItem(int index) {
+    final isSelected = widget.controller.selectedIndex == index;
+    
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
@@ -180,47 +219,61 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
           widget.parentFocusNode.requestFocus();
           widget.controller.onCompletionSelected();
         },
-        hoverColor: Colors.grey.withOpacity(0.1),
+        hoverColor: Colors.grey.withOpacity(0.08),
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
-        child: ColoredBox(
-          color: widget.controller.selectedIndex == index
-              ? const Color(0xff1D73C9).withOpacity(0.3)
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOutCubic,
+          color: isSelected
+              ? const Color(0xff1D73C9).withOpacity(0.15)
               : Colors.transparent,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.asset(
-                  getZingIcon(widget.controller.suggestions[index].keys.first),
-                  width: 16,
-                  height: 16,
-                  fit: BoxFit.contain,
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  child: Image.asset(
+                    getZingIcon(widget.controller.suggestions[index].keys.first),
+                    width: 16,
+                    height: 16,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         widget.controller.suggestions[index].values.first
                             .replaceAll('"', '')
                             .replaceAll('`', ''),
                         overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                        style: widget.style.copyWith(fontSize: 12),
+                        maxLines: 1,
+                        style: widget.style.copyWith(
+                          fontSize: 13,
+                          height: 1.2,
+                          color: isSelected
+                              ? const Color(0xff1D73C9)
+                              : widget.style.color,
+                        ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         widget.controller.suggestions[index].keys.first,
-                        textAlign: TextAlign.right,
+                        textAlign: TextAlign.left,
                         overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
+                        maxLines: 1,
                         style: widget.style.copyWith(
-                          fontSize: 11,
-                          color: Theme.of(context).colorScheme.secondary,
+                          fontSize: 12,
+                          height: 1.2,
+                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
                           fontFamily: 'NotoSans',
-                          wordSpacing: 1,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -253,7 +306,15 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
   void rebuild() {
     setState(() {
       if (widget.controller.shouldShow && !_animationController.isAnimating) {
-        _animationController.forward(from: 0.0);
+        // Reset animations
+        _animationController.value = 0.0;
+        
+        // Use a small delay to avoid visual glitches during quick typing
+        Future.delayed(const Duration(milliseconds: 5), () {
+          if (mounted && widget.controller.shouldShow) {
+            _animationController.forward(from: 0.0);
+          }
+        });
       }
     });
   }

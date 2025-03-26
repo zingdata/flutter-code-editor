@@ -491,24 +491,46 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   void _updatePopupOffset() {
+    // Update editor offset first to ensure we have the latest position
+    if (_editorKey.currentContext != null) {
+      final box = _editorKey.currentContext!.findRenderObject() as RenderBox?;
+      if (box != null) {
+        _editorOffset = box.localToGlobal(Offset.zero);
+      }
+    }
+    
     final textPainter = _getTextPainter(widget.controller.text);
     final caretHeight = _getCaretHeight(textPainter);
-    final numberOfSuggestions = widget.controller.popupController.suggestions.isNotEmpty
-        ? widget.controller.popupController.suggestions.length
-        : 4;
-    final caretDataOffset = _getCaretOffset(textPainter);
-    final leftOffset = _getPopupLeftOffset(textPainter);
-    final normalTopOffset = _getPopupTopOffset(textPainter, caretHeight);
     
-    // For flipped popups (showing above cursor), calculate position
-    // taking into account popup height and cursor height
-    final suggestionHeight = min(numberOfSuggestions, 4) * Sizes.autocompleteItemHeight;
-    final flippedTopOffset = normalTopOffset - suggestionHeight - caretHeight - (2 * Sizes.caretPadding);
-
+    // Get caret position in global coordinates - this is absolute screen position
+    final Offset cursorOffset = _getCaretOffset(textPainter);
+    
+    // Calculate how many suggestions we'll show (for height calculation)
+    final suggestionCount = widget.controller.popupController.suggestions.isNotEmpty
+        ? min(widget.controller.popupController.suggestions.length, 4)
+        : 4;
+    final popupHeight = suggestionCount * Sizes.autocompleteItemHeight;
+    
+    // Get the viewport height and caret position relative to viewport
+    final viewportHeight = windowSize?.height ?? 0;
+    final scrollOffset = _codeScroll?.offset ?? 0;
+    final relativeToViewport = cursorOffset.dy - scrollOffset;
+    
+    // Get editor's left position to account for side panels in web
+    final editorLeft = _editorOffset?.dx ?? 0;
+    
+    // Calculate positions for normal (below cursor) and flipped (above cursor) popup
+    final normalTopOffset = cursorOffset.dy + caretHeight + 2; // Add small vertical offset for better appearance
+    final flippedTopOffset = cursorOffset.dy - popupHeight - 2; // Small negative offset for spacing
+    
+    // Calculate horizontal position - right at the cursor
+    // We're explicitly using cursor position instead of adding gutter width
+    final leftOffset = cursorOffset.dx + 2; // Small offset for better appearance
+    
     setState(() {
+      _caretDataOffset = cursorOffset;
       _normalPopupOffset = Offset(leftOffset, normalTopOffset);
       _flippedPopupOffset = Offset(leftOffset, flippedTopOffset);
-      _caretDataOffset = caretDataOffset;
     });
   }
 
@@ -561,7 +583,8 @@ class _CodeFieldState extends State<CodeField> {
     linePainter.layout(maxWidth: availableWidth);
     
     // Get the width of text up to cursor in current line
-    final double cursorX = linePainter.width + widget.gutterStyle.width;
+    // Note: Do NOT add gutter width here as we only want position within the editor
+    final double cursorX = linePainter.width;
     
     // Get line height
     final double lineHeight = getLineHeight() * (textStyle.fontSize ?? 14.0);
@@ -590,7 +613,8 @@ class _CodeFieldState extends State<CodeField> {
     final horizontalScrollOffset = _horizontalCodeScroll?.offset ?? 0;
     
     // Position the popup at the cursor's right edge
-    final leftPosition = cursorOffset.dx + widget.padding.left - horizontalScrollOffset;
+    // Add a small offset for better visual appearance
+    final leftPosition = cursorOffset.dx + 2 - horizontalScrollOffset;
     
     // Ensure popup doesn't go off the left edge of the screen
     return max(leftPosition, 0);
