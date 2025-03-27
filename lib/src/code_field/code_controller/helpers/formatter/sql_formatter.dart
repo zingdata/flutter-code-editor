@@ -77,14 +77,19 @@ class SqlFormatter {
 
     final isSqlKeyword = sqlKeywords.contains(selectedWord.toUpperCase());
 
+    final isAggregationFunction =
+        aggregationsWithBrackets.contains(selectedWord.replaceAll('(', '').replaceAll(')', ''));
+
     // Determine if a space should be added based on SQL element type and context
-    bool addSpace = shouldAddSpace(
-      selectedWord: selectedWord,
-      suffixText: suffixText, 
-      isSqlKeyword: isSqlKeyword,
-      isColumn: isColumn,
-      inColumnContext: inColumnContext,
-    );
+    bool addSpace = isAggregationFunction
+        ? false
+        : shouldAddSpace(
+            selectedWord: selectedWord,
+            suffixText: suffixText,
+            isSqlKeyword: isSqlKeyword,
+            isColumn: isColumn,
+            inColumnContext: inColumnContext,
+          );
 
     // Handle SQL-specific patterns
     if (aggregationsWithBrackets.contains(selectedWord)) {
@@ -141,7 +146,7 @@ class SqlFormatter {
   /// Determines if a space should be added after the inserted text
   /// based on SQL context and element type
   static bool shouldAddSpace({
-    required String selectedWord, 
+    required String selectedWord,
     required String suffixText,
     required bool isSqlKeyword,
     required bool isColumn,
@@ -149,39 +154,37 @@ class SqlFormatter {
   }) {
     // First, handle cases based primarily on the selected word
     final upperWord = selectedWord.toUpperCase();
-    
+
     // Always add space after SQL keywords (SELECT, FROM, WHERE, etc.)
     if (isSqlKeyword) {
       return true;
     }
-    
+
     // Handle aggregation functions - don't add space unless there's content after
     if (aggregationsWithBrackets.contains(upperWord)) {
       return false; // No space before parentheses
     }
-    
+
     // Add space after columns in a SELECT clause
     if (isColumn) {
       return true;
     }
-    
+
     // Now, only if suffixText is not empty, consider it
     if (suffixText.isNotEmpty) {
       // Don't add space if there's already a space
       if (suffixText.startsWith(' ')) {
         return false;
       }
-      
+
       // Don't add space before these punctuation marks
-      if (suffixText.startsWith(')') || 
-          suffixText.startsWith(',') || 
-          suffixText.startsWith('.')) {
+      if (suffixText.startsWith(')') || suffixText.startsWith(',') || suffixText.startsWith('.')) {
         return false;
       }
-      
+
       // Don't add space before operators
-      if (suffixText.startsWith('=') || 
-          suffixText.startsWith('<') || 
+      if (suffixText.startsWith('=') ||
+          suffixText.startsWith('<') ||
           suffixText.startsWith('>') ||
           suffixText.startsWith('+') ||
           suffixText.startsWith('-') ||
@@ -190,12 +193,12 @@ class SqlFormatter {
         return false;
       }
     }
-    
+
     // For table names that might be followed by a dot
     if (inColumnContext) {
       return false;
     }
-    
+
     // Default behavior: add space after most words that aren't followed by punctuation
     return true;
   }
