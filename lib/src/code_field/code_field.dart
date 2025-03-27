@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -365,11 +366,16 @@ class _CodeFieldState extends State<CodeField> {
 
     textStyle = defaultTextStyle.merge(widget.textStyle);
 
-    // Adjust textStyle to have consistent line height
-    // This is a key fix for Chrome selection issues
+    // Get Chrome-specific text selection fixes
+    final chromeTextSelectionFixes = getChromeTextSelectionFixes();
+    final useCustomSelectionStyle = chromeTextSelectionFixes['useCustomSelectionStyle'] as bool;
+
+    // Adjust textStyle to have consistent line height and Chrome-specific fixes
     final adjustedTextStyle = textStyle.copyWith(
-      height: getLineHeight(), // Use the function instead of constant
-      leadingDistribution: TextLeadingDistribution.even, // Added for consistent text baselines
+      height: getLineHeight(),
+      leadingDistribution: useCustomSelectionStyle 
+          ? chromeTextSelectionFixes['leadingDistribution'] as TextLeadingDistribution 
+          : TextLeadingDistribution.proportional,
     );
 
     final codeField = TextField(
@@ -382,16 +388,18 @@ class _CodeFieldState extends State<CodeField> {
       expands: widget.expands,
       scrollController: _codeScroll,
       keyboardType: widget.keyboardType,
-      selectionControls: MaterialTextSelectionControls(),
-      decoration: const InputDecoration(
+      selectionControls: kIsWeb ? DesktopTextSelectionControls() : MaterialTextSelectionControls(),
+      decoration: InputDecoration(
         isCollapsed: true,
-        // Add more vertical padding to help with line selection
-        contentPadding: EdgeInsets.symmetric(vertical: 16),
+        // Add vertical padding - adjust based on selection fixes
+        contentPadding: EdgeInsets.symmetric(
+          vertical: useCustomSelectionStyle ? 14.0 : 16.0,
+        ),
         disabledBorder: InputBorder.none,
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
       ),
-      textAlignVertical: TextAlignVertical.top, // Align text at the top for better matching
+      textAlignVertical: TextAlignVertical.top,
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
       cursorHeight: widget.cursorHeight,
       autocorrect: false,
@@ -413,14 +421,7 @@ class _CodeFieldState extends State<CodeField> {
 
     final editingField = Theme(
       data: Theme.of(context).copyWith(
-        textSelectionTheme: widget.textSelectionTheme ??
-            TextSelectionThemeData(
-              // Use a more pronounced and distinguishable selection color
-              // This helps with Chrome's selection rendering
-              selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-              cursorColor: widget.cursorColor ?? defaultTextStyle.color,
-              selectionHandleColor: Theme.of(context).colorScheme.primary,
-            ),
+        textSelectionTheme: _getTextSelectionTheme(context),
       ),
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
@@ -457,14 +458,20 @@ class _CodeFieldState extends State<CodeField> {
     final lineNumberSize = textStyle.fontSize;
     final lineNumberColor = widget.gutterStyle.textStyle?.color ?? textStyle.color?.withOpacity(.5);
 
+    // Get Chrome-specific text selection fixes
+    final chromeTextSelectionFixes = getChromeTextSelectionFixes();
+    final useCustomSelectionStyle = chromeTextSelectionFixes['useCustomSelectionStyle'] as bool;
+
     // Ensure same text style properties for consistent line height
     final lineNumberTextStyle = (widget.gutterStyle.textStyle ?? textStyle).copyWith(
       color: lineNumberColor,
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
-      height: getLineHeight(), // Use the function instead of constant
+      height: getLineHeight(),
       // Add additional properties to ensure metrics consistency
-      leadingDistribution: TextLeadingDistribution.even,
+      leadingDistribution: useCustomSelectionStyle 
+          ? chromeTextSelectionFixes['leadingDistribution'] as TextLeadingDistribution 
+          : TextLeadingDistribution.proportional,
     );
 
     final gutterStyle = widget.gutterStyle.copyWith(
@@ -548,9 +555,11 @@ class _CodeFieldState extends State<CodeField> {
       return renderBox.localToGlobal(Offset.zero);
     }
 
-    // Instead of calculating line position based on newlines,
-    // we'll use the TextPainter's getOffsetForCaret method which
-    // properly accounts for text wrapping
+    // Get Chrome-specific text selection fixes
+    final chromeTextSelectionFixes = getChromeTextSelectionFixes();
+    final useCustomSelectionStyle = chromeTextSelectionFixes['useCustomSelectionStyle'] as bool;
+    final selectionHeightFix = useCustomSelectionStyle ? 
+        (chromeTextSelectionFixes['selectionHeightFix'] as bool? ?? false) : false;
 
     // Create a text painter for the entire text
     final fullTextPainter = TextPainter(
@@ -576,15 +585,21 @@ class _CodeFieldState extends State<CodeField> {
 
     // Apply scroll offsets
     final double adjustedX = rawOffset.dx - horizontalScrollOffset;
-    final double adjustedY = rawOffset.dy - scrollY;
+    double adjustedY = rawOffset.dy - scrollY;
+    
+    // Apply Chrome-specific vertical adjustment if needed
+    if (selectionHeightFix) {
+      // This small offset helps Chrome render selections correctly without changing line height
+      adjustedY += 2.0;
+    }
 
     // Convert to global coordinates
     return renderBox.localToGlobal(Offset(adjustedX, adjustedY));
   }
 
   double getLineHeight() {
-    // Default line height multiple if not specified in the style
-    return getChromeLineHeight() ?? (textStyle.height ?? 1.2);
+    // Use a consistent line height that looks good (not the special Chrome value)
+    return textStyle.height ?? 1.2;
   }
 
   void _onPopupStateChanged() {
@@ -638,5 +653,28 @@ class _CodeFieldState extends State<CodeField> {
         });
       }
     }
+  }
+
+  TextSelectionThemeData _getTextSelectionTheme(BuildContext context) {
+    final chromeTextSelectionFixes = getChromeTextSelectionFixes();
+    final useCustomSelectionStyle = chromeTextSelectionFixes['useCustomSelectionStyle'] as bool;
+    
+    // Create a more optimized selection style for Chrome
+    if (useCustomSelectionStyle) {
+      return widget.textSelectionTheme ??
+          TextSelectionThemeData(
+            selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            cursorColor: widget.cursorColor ?? textStyle.color,
+            selectionHandleColor: Theme.of(context).colorScheme.primary,
+          );
+    }
+    
+    // Default selection style for other browsers
+    return widget.textSelectionTheme ??
+        TextSelectionThemeData(
+          selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          cursorColor: widget.cursorColor ?? textStyle.color,
+          selectionHandleColor: Theme.of(context).colorScheme.primary,
+        );
   }
 }
