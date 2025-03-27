@@ -1,21 +1,13 @@
 // Use different implementations for web vs non-web platforms
-import 'package:flutter/rendering.dart';
 import 'package:flutter_code_editor/src/code_field/browser_detection_web.dart'
     if (dart.library.io) 'browser_detection_io.dart' as detection;
 
-// Function to determine if we need to use specific Chrome text selection fixes
-Map<String, dynamic> getChromeTextSelectionFixes() {
-  return detection.getChromeTextSelectionFixes();
-}
-
-// Legacy function kept for backward compatibility
-// Now returns null to use the default line height
-@deprecated
+// Function to determine the line height based on platform
 double? getChromeLineHeight() {
-  return null;
+  return detection.isChromeBrowser() ? 1.18 : null;
 }
 
-// Function to get appropriate top padding based on browser
+// Function to get appropriate top padding based on line height
 double getGutterTopPadding() {
-  return 16.0;
+  return getChromeLineHeight() == 1.18 ? 13.0 : 16.0;
 }
