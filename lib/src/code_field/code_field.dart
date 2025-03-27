@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_code_editor/src/code_field/actions/comment_uncomment.dart';
 import 'package:flutter_code_editor/src/code_field/actions/indent.dart';
 import 'package:flutter_code_editor/src/code_field/actions/outdent.dart';
+import 'package:flutter_code_editor/src/code_field/browser_detection.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 import 'package:flutter_code_editor/src/code_field/default_styles.dart';
 import 'package:flutter_code_editor/src/code_field/disable_spell_check/disable_spell_check.dart';
@@ -15,8 +16,6 @@ import 'package:flutter_code_editor/src/line_numbers/gutter_style.dart';
 import 'package:flutter_code_editor/src/sizes.dart';
 import 'package:flutter_code_editor/src/wip/autocomplete/popup.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
-
-
 
 final _shortcuts = <ShortcutActivator, Intent>{
   // Copy
@@ -92,7 +91,6 @@ final _shortcuts = <ShortcutActivator, Intent>{
 };
 
 class CodeField extends StatefulWidget {
-
   const CodeField({
     super.key,
     required this.controller,
@@ -122,6 +120,7 @@ class CodeField extends StatefulWidget {
             'Can not provide gutterStyle and lineNumbers at the same time. '
             'Please use gutterStyle and provide necessary columns to show/hide'),
         gutterStyle = gutterStyle ?? ((lineNumbers == false) ? GutterStyle.none : lineNumberStyle);
+
   /// {@macro flutter.widgets.textField.minLines}
   final int? minLines;
 
@@ -494,34 +493,35 @@ class _CodeFieldState extends State<CodeField> {
         _editorOffset = box.localToGlobal(Offset.zero);
       }
     }
-    
+
     final textPainter = _getTextPainter(widget.controller.text);
-    
+
     // Get the font metrics to calculate an accurate line height
     final fontSize = textStyle.fontSize ?? 14.0;
     final lineHeight = fontSize * (textStyle.height ?? 1.2);
-    
+
     // Get caret position in global coordinates - this is absolute screen position
     // This now accounts for soft wrapping
     final Offset cursorOffset = _getCaretOffset(textPainter);
-    
+
     // Calculate how many suggestions we'll show (for height calculation)
     final suggestionCount = widget.controller.popupController.suggestions.isNotEmpty
         ? min(widget.controller.popupController.suggestions.length, 4)
         : 4;
     final popupHeight = suggestionCount * Sizes.autocompleteItemHeight;
-    
-    // Get the viewport height 
+
+    // Get the viewport height
     final viewportHeight = windowSize?.height ?? 0;
-    
+
     // Calculate positions for normal (below cursor) and flipped (above cursor) popup
     // Using the actual line height for better positioning
-    final normalTopOffset = cursorOffset.dy + lineHeight + 2; // Position just below the current line
+    final normalTopOffset =
+        cursorOffset.dy + lineHeight + 2; // Position just below the current line
     final flippedTopOffset = cursorOffset.dy - popupHeight - 2; // Position above the current line
-    
+
     // Calculate horizontal position - right at the cursor
     final leftOffset = cursorOffset.dx + 2; // Small offset for better visual appearance
-    
+
     setState(() {
       _caretDataOffset = cursorOffset;
       _normalPopupOffset = Offset(leftOffset, normalTopOffset);
@@ -539,56 +539,53 @@ class _CodeFieldState extends State<CodeField> {
   Offset _getCaretOffset(TextPainter textPainter) {
     final RenderBox? renderBox = _editorKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return Offset.zero;
-    
+
     final TextPosition cursorPosition = widget.controller.selection.base;
     final String text = widget.controller.text;
-    
+
     // Handle empty text case
     if (text.isEmpty) {
       return renderBox.localToGlobal(Offset.zero);
     }
-    
+
     // Instead of calculating line position based on newlines,
     // we'll use the TextPainter's getOffsetForCaret method which
     // properly accounts for text wrapping
-    
+
     // Create a text painter for the entire text
     final fullTextPainter = TextPainter(
       text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
     );
-    
+
     // Get available width for layout
     final double availableWidth = renderBox.size.width - widget.padding.horizontal;
     fullTextPainter.layout(maxWidth: availableWidth);
-    
+
     // Get the offset at cursor position (this accounts for wrapping)
     final Offset rawOffset = fullTextPainter.getOffsetForCaret(
-      cursorPosition, 
+      cursorPosition,
       Rect.zero,
     );
-    
+
     // Get horizontal scroll offset to adjust for horizontal scrolling
     final horizontalScrollOffset = _horizontalCodeScroll?.offset ?? 0;
-    
+
     // Get vertical scroll offset to adjust position
     final scrollY = _codeScroll?.offset ?? 0;
-    
+
     // Apply scroll offsets
     final double adjustedX = rawOffset.dx - horizontalScrollOffset;
     final double adjustedY = rawOffset.dy - scrollY;
-    
+
     // Convert to global coordinates
     return renderBox.localToGlobal(Offset(adjustedX, adjustedY));
   }
 
-
-
   double getLineHeight() {
     // Default line height multiple if not specified in the style
-    return textStyle.height ?? 1.2;
+    return getChromeLineHeight() ?? (textStyle.height ?? 1.2);
   }
-
 
   void _onPopupStateChanged() {
     final shouldShow = widget.controller.popupController.shouldShow && windowSize != null;
@@ -630,7 +627,7 @@ class _CodeFieldState extends State<CodeField> {
     if (widget.controller.popupController.shouldShow) {
       _updatePopupOffset();
     }
-    
+
     // Update editor offset when scrolling
     if (_editorKey.currentContext != null) {
       final box = _editorKey.currentContext!.findRenderObject() as RenderBox?;

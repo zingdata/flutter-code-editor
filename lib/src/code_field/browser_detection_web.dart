@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'dart:js' as js;
 
 import 'package:flutter/foundation.dart';
