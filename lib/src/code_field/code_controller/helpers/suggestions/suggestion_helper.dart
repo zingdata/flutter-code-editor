@@ -864,7 +864,6 @@ class SuggestionHelper {
 
     if (suggestions.isNotEmpty) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        print('fallbackToStandardSuggestions');
         controller.popupController.show(controller.tableNameBeforeDot, suggestions.toList());
       });
     } else {
@@ -881,8 +880,21 @@ class SuggestionHelper {
     if (cursorPosition <= 0 || text.isEmpty) {
       return null;
     }
+    // Prepare customWords and suggestions for isolate
+    final customWords = controller.autocompleter.customWords.toList();
 
+    // Convert suggestion categories to a simple map for isolate
+    final Map<String, List<String>> suggestionMap = {};
+    for (final category in controller.popupController.suggestionCategories) {
+      suggestionMap[category.keys.first] = category.values.first.toList();
+    }
     // Check if we can use isolates
+    final request = _SuggestionRequest(
+      text: text.substring(0, cursorPosition),
+      prefix: '', // Empty prefix indicates we want longest matching prefix
+      customWords: customWords,
+      suggestions: suggestionMap,
+    );
     if (_canUseIsolates) {
       try {
         // Get a send port to communicate with the isolate
@@ -891,23 +903,9 @@ class SuggestionHelper {
         // Create a receive port for the response
         final responsePort = ReceivePort();
 
-        // Prepare customWords and suggestions for isolate
-        final customWords = controller.autocompleter.customWords.toList();
-
-        // Convert suggestion categories to a simple map for isolate
-        final Map<String, List<String>> suggestionMap = {};
-        for (final category in controller.popupController.suggestionCategories) {
-          suggestionMap[category.keys.first] = category.values.first.toList();
-        }
-
         // Send the request to the isolate
         sendPort.send([
-          _SuggestionRequest(
-            text: text.substring(0, cursorPosition),
-            prefix: '', // Empty prefix indicates we want longest matching prefix
-            customWords: customWords,
-            suggestions: suggestionMap,
-          ),
+          request,
           responsePort.sendPort // Send the response port so isolate knows where to reply
         ]);
 
@@ -919,11 +917,31 @@ class SuggestionHelper {
         return result.prefixInfo;
       } catch (e) {
         // If an error occurs with the isolate, fall back to the main thread implementation
-        return _getLongestMatchingPrefixOnMainThread(text);
+        return _getSuggestions(request);
       }
     } else {
       // Web platform or other environment where isolates aren't supported
-      return _getLongestMatchingPrefixOnMainThread(text);
+      return _getSuggestions(request);
+    }
+  }
+
+  Future<Map<String, dynamic>?> _getSuggestions(_SuggestionRequest request) async {
+    if (request.prefix.isNotEmpty) {
+      // Handle fetching suggestions for a prefix
+      final suggestions = await _isolateFetchSuggestions(
+        request.prefix,
+        request.customWords,
+        request.suggestions,
+      );
+      return _SuggestionResult(suggestions: suggestions).prefixInfo;
+    } else {
+      // Handle finding longest matching prefix
+      final prefixInfo = await _isolateGetLongestMatchingPrefix(
+        request.text,
+        request.customWords,
+        request.suggestions,
+      );
+      return _SuggestionResult(prefixInfo: prefixInfo).prefixInfo;
     }
   }
 
