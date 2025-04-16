@@ -524,6 +524,7 @@ class WordInsertionHelper {
   /// Shows suggestions for main table fields
   void _showMainTableFields() {
     SchedulerBinding.instance.addPostFrameCallback((_) {
+      print('showMainTableFields');
       controller.popupController.show(null, controller.mainTableFields);
     });
   }

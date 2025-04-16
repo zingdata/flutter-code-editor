@@ -25,7 +25,6 @@ class PopupController extends ChangeNotifier {
   int get selectedIndex => _selectedIndex;
 
   void show(String? tableName, List<String> suggestions) {
-    print('show: $suggestions');
     if (suggestions.isEmpty) {
       hide();
       return;
