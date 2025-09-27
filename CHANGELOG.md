@@ -1,3 +1,7 @@
+## 0.3.5
+
+- Fixed line numbers not aligning with lines (https://github.com/akvelon/flutter-code-editor/pull/307)
+
 ## 0.3.4
 
 - Added default height to `defaultTextStyle` (https://github.com/akvelon/flutter-code-editor/pull/297).
