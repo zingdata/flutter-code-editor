@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'package:flutter_code_editor/src/code_field/browser_detection.dart';
@@ -13,9 +12,6 @@ const _foldingColumnWidth = 16.0;
 const _lineNumberColumn = 0;
 const _issueColumn = 1;
 const _foldingColumn = 2;
-
-
-
 
 class GutterWidget extends StatelessWidget {
   const GutterWidget({
@@ -47,7 +43,8 @@ class GutterWidget extends StatelessWidget {
         (style.showFoldingHandles ? 0 : _foldingColumnWidth);
 
     final issueColumnWidth = style.showErrors ? _issueColumnWidth : 0.0;
-    final foldingColumnWidth = style.showFoldingHandles ? _foldingColumnWidth : 0.0;
+    final foldingColumnWidth =
+        style.showFoldingHandles ? _foldingColumnWidth : 0.0;
 
     final tableRows = List.generate(
       code.hiddenLineRanges.visibleLineNumbers.length,
@@ -79,18 +76,20 @@ class GutterWidget extends StatelessWidget {
             right: 10,
           ),
       width: style.showLineNumbers ? gutterWidth : null,
-
-      child: SingleChildScrollView(
-        controller: scrollController,
-        child: Table(
-          columnWidths: {
-            _lineNumberColumn: const FlexColumnWidth(),
-            _issueColumn: FixedColumnWidth(issueColumnWidth),
-            _foldingColumn: FixedColumnWidth(foldingColumnWidth),
-          },
-          defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: tableRows,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: scrollController,
+          child: Table(
+            columnWidths: {
+              _lineNumberColumn: const FlexColumnWidth(),
+              _issueColumn: FixedColumnWidth(issueColumnWidth),
+              _foldingColumn: FixedColumnWidth(foldingColumnWidth),
+            },
+            defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: tableRows,
+          ),
         ),
       ),
     );
@@ -118,7 +117,8 @@ class GutterWidget extends StatelessWidget {
       const newLine = '\n';
       double textWrappedTimes = 1;
       if (size != null && code.text.isNotEmpty) {
-        final textWidth = getTextWidth(code.lines[lineIndex].text, style.textStyle!);
+        final textWidth =
+            getTextWidth(code.lines[lineIndex].text, style.textStyle!);
         textWrappedTimes = textWidth.width / (size!.width - 36);
       }
 
@@ -145,7 +145,8 @@ class GutterWidget extends StatelessWidget {
 
       tableRows[lineIndex].children[_issueColumn] = GutterErrorWidget(
         issue,
-        style.errorPopupTextStyle ?? (throw Exception('Error popup style should never be null')),
+        style.errorPopupTextStyle ??
+            (throw Exception('Error popup style should never be null')),
       );
     }
   }
