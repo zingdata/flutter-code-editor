@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_code_editor/src/code_field/editor_params.dart';
 import 'package:flutter_code_editor/src/code_modifiers/code_modifier.dart';
 
+/// [CloseBlockModifier] is an implementation of [CodeModifier]
+/// that remove spaces before the closing bracket, if required.
 class CloseBlockModifier extends CodeModifier {
   const CloseBlockModifier() : super('}');
 
