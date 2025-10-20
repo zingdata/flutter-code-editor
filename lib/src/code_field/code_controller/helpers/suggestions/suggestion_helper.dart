@@ -779,7 +779,6 @@ class SuggestionHelper {
 
     if (columnSuggestions.isNotEmpty) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        print('handleColumnFiltering');
         controller.popupController.show(tableName, columnSuggestions.toList());
       });
       // Set start index to position right after dot

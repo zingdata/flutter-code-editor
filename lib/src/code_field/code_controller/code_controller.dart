@@ -35,6 +35,7 @@ class CodeController extends TextEditingController {
     Set<String> visibleSectionNames = const {},
     this.analysisResult = const AnalysisResult(issues: []),
     this.patternMap,
+    this.readOnly = false,
     this.params = const EditorParams(),
     this.modifiers = const [
       IndentModifier(),
@@ -101,12 +102,20 @@ class CodeController extends TextEditingController {
   Timer? _debounce;
 
   final AbstractNamedSectionParser? namedSectionParser;
+
+  /// Makes the text un-editable, but allows to set the full text.
+  /// Focusing and moving the selection inside of a [CodeField] will
+  /// still be possible.
+  final bool readOnly;
+
   Set<String> _readOnlySectionNames;
-  set readOnlySectionNames(Set<String> value) {
-    _readOnlySectionNames = value;
+  set readOnlySectionNames(Set<String> newValue) {
+    _readOnlySectionNames = newValue;
+    _updateCode(_code.text);
+
+    notifyListeners();
   }
 
-  // ignore: unnecessary_getters_setters
   Set<String> get readOnlySectionNames => _readOnlySectionNames;
 
   bool needsQoutes = false;
@@ -653,6 +662,10 @@ class CodeController extends TextEditingController {
   void modifySelectedLines(
     String Function(String line) modifierCallback,
   ) {
+    if (readOnly) {
+      return;
+    }
+
     if (selection.start == -1 || selection.end == -1) {
       return;
     }
@@ -728,6 +741,10 @@ class CodeController extends TextEditingController {
   Code get code => _code;
 
   CodeEditResult? _getEditResultNotBreakingReadOnly(TextEditingValue newValue) {
+    if (readOnly) {
+      return null;
+    }
+
     final editResult = _code.getEditResult(value.selection, newValue);
     if (!_code.isReadOnlyInLineRange(editResult.linesChanged)) {
       return editResult;
@@ -797,6 +814,9 @@ class CodeController extends TextEditingController {
 
   @override
   void dispose() {
+    if (_disposed) {
+      return;
+    }
     _disposed = true;
     _debounce?.cancel();
     historyController.dispose();
