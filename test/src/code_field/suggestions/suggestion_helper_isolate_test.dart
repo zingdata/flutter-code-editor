@@ -12,7 +12,7 @@ void main() {
         text: 'SELECT * FROM users',
         language: sql,
       );
-      
+
       // Add some test suggestions
       controller.autocompleter.customWords.addAll([
         'SELECT',
@@ -27,7 +27,7 @@ void main() {
         'first_name',
         'last_name',
       ]);
-      
+
       // Set up tables
       controller.addMainTableFields(
         ['user_id', 'first_name', 'last_name'],
@@ -41,11 +41,12 @@ void main() {
 
     test('SuggestionHelper initializes isolate on first use', () async {
       // Set cursor position
-      controller.selection = const TextSelection.collapsed(offset: 7); // After "SELECT "
-      
+      controller.selection =
+          const TextSelection.collapsed(offset: 7); // After "SELECT "
+
       // Generate suggestions which should trigger isolate creation
       await controller.generateSuggestions();
-      
+
       // Can't directly test isolate existence, but ensure no exceptions are thrown
       expect(true, isTrue);
     });
@@ -54,27 +55,28 @@ void main() {
       // Set cursor position after typing "SEL"
       controller.text = 'SEL';
       controller.selection = const TextSelection.collapsed(offset: 3);
-      
+
       // Generate suggestions
       await controller.generateSuggestions();
-      
+
       // Check if suggestions are shown (can't check content directly in test)
       expect(controller.popupController.shouldShow, isTrue);
     });
 
-    test('SuggestionHelper falls back to main thread if isolate fails', () async {
+    test('SuggestionHelper falls back to main thread if isolate fails',
+        () async {
       // This test simulates a failure in isolate communication
       // We can't easily mock the isolate directly, so we'll just verify
       // that suggestions still work after forcing a new suggestion generation
-      
+
       // Set cursor position
       controller.text = 'SEL';
       controller.selection = const TextSelection.collapsed(offset: 3);
-      
+
       // Generate suggestions multiple times to test robustness
       await controller.generateSuggestions();
       await controller.generateSuggestions();
-      
+
       // Verify suggestions still work
       expect(controller.popupController.shouldShow, isTrue);
     });
@@ -82,15 +84,15 @@ void main() {
     test('SuggestionHelper properly disposes isolate', () async {
       // Set cursor position
       controller.selection = const TextSelection.collapsed(offset: 7);
-      
+
       // Generate suggestions to create isolate
       await controller.generateSuggestions();
-      
+
       // Dispose controller which should also dispose isolate
       controller.dispose();
-      
+
       // Can't directly test isolate disposal, but ensure no exceptions are thrown
       expect(true, isTrue);
     });
   });
-} 
+}

@@ -116,7 +116,6 @@ void main() {
 }
 
 class _Example {
-
   const _Example(
     this.name, {
     required this.str1,

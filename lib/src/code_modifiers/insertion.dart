@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
-import '../code_field/editor_params.dart';
-import 'code_modifier.dart';
+import 'package:flutter_code_editor/src/code_field/editor_params.dart';
+import 'package:flutter_code_editor/src/code_modifiers/code_modifier.dart';
 
 class InsertionCodeModifier extends CodeModifier {
   final String openChar;

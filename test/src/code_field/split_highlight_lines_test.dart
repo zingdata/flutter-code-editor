@@ -139,7 +139,6 @@ void main() {
 }
 
 class _Example {
-
   const _Example({required this.text, required this.expected});
   final String text;
   final String expected;

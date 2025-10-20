@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_code_editor/src/hidden_ranges/line_numbering_breakpoint.dart';
 
 class HiddenLineRanges with EquatableMixin {
-
   factory HiddenLineRanges({
     required List<LineNumberingBreakpoint> breakpoints,
     required int fullLineCount,

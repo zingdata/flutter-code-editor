@@ -6,17 +6,17 @@ import 'dart:js' as js;
 /// Chrome-specific text selection handling that fixes the line selection issues in Chrome browser
 class ChromeSelectionFix {
   static bool _isFixed = false;
-  
+
   /// Fix selection issues in Chrome browser
   static void fixChromeSelection() {
     if (_isFixed) return;
-    
+
     if (_isChromeBrowser()) {
       _applyChromeSelectionFix();
       _isFixed = true;
     }
   }
-  
+
   /// Detect if the browser is Chrome
   static bool _isChromeBrowser() {
     try {
@@ -24,10 +24,10 @@ class ChromeSelectionFix {
       final agent = html.window.navigator.userAgent.toLowerCase();
       return vendor.contains('google') && agent.contains('chrome');
     } catch (_) {
-      return false; 
+      return false;
     }
   }
-  
+
   /// Apply the Chrome selection fix
   static void _applyChromeSelectionFix() {
     // Using raw JavaScript to directly address Chrome's selection issues
@@ -149,8 +149,8 @@ class ChromeSelectionFix {
       });
     })();
     ''';
-    
+
     // Execute the script
     js.context.callMethod('eval', [jsFixScript]);
   }
-} 
+}

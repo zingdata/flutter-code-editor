@@ -112,7 +112,6 @@ class IndentFoldableBlockParser extends AbstractFoldableBlockParser {
 }
 
 class _SignificantIndentIndexes {
-
   _SignificantIndentIndexes(this.first, this.second, this.last);
   final int first;
   final int second;

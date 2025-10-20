@@ -133,7 +133,9 @@ class SuggestionHelper {
       prefix,
       prefix.toLowerCase(),
       prefix.toUpperCase(),
-      prefix.isNotEmpty ? prefix[0].toUpperCase() + prefix.substring(1).toLowerCase() : '',
+      prefix.isNotEmpty
+          ? prefix[0].toUpperCase() + prefix.substring(1).toLowerCase()
+          : '',
     ];
 
     // Token-based matching for multi-word fields
@@ -150,7 +152,9 @@ class SuggestionHelper {
           for (final variation in variations) {
             if (variation.isEmpty) continue;
 
-            if (wordWithoutQuotes.toLowerCase().startsWith(variation.toLowerCase())) {
+            if (wordWithoutQuotes
+                .toLowerCase()
+                .startsWith(variation.toLowerCase())) {
               result.add(word);
               break;
             }
@@ -177,7 +181,9 @@ class SuggestionHelper {
           for (final variation in variations) {
             if (variation.isEmpty) continue;
 
-            if (wordWithoutQuotes.toLowerCase().startsWith(variation.toLowerCase())) {
+            if (wordWithoutQuotes
+                .toLowerCase()
+                .startsWith(variation.toLowerCase())) {
               result.add(word);
               break;
             }
@@ -205,12 +211,15 @@ class SuggestionHelper {
           }
 
           // Also check if the whole identifier contains the prefix
-          if (!tokenMatch && wordWithoutQuotes.toLowerCase().contains(prefix.toLowerCase())) {
+          if (!tokenMatch &&
+              wordWithoutQuotes.toLowerCase().contains(prefix.toLowerCase())) {
             result.add(word);
           }
         }
         // Standard matching for single-word identifiers
-        else if (wordWithoutQuotes.toLowerCase().contains(prefix.toLowerCase())) {
+        else if (wordWithoutQuotes
+            .toLowerCase()
+            .contains(prefix.toLowerCase())) {
           result.add(word);
         }
       }
@@ -222,15 +231,19 @@ class SuggestionHelper {
           final bWithoutQuotes = _getStringWithoutQuotes(b);
 
           // Exact matches get priority
-          final aExactMatch = aWithoutQuotes.toLowerCase() == prefix.toLowerCase();
-          final bExactMatch = bWithoutQuotes.toLowerCase() == prefix.toLowerCase();
+          final aExactMatch =
+              aWithoutQuotes.toLowerCase() == prefix.toLowerCase();
+          final bExactMatch =
+              bWithoutQuotes.toLowerCase() == prefix.toLowerCase();
 
           if (aExactMatch && !bExactMatch) return -1;
           if (!aExactMatch && bExactMatch) return 1;
 
           // Then starts-with matches
-          final aStartsWith = aWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase());
-          final bStartsWith = bWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase());
+          final aStartsWith =
+              aWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase());
+          final bStartsWith =
+              bWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase());
 
           if (aStartsWith && !bStartsWith) return -1;
           if (!aStartsWith && bStartsWith) return 1;
@@ -302,7 +315,8 @@ class SuggestionHelper {
       }
 
       // Handle quotes
-      if ((char == '"' || char == "'") && (quoteChar == null || char == quoteChar)) {
+      if ((char == '"' || char == "'") &&
+          (quoteChar == null || char == quoteChar)) {
         inQuotes = !inQuotes;
         if (quoteChar == null && inQuotes) {
           quoteChar = char;
@@ -311,7 +325,9 @@ class SuggestionHelper {
         }
 
         // If we just entered quotes, this might be the start of an identifier
-        if (inQuotes && i > 0 && (text[i - 1] == ' ' || text[i - 1] == '=' || text[i - 1] == ',')) {
+        if (inQuotes &&
+            i > 0 &&
+            (text[i - 1] == ' ' || text[i - 1] == '=' || text[i - 1] == ',')) {
           phraseStart = i;
           break;
         }
@@ -344,14 +360,16 @@ class SuggestionHelper {
           if (lastNonSpaceCharPos > i) {
             // Calculate the potential word start before this space
             int potentialWordStart = i - 1;
-            while (potentialWordStart >= 0 && !_isWordBoundaryChar(text[potentialWordStart])) {
+            while (potentialWordStart >= 0 &&
+                !_isWordBoundaryChar(text[potentialWordStart])) {
               potentialWordStart--;
             }
             potentialWordStart++; // Adjust to the actual start
 
             // Extract the potential word before this space
             if (potentialWordStart < i) {
-              final previousWord = text.substring(potentialWordStart, i).trim().toUpperCase();
+              final previousWord =
+                  text.substring(potentialWordStart, i).trim().toUpperCase();
 
               // If this looks like a SQL keyword that might precede a field name, update phraseStart
               if (commonSqlKeywords.contains(previousWord) ||
@@ -440,7 +458,15 @@ class SuggestionHelper {
 
       // 0. Check if we're in SQL context - if so, we prioritize multi-word matching
       bool sqlContext = false;
-      final commonSqlKeywords = ['SELECT', 'FROM', 'WHERE', 'GROUP', 'ORDER', 'JOIN', 'HAVING'];
+      final commonSqlKeywords = [
+        'SELECT',
+        'FROM',
+        'WHERE',
+        'GROUP',
+        'ORDER',
+        'JOIN',
+        'HAVING'
+      ];
       for (final keyword in commonSqlKeywords) {
         if (text.toUpperCase().contains(keyword)) {
           sqlContext = true;
@@ -453,7 +479,8 @@ class SuggestionHelper {
         // 1. Look for multi-word phrases first in SQL context
         final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
         if (multiWordStart != wordStart) {
-          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final multiWordPhrase =
+              text.substring(multiWordStart, cursorPosition);
           final phraseMatches = await _isolateFetchSuggestions(
             multiWordPhrase,
             customWords,
@@ -503,7 +530,8 @@ class SuggestionHelper {
         // 2. Then try to match multi-word phrases
         final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
         if (multiWordStart != wordStart) {
-          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final multiWordPhrase =
+              text.substring(multiWordStart, cursorPosition);
           final phraseMatches = await _isolateFetchSuggestions(
             multiWordPhrase,
             customWords,
@@ -581,7 +609,8 @@ class SuggestionHelper {
       }
 
       // 5. Check for context before the current word
-      final checkLimit = math.max(0, wordStart - 30); // Extend look-behind range
+      final checkLimit =
+          math.max(0, wordStart - 30); // Extend look-behind range
       for (int i = wordStart - 1; i >= checkLimit; i--) {
         // Look for potential phrase start points
         if (i == 0 || isWordBoundary(text[i - 1])) {
@@ -648,7 +677,8 @@ class SuggestionHelper {
 
     if (fallbackSuggestions.isNotEmpty) {
       return {
-        'prefix': text.substring(math.max(0, cursorPosition - 10), cursorPosition),
+        'prefix':
+            text.substring(math.max(0, cursorPosition - 10), cursorPosition),
         'startIndex': math.max(0, cursorPosition - 10),
         'suggestions': fallbackSuggestions,
       };
@@ -661,7 +691,8 @@ class SuggestionHelper {
   Future<void> generateSuggestions() async {
     controller.tableNameBeforeDot = null;
     try {
-      final textBeforeCursor = controller.value.text.substring(0, controller.selection.baseOffset);
+      final textBeforeCursor =
+          controller.value.text.substring(0, controller.selection.baseOffset);
       if (textBeforeCursor.isEmpty) {
         controller.popupController.hide();
         return;
@@ -686,12 +717,13 @@ class SuggestionHelper {
           }
           // Otherwise, use text after dot as filter for columns
           else if (dotIndex < textBeforeCursor.length - 1) {
-            final columnPrefix = textBeforeCursor.substring(dotIndex + 1).trim();
+            final columnPrefix =
+                textBeforeCursor.substring(dotIndex + 1).trim();
 
             // Only process if there's valid column text to filter by
             if (columnPrefix.isNotEmpty) {
-              final handled =
-                  await _handleColumnFiltering(potentialTableName, columnPrefix, dotIndex);
+              final handled = await _handleColumnFiltering(
+                  potentialTableName, columnPrefix, dotIndex);
               if (handled) return;
             }
           }
@@ -718,7 +750,8 @@ class SuggestionHelper {
     // Check in suggestionCategories for entries with 'Table' key
     for (final category in controller.popupController.suggestionCategories) {
       // Look for the 'Table' category or any category containing the word 'Table'
-      if (category.keys.first == 'Table' || category.keys.first.contains('Table')) {
+      if (category.keys.first == 'Table' ||
+          category.keys.first.contains('Table')) {
         if (category.values.first.contains(name)) {
           return true;
         }
@@ -738,9 +771,11 @@ class SuggestionHelper {
 
   /// Handles the case where user is typing after table.
   /// Returns true if suggestions were shown, false otherwise
-  Future<bool> _handleColumnFiltering(String tableName, String columnPrefix, int dotIndex) async {
+  Future<bool> _handleColumnFiltering(
+      String tableName, String columnPrefix, int dotIndex) async {
     // Get filtered column suggestions based on what's been typed after dot
-    Set<String> columnSuggestions = await _getFilteredColumnSuggestions(tableName, columnPrefix);
+    Set<String> columnSuggestions =
+        await _getFilteredColumnSuggestions(tableName, columnPrefix);
 
     if (columnSuggestions.isNotEmpty) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -755,7 +790,8 @@ class SuggestionHelper {
   }
 
   /// Get column suggestions filtered by prefix for a specific table
-  Future<Set<String>> _getFilteredColumnSuggestions(String tableName, String prefix) async {
+  Future<Set<String>> _getFilteredColumnSuggestions(
+      String tableName, String prefix) async {
     final result = <String>{};
 
     // Check columns in suggestionCategories
@@ -772,7 +808,9 @@ class SuggestionHelper {
             final tokens = columnWithoutQuotes.split(' ');
 
             // Check if the whole column name starts with prefix
-            if (columnWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase())) {
+            if (columnWithoutQuotes
+                .toLowerCase()
+                .startsWith(prefix.toLowerCase())) {
               result.add(column);
               continue;
             }
@@ -786,7 +824,9 @@ class SuggestionHelper {
             }
           }
           // For single-word columns, use normal prefix matching
-          else if (columnWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase())) {
+          else if (columnWithoutQuotes
+              .toLowerCase()
+              .startsWith(prefix.toLowerCase())) {
             result.add(column);
           }
         }
@@ -816,7 +856,9 @@ class SuggestionHelper {
         }
       }
       // Single-word field handling
-      else if (fieldWithoutQuotes.toLowerCase().startsWith(prefix.toLowerCase())) {
+      else if (fieldWithoutQuotes
+          .toLowerCase()
+          .startsWith(prefix.toLowerCase())) {
         result.add(field);
       }
     }
@@ -831,11 +873,16 @@ class SuggestionHelper {
     for (final table in controller.mainTables) {
       // Check for common SQL patterns where a table name appears
       // Find the last occurrence of patterns like "FROM table", "JOIN table", "table."
-      final fromPattern = RegExp(r'FROM\s+' + table + r'\b', caseSensitive: false);
-      final joinPattern = RegExp(r'JOIN\s+' + table + r'\b', caseSensitive: false);
-      final aliasPattern = RegExp(r'FROM\s+' + table + r'\s+AS\s+\w+', caseSensitive: false);
+      final fromPattern =
+          RegExp(r'FROM\s+' + table + r'\b', caseSensitive: false);
+      final joinPattern =
+          RegExp(r'JOIN\s+' + table + r'\b', caseSensitive: false);
+      final aliasPattern =
+          RegExp(r'FROM\s+' + table + r'\s+AS\s+\w+', caseSensitive: false);
 
-      if (fromPattern.hasMatch(text) || joinPattern.hasMatch(text) || aliasPattern.hasMatch(text)) {
+      if (fromPattern.hasMatch(text) ||
+          joinPattern.hasMatch(text) ||
+          aliasPattern.hasMatch(text)) {
         return table;
       }
     }
@@ -864,7 +911,8 @@ class SuggestionHelper {
 
     if (suggestions.isNotEmpty) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        controller.popupController.show(controller.tableNameBeforeDot, suggestions.toList());
+        controller.popupController
+            .show(controller.tableNameBeforeDot, suggestions.toList());
       });
     } else {
       controller.popupController.hide();
@@ -906,7 +954,8 @@ class SuggestionHelper {
         // Send the request to the isolate
         sendPort.send([
           request,
-          responsePort.sendPort // Send the response port so isolate knows where to reply
+          responsePort
+              .sendPort // Send the response port so isolate knows where to reply
         ]);
 
         // Wait for the response
@@ -925,7 +974,8 @@ class SuggestionHelper {
     }
   }
 
-  Future<Map<String, dynamic>?> _getSuggestions(_SuggestionRequest request) async {
+  Future<Map<String, dynamic>?> _getSuggestions(
+      _SuggestionRequest request) async {
     if (request.prefix.isNotEmpty) {
       // Handle fetching suggestions for a prefix
       final suggestions = await _isolateFetchSuggestions(
@@ -947,7 +997,8 @@ class SuggestionHelper {
 
   /// Fallback implementation that runs on the main thread if isolate fails
   /// or on web platform where isolates aren't supported
-  Future<Map<String, dynamic>?> _getLongestMatchingPrefixOnMainThread(String text) async {
+  Future<Map<String, dynamic>?> _getLongestMatchingPrefixOnMainThread(
+      String text) async {
     final cursorPosition = controller.selection.baseOffset;
     if (cursorPosition <= 0 || text.isEmpty) {
       return null;
@@ -974,7 +1025,15 @@ class SuggestionHelper {
 
       // 0. Check if we're in SQL context - if so, we prioritize multi-word matching
       bool sqlContext = false;
-      final commonSqlKeywords = ['SELECT', 'FROM', 'WHERE', 'GROUP', 'ORDER', 'JOIN', 'HAVING'];
+      final commonSqlKeywords = [
+        'SELECT',
+        'FROM',
+        'WHERE',
+        'GROUP',
+        'ORDER',
+        'JOIN',
+        'HAVING'
+      ];
       for (final keyword in commonSqlKeywords) {
         if (text.toUpperCase().contains(keyword)) {
           sqlContext = true;
@@ -987,7 +1046,8 @@ class SuggestionHelper {
         // 1. Look for multi-word phrases first in SQL context
         final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
         if (multiWordStart != wordStart) {
-          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final multiWordPhrase =
+              text.substring(multiWordStart, cursorPosition);
           final phraseMatches = await fetchSuggestions(multiWordPhrase);
 
           if (phraseMatches.isNotEmpty) {
@@ -1025,7 +1085,8 @@ class SuggestionHelper {
         // 2. Then try to match multi-word phrases
         final multiWordStart = _findMultiWordPhraseStart(text, wordStart);
         if (multiWordStart != wordStart) {
-          final multiWordPhrase = text.substring(multiWordStart, cursorPosition);
+          final multiWordPhrase =
+              text.substring(multiWordStart, cursorPosition);
           final phraseMatches = await fetchSuggestions(multiWordPhrase);
 
           if (phraseMatches.isNotEmpty) {
@@ -1095,7 +1156,8 @@ class SuggestionHelper {
       }
 
       // 5. Check for context before the current word
-      final checkLimit = math.max(0, wordStart - 30); // Extend look-behind range
+      final checkLimit =
+          math.max(0, wordStart - 30); // Extend look-behind range
       for (int i = wordStart - 1; i >= checkLimit; i--) {
         // Look for potential phrase start points
         if (i == 0 || isWordBoundary(text[i - 1])) {
@@ -1150,12 +1212,13 @@ class SuggestionHelper {
     }
 
     // 8. Fallback to basic search for edge cases
-    final fallbackSuggestions =
-        await fetchSuggestions(text.substring(math.max(0, cursorPosition - 10), cursorPosition));
+    final fallbackSuggestions = await fetchSuggestions(
+        text.substring(math.max(0, cursorPosition - 10), cursorPosition));
 
     if (fallbackSuggestions.isNotEmpty) {
       return {
-        'prefix': text.substring(math.max(0, cursorPosition - 10), cursorPosition),
+        'prefix':
+            text.substring(math.max(0, cursorPosition - 10), cursorPosition),
         'startIndex': math.max(0, cursorPosition - 10),
         'suggestions': fallbackSuggestions,
       };
@@ -1186,7 +1249,8 @@ class SuggestionHelper {
 
         // Convert suggestion categories to a simple map for isolate
         final Map<String, List<String>> suggestionMap = {};
-        for (final category in controller.popupController.suggestionCategories) {
+        for (final category
+            in controller.popupController.suggestionCategories) {
           suggestionMap[category.keys.first] = category.values.first.toList();
         }
 
@@ -1198,7 +1262,8 @@ class SuggestionHelper {
             customWords: customWords,
             suggestions: suggestionMap,
           ),
-          responsePort.sendPort // Send the response port so isolate knows where to reply
+          responsePort
+              .sendPort // Send the response port so isolate knows where to reply
         ]);
 
         // Wait for the response
@@ -1227,14 +1292,17 @@ class SuggestionHelper {
       prefix,
       prefix.toLowerCase(),
       prefix.toUpperCase(),
-      prefix.isNotEmpty ? prefix[0].toUpperCase() + prefix.substring(1).toLowerCase() : '',
+      prefix.isNotEmpty
+          ? prefix[0].toUpperCase() + prefix.substring(1).toLowerCase()
+          : '',
     ];
 
     // Get suggestions from autocompleter with each variation
     for (final variation in variations) {
       if (variation.isEmpty) continue;
 
-      final variationSuggestions = await controller.autocompleter.getSuggestions(variation);
+      final variationSuggestions =
+          await controller.autocompleter.getSuggestions(variation);
       suggestions.addAll(variationSuggestions);
     }
 
@@ -1255,7 +1323,9 @@ class SuggestionHelper {
           }
         }
         // For single-word fields, use contains for more flexible matching
-        else if (wordWithoutQuotes.toLowerCase().contains(prefix.toLowerCase())) {
+        else if (wordWithoutQuotes
+            .toLowerCase()
+            .contains(prefix.toLowerCase())) {
           suggestions.add(word);
         }
       }

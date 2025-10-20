@@ -3,7 +3,6 @@ import 'dart:core';
 import 'package:flutter_code_editor/src/analyzer/models/issue_type.dart';
 
 class Issue {
-
   const Issue({
     required this.line,
     required this.message,

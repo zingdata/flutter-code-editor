@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 
 @immutable
 class CodeEditResult {
-
   const CodeEditResult({
     required this.fullTextAfter,
     required this.linesChanged,

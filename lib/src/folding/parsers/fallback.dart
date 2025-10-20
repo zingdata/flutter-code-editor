@@ -10,7 +10,6 @@ import 'package:flutter_code_editor/src/folding/parsers/text.dart';
 
 /// A parser for foldable blocks from raw text.
 class FallbackFoldableBlockParser extends TextFoldableBlockParser {
-
   FallbackFoldableBlockParser({
     required this.importPrefixes,
     this.multilineCommentSequences = const [],

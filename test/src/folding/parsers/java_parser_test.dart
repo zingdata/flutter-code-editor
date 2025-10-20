@@ -407,7 +407,6 @@ import java.lang.Exception;   // 9
 }
 
 class _Example {
-
   const _Example(
     this.name, {
     required this.code,

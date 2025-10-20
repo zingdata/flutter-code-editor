@@ -15,7 +15,13 @@ class SqlFormatResult {
 /// SQL-specific notation like table.column patterns and function calls
 class SqlFormatter {
   /// List of SQL aggregation functions that should have brackets
-  static const List<String> aggregationsWithBrackets = ['SUM', 'COUNT', 'MIN', 'MAX', 'AVG'];
+  static const List<String> aggregationsWithBrackets = [
+    'SUM',
+    'COUNT',
+    'MIN',
+    'MAX',
+    'AVG'
+  ];
 
   /// List of SQL keywords that should not be quoted
   static const List<String> sqlKeywords = [
@@ -62,12 +68,15 @@ class SqlFormatter {
     bool isColumn = false,
   }) {
     // Check surrounding context before and after insertion point
-    final prefixText = startIndex > 0 ? originalText.substring(0, startIndex) : '';
-    final suffixText = endIndex < originalText.length ? originalText.substring(endIndex) : '';
+    final prefixText =
+        startIndex > 0 ? originalText.substring(0, startIndex) : '';
+    final suffixText =
+        endIndex < originalText.length ? originalText.substring(endIndex) : '';
 
     // Check if we're in a specific SQL context (after table.)
     final inColumnContext = isInColumnContext(prefixText);
-    final tableName = inColumnContext ? extractTableNameFromPrefix(prefixText) : null;
+    final tableName =
+        inColumnContext ? extractTableNameFromPrefix(prefixText) : null;
 
     // Detect if we're continuing an existing function call
     final isInFunctionContext = isInsideFunctionCall(prefixText);
@@ -77,8 +86,8 @@ class SqlFormatter {
 
     final isSqlKeyword = sqlKeywords.contains(selectedWord.toUpperCase());
 
-    final isAggregationFunction =
-        aggregationsWithBrackets.contains(selectedWord.replaceAll('(', '').replaceAll(')', ''));
+    final isAggregationFunction = aggregationsWithBrackets
+        .contains(selectedWord.replaceAll('(', '').replaceAll(')', ''));
 
     // Determine if a space should be added based on SQL element type and context
     bool addSpace = isAggregationFunction
@@ -107,7 +116,8 @@ class SqlFormatter {
         selectedWord: selectedWord,
         startIndex: startIndex,
         endIndex: endIndex,
-        needsQuotes: needsQuotes || containsSpaces, // Always quote multi-word tables
+        needsQuotes:
+            needsQuotes || containsSpaces, // Always quote multi-word tables
         needDotForTable: needDotForTable,
         inColumnContext: inColumnContext,
         suffixText: suffixText,
@@ -122,7 +132,8 @@ class SqlFormatter {
         suffixText: suffixText,
         needsQuotes: containsSpaces, // Auto-quote columns with spaces
       );
-    } else if ((containsSpaces && !isSqlKeyword) || (needsQuotes && !isSqlKeyword)) {
+    } else if ((containsSpaces && !isSqlKeyword) ||
+        (needsQuotes && !isSqlKeyword)) {
       // Always quote identifiers with spaces, regardless of the needsQuotes setting
       return _formatQuotedIdentifier(
         originalText: originalText,
@@ -178,7 +189,9 @@ class SqlFormatter {
       }
 
       // Don't add space before these punctuation marks
-      if (suffixText.startsWith(')') || suffixText.startsWith(',') || suffixText.startsWith('.')) {
+      if (suffixText.startsWith(')') ||
+          suffixText.startsWith(',') ||
+          suffixText.startsWith('.')) {
         return false;
       }
 
@@ -215,7 +228,8 @@ class SqlFormatter {
     // Don't add parentheses if we're already inside a function call
     // or if the next character is already an opening parenthesis
     if (isInsideFunctionCall || suffixText.startsWith('(')) {
-      final formattedText = originalText.replaceRange(startIndex, endIndex, selectedWord);
+      final formattedText =
+          originalText.replaceRange(startIndex, endIndex, selectedWord);
       return SqlFormatResult(
         formattedText: formattedText,
         adjustedOffset: startIndex + selectedWord.length,
@@ -223,10 +237,13 @@ class SqlFormatter {
       );
     } else {
       final insertionText = '$selectedWord()';
-      final formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+      final formattedText =
+          originalText.replaceRange(startIndex, endIndex, insertionText);
       return SqlFormatResult(
         formattedText: formattedText,
-        adjustedOffset: startIndex + insertionText.length - 1, // Position cursor inside parentheses
+        adjustedOffset: startIndex +
+            insertionText.length -
+            1, // Position cursor inside parentheses
         isTable: false,
       );
     }
@@ -244,24 +261,29 @@ class SqlFormatter {
     required String suffixText,
   }) {
     // Check if we should add quotes and dot
-    bool shouldAddQuotes =
-        needsQuotes && !selectedWord.startsWith('"') && !selectedWord.endsWith('"');
+    bool shouldAddQuotes = needsQuotes &&
+        !selectedWord.startsWith('"') &&
+        !selectedWord.endsWith('"');
 
     // Don't add dot if we're already in a dot context or the next char is a dot
-    bool shouldAddDot = needDotForTable && !suffixText.startsWith('.') && !inColumnContext;
+    bool shouldAddDot =
+        needDotForTable && !suffixText.startsWith('.') && !inColumnContext;
 
     String insertionText;
     int adjustedOffset;
 
     if (shouldAddQuotes) {
       insertionText = '"$selectedWord"${shouldAddDot ? '.' : ''}';
-      adjustedOffset = startIndex + selectedWord.length + 2 + (shouldAddDot ? 1 : 0);
+      adjustedOffset =
+          startIndex + selectedWord.length + 2 + (shouldAddDot ? 1 : 0);
     } else {
       insertionText = '$selectedWord${shouldAddDot ? '.' : ''}';
-      adjustedOffset = startIndex + selectedWord.length + (shouldAddDot ? 1 : 0);
+      adjustedOffset =
+          startIndex + selectedWord.length + (shouldAddDot ? 1 : 0);
     }
 
-    final formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+    final formattedText =
+        originalText.replaceRange(startIndex, endIndex, insertionText);
     return SqlFormatResult(
       formattedText: formattedText,
       adjustedOffset: adjustedOffset,
@@ -283,7 +305,9 @@ class SqlFormatter {
     String insertionText;
     int adjustedOffset;
 
-    if (needsQuotes && !selectedWord.startsWith('"') && !selectedWord.endsWith('"')) {
+    if (needsQuotes &&
+        !selectedWord.startsWith('"') &&
+        !selectedWord.endsWith('"')) {
       insertionText = '"$selectedWord"';
       adjustedOffset = startIndex + selectedWord.length + 2; // +2 for quotes
     } else {
@@ -297,7 +321,8 @@ class SqlFormatter {
       adjustedOffset += 1;
     }
 
-    final formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+    final formattedText =
+        originalText.replaceRange(startIndex, endIndex, insertionText);
     return SqlFormatResult(
       formattedText: formattedText,
       adjustedOffset: adjustedOffset,
@@ -314,10 +339,14 @@ class SqlFormatter {
     required bool addSpace,
   }) {
     final insertionText = '"$selectedWord"${addSpace ? ' ' : ''}';
-    final formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+    final formattedText =
+        originalText.replaceRange(startIndex, endIndex, insertionText);
     return SqlFormatResult(
       formattedText: formattedText,
-      adjustedOffset: startIndex + selectedWord.length + 2 + (addSpace ? 1 : 0), // +2 for quotes
+      adjustedOffset: startIndex +
+          selectedWord.length +
+          2 +
+          (addSpace ? 1 : 0), // +2 for quotes
       isTable: false,
     );
   }
@@ -340,7 +369,8 @@ class SqlFormatter {
       insertionText += ' ';
     }
 
-    final formattedText = originalText.replaceRange(startIndex, endIndex, insertionText);
+    final formattedText =
+        originalText.replaceRange(startIndex, endIndex, insertionText);
     return SqlFormatResult(
       formattedText: formattedText,
       adjustedOffset: startIndex + insertionText.length,
@@ -391,7 +421,8 @@ class SqlFormatter {
 
     // Find the beginning of the word
     int wordStart = startIndex;
-    while (wordStart >= 0 && (isLetterOrDigit(text[wordStart]) || text[wordStart] == '_')) {
+    while (wordStart >= 0 &&
+        (isLetterOrDigit(text[wordStart]) || text[wordStart] == '_')) {
       wordStart--;
     }
 
@@ -440,7 +471,10 @@ class SqlFormatter {
       }
 
       // If we've found a space and then a non-space, we might be in a multi-word phrase
-      if (foundSpace && text[position] != ' ' && position > 0 && text[position - 1] == ' ') {
+      if (foundSpace &&
+          text[position] != ' ' &&
+          position > 0 &&
+          text[position - 1] == ' ') {
         // Check if previous word is part of the same phrase or a boundary
         int prevWordStart = position - 1;
         while (prevWordStart > 0 && text[prevWordStart - 1] == ' ') {
@@ -448,7 +482,8 @@ class SqlFormatter {
         }
 
         int wordBoundary = prevWordStart;
-        while (wordBoundary > 0 && !",;:(){}[]\"\'`=+-*/\\".contains(text[wordBoundary - 1])) {
+        while (wordBoundary > 0 &&
+            !",;:(){}[]\"\'`=+-*/\\".contains(text[wordBoundary - 1])) {
           wordBoundary--;
         }
 

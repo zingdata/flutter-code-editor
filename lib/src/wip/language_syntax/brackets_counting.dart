@@ -16,13 +16,19 @@ Map<int, String> countingBrackets(String text) {
     if (char == "\n") {
       lineNumber++;
       continue;
-    } else if (char == "/" && i < text.length - 1 && text[i + 1] == char && !isCharInString) {
+    } else if (char == "/" &&
+        i < text.length - 1 &&
+        text[i + 1] == char &&
+        !isCharInString) {
       while (char != "\n" && i < text.length - 1) {
         i++;
         char = text[i];
       }
       lineNumber++;
-    } else if (char == "/" && i < text.length - 1 && text[i + 1] == "*" && !isCharInString) {
+    } else if (char == "/" &&
+        i < text.length - 1 &&
+        text[i + 1] == "*" &&
+        !isCharInString) {
       while (char != "*" && i < text.length - 1 && text[i + 1] == "/") {
         i++;
         char = text[i];
@@ -106,7 +112,8 @@ Map<int, String> countingBrackets(String text) {
       errors[errorsLocations[errorsLocations.length - 1]] =
           "${errors[errorsLocations[errorsLocations.length - 1]]!}\nMissing bracket";
     } else {
-      errors.addAll({errorsLocations[errorsLocations.length - 1]: "Missing bracket"});
+      errors.addAll(
+          {errorsLocations[errorsLocations.length - 1]: "Missing bracket"});
     }
   }
 

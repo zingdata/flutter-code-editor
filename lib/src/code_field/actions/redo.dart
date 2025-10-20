@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/code_controller.dart';
 
 class RedoAction extends Action<RedoTextIntent> {
-
   RedoAction({
     required this.controller,
   });

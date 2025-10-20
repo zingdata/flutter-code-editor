@@ -257,7 +257,6 @@ public class MyClass {
 }
 
 class _Example {
-
   const _Example(
     this.name, {
     required this.fullTextBefore,

@@ -7,7 +7,6 @@ import 'package:flutter_code_editor/src/code_theme/code_theme_data.dart';
 import 'package:flutter_code_editor/src/highlight/node.dart';
 
 class SpanBuilder {
-
   SpanBuilder({
     required this.code,
     required this.theme,

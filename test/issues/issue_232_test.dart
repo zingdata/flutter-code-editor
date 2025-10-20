@@ -73,7 +73,7 @@ void main() {
     );
 
     controller.fullText = _fullText;
-   // controller.foldCommentAtLineZero();
+    // controller.foldCommentAtLineZero();
     //controller.foldImports();
 
     controller.value = _newValue;

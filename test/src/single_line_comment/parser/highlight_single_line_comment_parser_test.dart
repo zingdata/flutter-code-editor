@@ -309,7 +309,6 @@ val str4 = """
 }
 
 class _Example {
-
   _Example(
     this.name, {
     required this.text,

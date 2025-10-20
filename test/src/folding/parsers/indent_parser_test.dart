@@ -202,7 +202,6 @@ numbers = [1,
 }
 
 class _Example {
-
   const _Example(
     this.name, {
     required this.code,

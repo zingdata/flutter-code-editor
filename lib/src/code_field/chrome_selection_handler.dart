@@ -4,4 +4,4 @@ import 'package:flutter_code_editor/src/code_field/chrome_selection_fix_stub.dar
 /// Initialize Chrome selection fix
 void initChromeSelectionFix() {
   ChromeSelectionFix.fixChromeSelection();
-} 
+}

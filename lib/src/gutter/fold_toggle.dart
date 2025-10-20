@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/src/gutter/clickable.dart';
 
 class FoldToggle extends StatelessWidget {
-
   const FoldToggle({
     super.key,
     required this.color,

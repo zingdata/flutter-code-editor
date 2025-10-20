@@ -49,8 +49,9 @@ extension TextEditingValueExtension on TextEditingValue {
 
     final text = this.text;
 
-    final start =
-        cursorPosition > 0 ? text.lastIndexOf(RegExps.wordSplit, cursorPosition - 1) + 1 : 0;
+    final start = cursorPosition > 0
+        ? text.lastIndexOf(RegExps.wordSplit, cursorPosition - 1) + 1
+        : 0;
     final firstNonWord = text.indexOf(RegExps.wordSplit, cursorPosition);
     final end = firstNonWord == -1 ? text.length : firstNonWord;
 
@@ -68,7 +69,9 @@ extension TextEditingValueExtension on TextEditingValue {
     final cursorPosition = selection.normalized.start;
     final start = startEnd[0];
 
-    return cursorPosition > start ? text.substring(start, cursorPosition) : null;
+    return cursorPosition > start
+        ? text.substring(start, cursorPosition)
+        : null;
   }
 
   TextEditingValue deleteSelection() {

@@ -7,7 +7,8 @@ import 'package:flutter/foundation.dart';
 bool isChromeBrowser() {
   if (kIsWeb) {
     try {
-      final userAgent = js.context['navigator']['userAgent'].toString().toLowerCase();
+      final userAgent =
+          js.context['navigator']['userAgent'].toString().toLowerCase();
       return userAgent.contains('chrome') &&
           !userAgent.contains('edge') &&
           !userAgent.contains('opr') &&

@@ -1,5 +1,4 @@
 class LimitStack<T> extends Iterable<T> {
-
   LimitStack({
     required this.maxLength,
   });

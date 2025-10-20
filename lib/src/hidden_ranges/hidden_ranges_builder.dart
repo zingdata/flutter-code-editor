@@ -22,7 +22,6 @@ import 'package:flutter_code_editor/src/hidden_ranges/hidden_ranges.dart';
 /// with [copyMergingSourceMap], e.g. to strip everything coming from
 /// any foldable blocks.
 class HiddenRangesBuilder {
-
   const HiddenRangesBuilder._({
     required this.ranges,
     required this.sourceMap,

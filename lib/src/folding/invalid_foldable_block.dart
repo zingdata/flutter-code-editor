@@ -8,7 +8,6 @@ import 'package:flutter_code_editor/src/folding/foldable_block_type.dart';
 /// Anything that failed to be a [FoldableBlock] due to missing
 /// the opposite pair character.
 class InvalidFoldableBlock with EquatableMixin {
-
   InvalidFoldableBlock({
     required this.type,
     this.startLine,

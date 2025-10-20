@@ -115,7 +115,6 @@ void main() {
 }
 
 class _CopyExample {
-
   const _CopyExample(
     this.name, {
     required this.act,

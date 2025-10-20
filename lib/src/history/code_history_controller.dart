@@ -26,7 +26,6 @@ enum HistoryControllerAction {
 /// - On any selection change other than that of inserting a single
 ///   character, if the text has changed since the last record.
 class CodeHistoryController {
-
   CodeHistoryController({
     required this.codeController,
   })  : lastCode = codeController.code,

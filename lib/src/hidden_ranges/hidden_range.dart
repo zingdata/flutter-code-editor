@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_code_editor/src/code/text_range.dart';
 
 class HiddenRange extends NormalizedTextRange with EquatableMixin {
-
   const HiddenRange(
     int start,
     int end, {

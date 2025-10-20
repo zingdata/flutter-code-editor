@@ -169,7 +169,6 @@ void main() {
 }
 
 class _Example {
-
   const _Example.nonDestructive(
     this.name, {
     required TextRange full,

@@ -4,7 +4,6 @@ import 'package:flutter_code_editor/src/code/tokens.dart';
 
 @immutable
 class SingleLineComment {
-
   SingleLineComment({
     required this.innerContent,
     required this.lineIndex,
@@ -31,6 +30,7 @@ class SingleLineComment {
           outerContent: outerContent,
           source: source,
         );
+
   /// Zero-based index of the first character from the beginning of the text.
   final int characterIndex;
 

@@ -5,7 +5,6 @@ import 'package:flutter_code_editor/src/code_field/code_controller/code_controll
 import 'package:flutter_code_editor/src/code_field/text_editing_value.dart';
 
 class CopyAction extends Action<CopySelectionTextIntent> {
-
   CopyAction({
     required this.controller,
   });

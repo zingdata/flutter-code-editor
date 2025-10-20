@@ -339,7 +339,6 @@ a;
 }
 
 class _Example {
-
   const _Example(
     this.name, {
     required this.initialFullText,

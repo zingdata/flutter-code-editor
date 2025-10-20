@@ -5,7 +5,6 @@ import 'package:meta/meta.dart';
 
 @immutable
 class CodeLine {
-
   const CodeLine({
     required this.text,
     required this.textRange,

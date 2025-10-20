@@ -73,7 +73,6 @@ text # not a comment
 }
 
 class _Example {
-
   _Example(
     this.name, {
     required this.language,

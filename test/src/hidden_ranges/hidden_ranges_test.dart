@@ -152,7 +152,6 @@ void main() {
 }
 
 class _CutStringExample {
-
   _CutStringExample(
     this.name, {
     required this.hiddenTexts,

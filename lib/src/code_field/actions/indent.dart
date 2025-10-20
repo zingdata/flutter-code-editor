@@ -7,7 +7,6 @@ class IndentIntent extends Intent {
 }
 
 class IndentIntentAction extends Action<IndentIntent> {
-
   IndentIntentAction({
     required this.controller,
   });

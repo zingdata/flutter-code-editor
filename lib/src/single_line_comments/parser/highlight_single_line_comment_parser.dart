@@ -5,7 +5,6 @@ import 'package:flutter_code_editor/src/single_line_comments/single_line_comment
 import 'package:flutter_code_editor/src/single_line_comments/parser/abstract_single_line_comment_parser.dart';
 
 class HighlightSingleLineCommentParser extends AbstractSingleLineCommentParser {
-
   HighlightSingleLineCommentParser({
     required this.text,
     required this.highlighted,

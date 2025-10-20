@@ -11,8 +11,10 @@ class PopupController extends ChangeNotifier {
   bool shouldShow = false;
 
   final ItemScrollController itemScrollController = ItemScrollController();
-  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
-  List<Map<String, List<String>>> get suggestionCategories => _suggestionCategories;
+  final ItemPositionsListener itemPositionsListener =
+      ItemPositionsListener.create();
+  List<Map<String, List<String>>> get suggestionCategories =>
+      _suggestionCategories;
 
   /// Should be called when an active list item is selected to be inserted into the text
   late final void Function() onCompletionSelected;
@@ -82,8 +84,9 @@ class PopupController extends ChangeNotifier {
 
   void showOnlyColumnsOfTable(String tableName) {
     final List<Map<String, String>> suggestions0 = [];
-    final Map<String, List<String>>? columnsMap = _suggestionCategories
-        .firstWhereOrNull((element) => element.keys.first == 'Column in $tableName');
+    final Map<String, List<String>>? columnsMap =
+        _suggestionCategories.firstWhereOrNull(
+            (element) => element.keys.first == 'Column in $tableName');
     if (columnsMap != null) {
       columnsMap.forEach((key, value) {
         for (var element in value) {
@@ -113,7 +116,8 @@ class PopupController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addSuggestionCategories(List<Map<String, List<String>>> suggestionCategoriesSet) {
+  void addSuggestionCategories(
+      List<Map<String, List<String>>> suggestionCategoriesSet) {
     _suggestionCategories.addAll(suggestionCategoriesSet);
   }
 
@@ -125,7 +129,8 @@ class PopupController extends ChangeNotifier {
   void scrollByArrow(ScrollDirection direction) {
     final previousSelectedIndex = selectedIndex;
     if (direction == ScrollDirection.up) {
-      selectedIndex = (selectedIndex - 1 + suggestions.length) % suggestions.length;
+      selectedIndex =
+          (selectedIndex - 1 + suggestions.length) % suggestions.length;
     } else {
       selectedIndex = (selectedIndex + 1) % suggestions.length;
     }
@@ -153,7 +158,8 @@ class PopupController extends ChangeNotifier {
   }
 
   String getSelectedWord() => suggestions[selectedIndex].values.first;
-  bool isColumn() => suggestions[selectedIndex].keys.first.contains('Column in');
+  bool isColumn() =>
+      suggestions[selectedIndex].keys.first.contains('Column in');
 }
 
 /// Possible directions of completions list navigation

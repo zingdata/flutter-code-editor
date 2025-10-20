@@ -9,7 +9,6 @@ import 'package:flutter_code_editor/src/code/code_line.dart';
 
 @immutable
 class CodeLines with EquatableMixin {
-
   const CodeLines(this.lines);
   final List<CodeLine> lines;
 

@@ -270,7 +270,6 @@ void main() {
 }
 
 class _Example {
-
   _Example({
     required this.text,
     required this.mode,

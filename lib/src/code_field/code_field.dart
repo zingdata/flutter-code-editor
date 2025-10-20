@@ -116,12 +116,14 @@ class CodeField extends StatefulWidget {
     this.onChanged,
     this.isMobile = false,
     @Deprecated('Use gutterStyle instead') this.lineNumbers,
-    @Deprecated('Use gutterStyle instead') this.lineNumberStyle = const GutterStyle(),
+    @Deprecated('Use gutterStyle instead')
+    this.lineNumberStyle = const GutterStyle(),
   })  : assert(
             gutterStyle == null || lineNumbers == null,
             'Can not provide gutterStyle and lineNumbers at the same time. '
             'Please use gutterStyle and provide necessary columns to show/hide'),
-        gutterStyle = gutterStyle ?? ((lineNumbers == false) ? GutterStyle.none : lineNumberStyle);
+        gutterStyle = gutterStyle ??
+            ((lineNumbers == false) ? GutterStyle.none : lineNumberStyle);
 
   /// {@macro flutter.widgets.textField.minLines}
   final int? minLines;
@@ -363,8 +365,9 @@ class _CodeFieldState extends State<CodeField> {
 
     final themeData = Theme.of(context);
     final styles = CodeTheme.of(context)?.styles;
-    _backgroundCol =
-        widget.background ?? styles?[rootKey]?.backgroundColor ?? DefaultStyles.backgroundColor;
+    _backgroundCol = widget.background ??
+        styles?[rootKey]?.backgroundColor ??
+        DefaultStyles.backgroundColor;
 
     if (widget.decoration != null) {
       _backgroundCol = null;
@@ -382,7 +385,8 @@ class _CodeFieldState extends State<CodeField> {
     // This is a key fix for Chrome selection issues
     final adjustedTextStyle = textStyle.copyWith(
       height: getLineHeight(), // Use the function instead of constant
-      leadingDistribution: TextLeadingDistribution.even, // Added for consistent text baselines
+      leadingDistribution:
+          TextLeadingDistribution.even, // Added for consistent text baselines
     );
 
     final codeField = TextField(
@@ -396,7 +400,9 @@ class _CodeFieldState extends State<CodeField> {
       expands: widget.expands,
       scrollController: _codeScroll,
       keyboardType: widget.keyboardType,
-      selectionControls: kIsWeb ? DesktopTextSelectionControls() : MaterialTextSelectionControls(),
+      selectionControls: kIsWeb
+          ? DesktopTextSelectionControls()
+          : MaterialTextSelectionControls(),
       decoration: const InputDecoration(
         isCollapsed: true,
         // Add more vertical padding to help with line selection
@@ -405,7 +411,8 @@ class _CodeFieldState extends State<CodeField> {
         border: InputBorder.none,
         focusedBorder: InputBorder.none,
       ),
-      textAlignVertical: TextAlignVertical.top, // Align text at the top for better matching
+      textAlignVertical:
+          TextAlignVertical.top, // Align text at the top for better matching
       cursorColor: widget.cursorColor ?? defaultTextStyle.color,
       cursorHeight: widget.cursorHeight,
       autocorrect: false,
@@ -431,7 +438,8 @@ class _CodeFieldState extends State<CodeField> {
             TextSelectionThemeData(
               // Use a more pronounced and distinguishable selection color
               // This helps with Chrome's selection rendering
-              selectionColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              selectionColor:
+                  Theme.of(context).colorScheme.primary.withOpacity(0.5),
               cursorColor: widget.cursorColor ?? defaultTextStyle.color,
               selectionHandleColor: Theme.of(context).colorScheme.primary,
             ),
@@ -469,10 +477,12 @@ class _CodeFieldState extends State<CodeField> {
 
   Widget _buildGutter() {
     final lineNumberSize = textStyle.fontSize;
-    final lineNumberColor = widget.gutterStyle.textStyle?.color ?? textStyle.color?.withOpacity(.5);
+    final lineNumberColor =
+        widget.gutterStyle.textStyle?.color ?? textStyle.color?.withOpacity(.5);
 
     // Ensure same text style properties for consistent line height
-    final lineNumberTextStyle = (widget.gutterStyle.textStyle ?? textStyle).copyWith(
+    final lineNumberTextStyle =
+        (widget.gutterStyle.textStyle ?? textStyle).copyWith(
       color: lineNumberColor,
       fontFamily: textStyle.fontFamily,
       fontSize: lineNumberSize,
@@ -519,9 +529,10 @@ class _CodeFieldState extends State<CodeField> {
     final Offset cursorOffset = _getCaretOffset(textPainter);
 
     // Calculate how many suggestions we'll show (for height calculation)
-    final suggestionCount = widget.controller.popupController.suggestions.isNotEmpty
-        ? min(widget.controller.popupController.suggestions.length, 4)
-        : 4;
+    final suggestionCount =
+        widget.controller.popupController.suggestions.isNotEmpty
+            ? min(widget.controller.popupController.suggestions.length, 4)
+            : 4;
     final popupHeight = suggestionCount * Sizes.autocompleteItemHeight;
 
     // Get the viewport height
@@ -529,12 +540,15 @@ class _CodeFieldState extends State<CodeField> {
 
     // Calculate positions for normal (below cursor) and flipped (above cursor) popup
     // Using the actual line height for better positioning
-    final normalTopOffset =
-        cursorOffset.dy + lineHeight + 2; // Position just below the current line
-    final flippedTopOffset = cursorOffset.dy - popupHeight - 2; // Position above the current line
+    final normalTopOffset = cursorOffset.dy +
+        lineHeight +
+        2; // Position just below the current line
+    final flippedTopOffset =
+        cursorOffset.dy - popupHeight - 2; // Position above the current line
 
     // Calculate horizontal position - right at the cursor
-    final leftOffset = cursorOffset.dx + 2; // Small offset for better visual appearance
+    final leftOffset =
+        cursorOffset.dx + 2; // Small offset for better visual appearance
 
     setState(() {
       _caretDataOffset = cursorOffset;
@@ -551,7 +565,8 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   Offset _getCaretOffset(TextPainter textPainter) {
-    final RenderBox? renderBox = _editorKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _editorKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return Offset.zero;
 
     final TextPosition cursorPosition = widget.controller.selection.base;
@@ -573,7 +588,8 @@ class _CodeFieldState extends State<CodeField> {
     );
 
     // Get available width for layout
-    final double availableWidth = renderBox.size.width - widget.padding.horizontal;
+    final double availableWidth =
+        renderBox.size.width - widget.padding.horizontal;
     fullTextPainter.layout(maxWidth: availableWidth);
 
     // Get the offset at cursor position (this accounts for wrapping)
@@ -602,7 +618,8 @@ class _CodeFieldState extends State<CodeField> {
   }
 
   void _onPopupStateChanged() {
-    final shouldShow = widget.controller.popupController.shouldShow && windowSize != null;
+    final shouldShow =
+        widget.controller.popupController.shouldShow && windowSize != null;
     if (!shouldShow) {
       _suggestionsPopup?.remove();
       _suggestionsPopup = null;

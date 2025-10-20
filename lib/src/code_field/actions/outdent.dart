@@ -7,7 +7,6 @@ class OutdentIntent extends Intent {
 }
 
 class OutdentIntentAction extends Action<OutdentIntent> {
-
   OutdentIntentAction({
     required this.controller,
   });

@@ -4,7 +4,6 @@ import 'package:flutter_code_editor/src/hidden_ranges/hidden_ranges.dart';
 import 'package:flutter_code_editor/src/hidden_ranges/line_numbering_breakpoint.dart';
 
 class HiddenLineRangesBuilder {
-
   factory HiddenLineRangesBuilder({
     required CodeLines codeLines,
     required HiddenRanges hiddenRanges,

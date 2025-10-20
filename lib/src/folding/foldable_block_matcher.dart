@@ -8,7 +8,6 @@ import 'package:flutter_code_editor/src/folding/foldable_block.dart';
 /// if the content of its hidden part is not changed.
 /// IMPORTANT: even if it is no longer a valid block after a change.
 class FoldableBlockMatcher {
-
   FoldableBlockMatcher({
     required this.oldLines,
     required this.newBlocks,

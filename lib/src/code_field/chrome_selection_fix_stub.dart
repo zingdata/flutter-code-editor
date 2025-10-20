@@ -4,4 +4,4 @@ class ChromeSelectionFix {
   static void fixChromeSelection() {
     // Do nothing on non-web platforms
   }
-} 
+}

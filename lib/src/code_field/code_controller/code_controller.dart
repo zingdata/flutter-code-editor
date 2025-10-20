@@ -105,6 +105,7 @@ class CodeController extends TextEditingController {
   set readOnlySectionNames(Set<String> value) {
     _readOnlySectionNames = value;
   }
+
   // ignore: unnecessary_getters_setters
   Set<String> get readOnlySectionNames => _readOnlySectionNames;
 
@@ -326,7 +327,13 @@ class CodeController extends TextEditingController {
     mainTables.addAll(tables);
   }
 
-  static const List<String> aggregationsWithBrackets = ['SUM', 'COUNT', 'MIN', 'MAX', 'AVG'];
+  static const List<String> aggregationsWithBrackets = [
+    'SUM',
+    'COUNT',
+    'MIN',
+    'MAX',
+    'AVG'
+  ];
   static const List<String> mainAggregations = [
     'SELECT',
     'FROM',
@@ -343,7 +350,8 @@ class CodeController extends TextEditingController {
 
   /// Inserts the currently selected word from autocomplete popup
   void insertSelectedWord({String? keyword, bool? isKeywordColumn}) {
-    _wordInsertionHelper.insertSelectedWord(keyword: keyword, isKeywordColumn: isKeywordColumn);
+    _wordInsertionHelper.insertSelectedWord(
+        keyword: keyword, isKeywordColumn: isKeywordColumn);
   }
 
   /// Generates suggestions based on the current text and cursor position
@@ -430,7 +438,8 @@ class CodeController extends TextEditingController {
         return;
       }
 
-      final selectionSnapshot = code.hiddenRanges.recoverSelection(newValue.selection);
+      final selectionSnapshot =
+          code.hiddenRanges.recoverSelection(newValue.selection);
       _updateCodeIfChanged(editResult.fullTextAfter);
 
       if (newValue.text != _code.visibleText) {
@@ -470,7 +479,8 @@ class CodeController extends TextEditingController {
 
   void applyHistoryRecord(CodeHistoryRecord record) {
     _code = record.code.foldedAs(_code);
-    final fullSelection = record.code.hiddenRanges.recoverSelection(record.selection);
+    final fullSelection =
+        record.code.hiddenRanges.recoverSelection(record.selection);
     final cutSelection = _code.hiddenRanges.cutSelection(fullSelection);
 
     super.value = TextEditingValue(
@@ -557,7 +567,8 @@ class CodeController extends TextEditingController {
   bool _anySelectedLineUncommented() {
     return _anySelectedLine((line) {
       for (final commentType in SingleLineComments.byMode[language] ?? []) {
-        if (line.trimLeft().startsWith(commentType) || line.hasOnlyWhitespaces()) {
+        if (line.trimLeft().startsWith(commentType) ||
+            line.hasOnlyWhitespaces()) {
           return false;
         }
       }
@@ -608,7 +619,8 @@ class CodeController extends TextEditingController {
         return line;
       }
 
-      for (final sequence in SingleLineComments.byMode[language] ?? <String>[]) {
+      for (final sequence
+          in SingleLineComments.byMode[language] ?? <String>[]) {
         // If there is a space after a sequence
         // we should remove it with the sequence.
         if (line.trim().startsWith('$sequence ')) {
@@ -676,7 +688,8 @@ class CodeController extends TextEditingController {
       baseOffset: firstLineStart,
       extentOffset: firstLineStart + modifiedLinesString.length,
     );
-    final finalVisibleSelection = _code.hiddenRanges.cutSelection(finalFullSelection);
+    final finalVisibleSelection =
+        _code.hiddenRanges.cutSelection(finalFullSelection);
 
     // TODO(yescorp): move to the listener both here and in `set value`
     //  or come up with a different approach
@@ -787,7 +800,8 @@ class CodeController extends TextEditingController {
     _disposed = true;
     _debounce?.cancel();
     historyController.dispose();
-    _suggestionHelper.dispose(); // Clean up the isolate when the controller is disposed
+    _suggestionHelper
+        .dispose(); // Clean up the isolate when the controller is disposed
 
     super.dispose();
   }
@@ -884,7 +898,10 @@ class CodeController extends TextEditingController {
 }
 
 class FormatResult {
-  FormatResult({required this.formattedText, required this.adjustedOffset, required this.isTable});
+  FormatResult(
+      {required this.formattedText,
+      required this.adjustedOffset,
+      required this.isTable});
   final String formattedText;
   final int adjustedOffset;
   final bool isTable;

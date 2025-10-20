@@ -234,7 +234,6 @@ abstract class AbstractFoldableBlockParser {
 }
 
 class _StartedFoldableBlock {
-
   const _StartedFoldableBlock({
     required this.line,
     required this.type,
@@ -244,7 +243,6 @@ class _StartedFoldableBlock {
 }
 
 class _LineWithSemantics {
-
   const _LineWithSemantics({
     required this.index,
     required this.semantics,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class GutterStyle {
-
   const GutterStyle({
     this.margin,
     this.textAlign = TextAlign.left,
@@ -13,6 +12,7 @@ class GutterStyle {
     this.errorPopupTextStyle,
     this.textStyle,
   });
+
   /// Width of the line number column.
   final double width;
 

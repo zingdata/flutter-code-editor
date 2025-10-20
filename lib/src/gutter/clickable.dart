@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 
 /// MouseRegion + GestureDetector.
 class ClickableWidget extends StatelessWidget {
-
   const ClickableWidget({
     super.key,
     required this.child,

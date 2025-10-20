@@ -97,7 +97,8 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final maxPopUpWidth = Sizes.autocompletePopupMaxWidth + (widget.isMobile ? 0 : 100);
+    final maxPopUpWidth =
+        Sizes.autocompletePopupMaxWidth + (widget.isMobile ? 0 : 100);
 
     // Calculate available space on screen
     final screenSize = MediaQuery.of(context).size;
@@ -107,7 +108,8 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
 
     // Update slide animation direction based on flip
     _slideAnimation = Tween<Offset>(
-      begin: Offset(0, shouldFlip ? 0.05 : -0.05), // Slide down if flipped, up if normal
+      begin: Offset(
+          0, shouldFlip ? 0.05 : -0.05), // Slide down if flipped, up if normal
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
@@ -192,8 +194,10 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
                   child: ScrollablePositionedList.builder(
                     shrinkWrap: true,
                     physics: const ClampingScrollPhysics(),
-                    itemScrollController: widget.controller.itemScrollController,
-                    itemPositionsListener: widget.controller.itemPositionsListener,
+                    itemScrollController:
+                        widget.controller.itemScrollController,
+                    itemPositionsListener:
+                        widget.controller.itemPositionsListener,
                     itemCount: widget.controller.suggestions.length,
                     itemBuilder: (context, index) {
                       return _buildListItem(index);
@@ -244,7 +248,9 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           curve: Curves.easeOutCubic,
-          color: isSelected ? const Color(0xff1D73C9).withOpacity(0.15) : Colors.transparent,
+          color: isSelected
+              ? const Color(0xff1D73C9).withOpacity(0.15)
+              : Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
@@ -253,7 +259,8 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
                 Container(
                   margin: const EdgeInsets.only(top: 2),
                   child: Image.asset(
-                    getZingIcon(widget.controller.suggestions[index].keys.first),
+                    getZingIcon(
+                        widget.controller.suggestions[index].keys.first),
                     width: 16,
                     height: 16,
                     fit: BoxFit.contain,
@@ -274,7 +281,9 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
                         style: widget.style.copyWith(
                           fontSize: 13,
                           height: 1.2,
-                          color: isSelected ? const Color(0xff1D73C9) : widget.style.color,
+                          color: isSelected
+                              ? const Color(0xff1D73C9)
+                              : widget.style.color,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -286,7 +295,10 @@ class PopupState extends State<Popup> with SingleTickerProviderStateMixin {
                         style: widget.style.copyWith(
                           fontSize: 12,
                           height: 1.2,
-                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.8),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withOpacity(0.8),
                           fontFamily: 'NotoSans',
                           fontWeight: FontWeight.w400,
                         ),

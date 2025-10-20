@@ -1,5 +1,4 @@
 class EditorParams {
-
   const EditorParams({
     this.tabSpaces = 2,
   });

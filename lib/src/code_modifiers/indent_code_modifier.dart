@@ -6,7 +6,6 @@ import 'package:flutter_code_editor/src/code_field/editor_params.dart';
 import 'package:flutter_code_editor/src/code_modifiers/code_modifier.dart';
 
 class IndentModifier extends CodeModifier {
-
   const IndentModifier({
     this.handleBrackets = true,
   }) : super('\n');

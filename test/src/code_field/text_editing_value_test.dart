@@ -357,7 +357,6 @@ void main() {
 }
 
 class _IntExample {
-
   const _IntExample(
     this.name, {
     required this.value,
@@ -369,7 +368,6 @@ class _IntExample {
 }
 
 class _StringExample {
-
   const _StringExample(
     this.name, {
     required this.value,

@@ -13,7 +13,6 @@ const errorIcon = Icon(
 );
 
 class GutterErrorWidget extends StatefulWidget {
-
   const GutterErrorWidget(this.issue, this.popupTextStyle, {super.key});
   final Issue issue;
   final TextStyle popupTextStyle;

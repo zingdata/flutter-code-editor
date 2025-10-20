@@ -9,7 +9,6 @@ import 'package:flutter_code_editor/src/hidden_ranges/hidden_range.dart';
 
 @immutable
 class HiddenRanges {
-
   HiddenRanges({
     required this.ranges,
     required this.textLength,
@@ -26,6 +25,7 @@ class HiddenRanges {
     required this.ranges,
     required this.textLength,
   });
+
   /// How many hidden characters are there before this range.
   /// Has the length of [ranges] + 1. The last element shows how many
   /// hidden characters are there in total.

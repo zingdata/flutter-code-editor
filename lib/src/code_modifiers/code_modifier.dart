@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/src/code_field/editor_params.dart';
 
 abstract class CodeModifier {
-
   const CodeModifier(this.char);
   final String char;
 

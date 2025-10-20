@@ -38,13 +38,15 @@ class WordInsertionHelper {
     controller.isInsertingWord = true;
 
     final previousSelection = controller.selection;
-    final selectedWord = keyword ?? controller.popupController.getSelectedWord();
+    final selectedWord =
+        keyword ?? controller.popupController.getSelectedWord();
     final isColumn = isKeywordColumn ?? controller.popupController.isColumn();
 
     try {
       // Handle case where we don't have a defined prefix start index
       if (controller.lastPrefixStartIndex == null) {
-        _handleInsertionWithoutPrefixIndex(previousSelection, isColumn, selectedWord);
+        _handleInsertionWithoutPrefixIndex(
+            previousSelection, isColumn, selectedWord);
         return;
       }
 
@@ -62,26 +64,30 @@ class WordInsertionHelper {
       }
 
       // Normal insertion with adjusted start index
-      _handleNormalInsertion(previousSelection, isColumn, selectedWord, startIndex, endIndex);
+      _handleNormalInsertion(
+          previousSelection, isColumn, selectedWord, startIndex, endIndex);
     } finally {
       // Always reset insertion flag when done, even if exception occurs
       controller.isInsertingWord = false;
     }
   }
+
   /// Determines the appropriate start index for multi-word identifier replacements
-  int _determineMultiWordReplacementStart(
-      int startIndex, int endIndex, String selectedWord, String textBeingReplaced) {
+  int _determineMultiWordReplacementStart(int startIndex, int endIndex,
+      String selectedWord, String textBeingReplaced) {
     // Check for SQL context - this changes how we handle replacements
     final fullContext = controller.text.substring(0, endIndex);
     final isSqlContext = _isInSqlContext(fullContext);
 
     // Get text before the replacement to better understand context
-    final contextBefore =
-        startIndex > 0 ? controller.text.substring(0, startIndex).trim().toUpperCase() : '';
+    final contextBefore = startIndex > 0
+        ? controller.text.substring(0, startIndex).trim().toUpperCase()
+        : '';
 
     // Remove quotes for comparison operations
     final selectedWordWithoutQuotes = selectedWord.stringWithoutQuotes;
-    final textBeingReplacedWithoutQuotes = textBeingReplaced.stringWithoutQuotes;
+    final textBeingReplacedWithoutQuotes =
+        textBeingReplaced.stringWithoutQuotes;
 
     // For SQL multi-word field names that were identified in the suggestion helper
     if (isSqlContext && selectedWordWithoutQuotes.contains(' ')) {
@@ -118,13 +124,15 @@ class WordInsertionHelper {
         if (lastClausePos >= 0) {
           // Extract the text between the SQL clause and our cursor
           int fieldStart = lastClausePos + foundClause.length;
-          String afterClause = fullContext.substring(fieldStart, endIndex).trim();
+          String afterClause =
+              fullContext.substring(fieldStart, endIndex).trim();
 
           if (afterClause.isNotEmpty) {
             // Check if what's been typed matches the beginning of our selected word
             // accounting for case differences and removing quotes
             final selectedLower = selectedWordWithoutQuotes.toLowerCase();
-            final afterClauseLower = afterClause.stringWithoutQuotes.toLowerCase();
+            final afterClauseLower =
+                afterClause.stringWithoutQuotes.toLowerCase();
 
             // Handle special cases where only part of a field name was typed
             // For example: "SELECT order da" should match "Order Date"
@@ -139,15 +147,18 @@ class WordInsertionHelper {
               // Case 1: Typed "first se" for "First Second"
               if (typedTokens.length == 2 &&
                   selectedTokens.length == 2 &&
-                  typedTokens[0].startsWith(selectedTokens[0].substring(0, 1)) &&
-                  typedTokens[1].startsWith(selectedTokens[1].substring(0, 1))) {
+                  typedTokens[0]
+                      .startsWith(selectedTokens[0].substring(0, 1)) &&
+                  typedTokens[1]
+                      .startsWith(selectedTokens[1].substring(0, 1))) {
                 isPartialMatch = true;
               }
 
               // Case 2: Typed "first s" for "First Second"
               else if (typedTokens.length == 2 &&
                   selectedTokens.length == 2 &&
-                  typedTokens[0].startsWith(selectedTokens[0].substring(0, 1)) &&
+                  typedTokens[0]
+                      .startsWith(selectedTokens[0].substring(0, 1)) &&
                   selectedTokens[1].startsWith(typedTokens[1])) {
                 isPartialMatch = true;
               }
@@ -164,9 +175,13 @@ class WordInsertionHelper {
               else if (typedTokens.length == 2 &&
                   selectedTokens.length == 2 &&
                   typedTokens[0].toLowerCase() ==
-                      selectedTokens[0].toLowerCase().substring(0, typedTokens[0].length) &&
+                      selectedTokens[0]
+                          .toLowerCase()
+                          .substring(0, typedTokens[0].length) &&
                   typedTokens[1].toLowerCase() ==
-                      selectedTokens[1].toLowerCase().substring(0, typedTokens[1].length)) {
+                      selectedTokens[1]
+                          .toLowerCase()
+                          .substring(0, typedTokens[1].length)) {
                 isPartialMatch = true;
               }
 
@@ -179,21 +194,25 @@ class WordInsertionHelper {
                 String typedFirstToken = typedTokens[0].toUpperCase();
 
                 // Try without quotes first
-                phraseStart = textUpToCursor.lastIndexOf(typedFirstToken, endIndex);
+                phraseStart =
+                    textUpToCursor.lastIndexOf(typedFirstToken, endIndex);
 
                 // If not found, try with double quotes
                 if (phraseStart < 0) {
-                  phraseStart = textUpToCursor.lastIndexOf("\"$typedFirstToken\"", endIndex);
+                  phraseStart = textUpToCursor.lastIndexOf(
+                      "\"$typedFirstToken\"", endIndex);
                 }
 
                 // If still not found, try with backticks
                 if (phraseStart < 0) {
-                  phraseStart = textUpToCursor.lastIndexOf("`$typedFirstToken`", endIndex);
+                  phraseStart = textUpToCursor.lastIndexOf(
+                      "`$typedFirstToken`", endIndex);
                 }
 
                 if (phraseStart >= 0) {
                   // We found a valid start position - ensure it's at the beginning of a word
-                  if (phraseStart == 0 || _isWordBoundary(fullContext[phraseStart - 1])) {
+                  if (phraseStart == 0 ||
+                      _isWordBoundary(fullContext[phraseStart - 1])) {
                     return phraseStart;
                   }
                 }
@@ -202,7 +221,9 @@ class WordInsertionHelper {
 
             // Handle the case where the entire phrase matches partially
             // Example: "Ord Da" should match "Order Date"
-            if (selectedLower.replaceAll(' ', '').startsWith(afterClauseLower.replaceAll(' ', ''))) {
+            if (selectedLower
+                .replaceAll(' ', '')
+                .startsWith(afterClauseLower.replaceAll(' ', ''))) {
               // Find where this text actually starts in the full context
               int realStart = fullContext.indexOf(afterClause, lastClausePos);
               if (realStart >= 0) {
@@ -224,13 +245,24 @@ class WordInsertionHelper {
 
     // If what's being typed doesn't contain spaces, we should look for
     // multi-word field name candidates in SQL context
-    if (!textBeingReplacedWithoutQuotes.contains(' ') && isSqlContext && selectedWordWithoutQuotes.contains(' ')) {
+    if (!textBeingReplacedWithoutQuotes.contains(' ') &&
+        isSqlContext &&
+        selectedWordWithoutQuotes.contains(' ')) {
       // Look backward from the cursor for a potential phrase start
       // Example: For "SELECT order da" when replacing with "Order Date"
 
       String textUpToCursor = fullContext;
       // Find the last SQL clause
-      final sqlClauses = ['SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING', 'AND', 'OR'];
+      final sqlClauses = [
+        'SELECT',
+        'FROM',
+        'WHERE',
+        'GROUP BY',
+        'ORDER BY',
+        'HAVING',
+        'AND',
+        'OR'
+      ];
       int lastClausePos = -1;
 
       for (final clause in sqlClauses) {
@@ -242,7 +274,8 @@ class WordInsertionHelper {
 
       if (lastClausePos >= 0) {
         // Get text between clause and cursor
-        String afterClause = textUpToCursor.substring(lastClausePos, endIndex).trim();
+        String afterClause =
+            textUpToCursor.substring(lastClausePos, endIndex).trim();
 
         // Remove quotes for comparison
         afterClause = afterClause.stringWithoutQuotes;
@@ -253,14 +286,19 @@ class WordInsertionHelper {
           final words = afterClause.split(' ');
           if (words.length >= 2) {
             // Check if the typed phrase could match our suggestion
-            final selectedWords = selectedWordWithoutQuotes.toLowerCase().split(' ');
+            final selectedWords =
+                selectedWordWithoutQuotes.toLowerCase().split(' ');
 
             // Case: "order da" for "Order Date"
             if (words.length == 2 && selectedWords.length == 2) {
               if (words[0].toLowerCase() ==
-                      selectedWords[0].toLowerCase().substring(0, words[0].length) &&
+                      selectedWords[0]
+                          .toLowerCase()
+                          .substring(0, words[0].length) &&
                   words[1].toLowerCase() ==
-                      selectedWords[1].toLowerCase().substring(0, words[1].length)) {
+                      selectedWords[1]
+                          .toLowerCase()
+                          .substring(0, words[1].length)) {
                 // Find the actual start of this phrase
                 int phraseStart = -1;
 
@@ -269,11 +307,13 @@ class WordInsertionHelper {
                 phraseStart = textUpToCursor.lastIndexOf(word0, endIndex);
 
                 if (phraseStart < 0) {
-                  phraseStart = textUpToCursor.lastIndexOf("\"$word0\"", endIndex);
+                  phraseStart =
+                      textUpToCursor.lastIndexOf("\"$word0\"", endIndex);
                 }
 
                 if (phraseStart < 0) {
-                  phraseStart = textUpToCursor.lastIndexOf("`$word0`", endIndex);
+                  phraseStart =
+                      textUpToCursor.lastIndexOf("`$word0`", endIndex);
                 }
 
                 if (phraseStart >= 0) {
@@ -288,7 +328,8 @@ class WordInsertionHelper {
 
     // Split both strings into word tokens for comparison
     final selectedTokens = selectedWordWithoutQuotes.toLowerCase().split(' ');
-    final replacedTokens = textBeingReplacedWithoutQuotes.toLowerCase().split(' ');
+    final replacedTokens =
+        textBeingReplacedWithoutQuotes.toLowerCase().split(' ');
 
     // Handle SQL clause context specially
     if (isSqlContext &&
@@ -321,7 +362,8 @@ class WordInsertionHelper {
       // Find how many of the beginning words match
       int matchingTokens = 0;
       for (int i = 0; i < replacedTokens.length - 1; i++) {
-        if (i < selectedTokens.length && selectedTokens[i] == replacedTokens[i]) {
+        if (i < selectedTokens.length &&
+            selectedTokens[i] == replacedTokens[i]) {
           matchingTokens++;
         } else {
           break;
@@ -330,10 +372,13 @@ class WordInsertionHelper {
 
       // Check if the last token is a partial match of the corresponding selected token
       bool lastTokenIsPartial = false;
-      if (replacedTokens.length > 0 && selectedTokens.length > replacedTokens.length - 1) {
+      if (replacedTokens.length > 0 &&
+          selectedTokens.length > replacedTokens.length - 1) {
         final lastReplacedToken = replacedTokens.last;
-        final correspondingSelectedToken = selectedTokens[replacedTokens.length - 1];
-        lastTokenIsPartial = correspondingSelectedToken.startsWith(lastReplacedToken);
+        final correspondingSelectedToken =
+            selectedTokens[replacedTokens.length - 1];
+        lastTokenIsPartial =
+            correspondingSelectedToken.startsWith(lastReplacedToken);
       }
 
       // If at least the first word matches and we typed part of a multi-word phrase,
@@ -409,7 +454,7 @@ class WordInsertionHelper {
 
     return sqlKeywords.contains(upperWord);
   }
-  
+
   /// Checks if the given word is an SQL aggregation function
   bool _isSqlAggregationFunction(String word) {
     return _sqlAggregationFunctions.contains(word.toUpperCase());
@@ -426,9 +471,10 @@ class WordInsertionHelper {
     final cursorPosition = previousSelection.baseOffset;
     String wordToInsert = selectedWord;
     int cursorAdjustment = 0;
-    
+
     // Check if this is an aggregation function and add brackets if needed
-    if (_isInSqlContext(controller.text) && _isSqlAggregationFunction(selectedWord)) {
+    if (_isInSqlContext(controller.text) &&
+        _isSqlAggregationFunction(selectedWord)) {
       wordToInsert = "$selectedWord()";
       cursorAdjustment = -1; // Position cursor inside the brackets
     }
@@ -470,9 +516,10 @@ class WordInsertionHelper {
   ) {
     String wordToInsert = selectedWord;
     int cursorAdjustment = 0;
-    
+
     // Check if this is an aggregation function and add brackets if needed
-    if (_isInSqlContext(controller.text) && _isSqlAggregationFunction(selectedWord)) {
+    if (_isInSqlContext(controller.text) &&
+        _isSqlAggregationFunction(selectedWord)) {
       wordToInsert = "$selectedWord()";
       cursorAdjustment = -1; // Position cursor inside the brackets
     }

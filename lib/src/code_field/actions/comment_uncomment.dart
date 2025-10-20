@@ -7,7 +7,6 @@ class CommentUncommentIntent extends Intent {
 }
 
 class CommentUncommentAction extends Action<CommentUncommentIntent> {
-
   CommentUncommentAction({
     required this.controller,
   });

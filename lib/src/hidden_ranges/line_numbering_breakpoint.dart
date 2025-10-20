@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 /// Describes a break in continuous line numbers.
 class LineNumberingBreakpoint with EquatableMixin {
-
   const LineNumberingBreakpoint({
     required this.full,
     required this.visible,
@@ -17,6 +16,7 @@ class LineNumberingBreakpoint with EquatableMixin {
           'A breakpoint must increase the previous spread. '
           'Old=$spreadBefore, New=($full - $visible)',
         );
+
   /// The full line index.
   final int full;
 

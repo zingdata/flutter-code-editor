@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 
 @immutable
 class CodeThemeData {
-
   CodeThemeData({
     Map<String, TextStyle>? styles,
     TextStyle? classStyle,

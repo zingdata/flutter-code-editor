@@ -44,7 +44,6 @@ CodeController createController(
 }
 
 class TestApp extends StatefulWidget {
-
   const TestApp({
     super.key,
     required this.controller,
