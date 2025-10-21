@@ -1,7 +1,7 @@
 // dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'data_worker_service.dart';
+part of 'suggestion_worker_pool.dart';
 
 // **************************************************************************
 // Generator: WorkerGenerator 7.1.7 (Squadron 7.2.0)
@@ -18,8 +18,8 @@ const int _$processTableChunkId = 7;
 const int _$processWithProgressId = 8;
 const int _$validateDataId = 9;
 
-/// WorkerService operations for DataWorkerService
-extension on DataWorkerService {
+/// WorkerService operations for SuggestionWorkerPool
+extension on SuggestionWorkerPool {
   sq.OperationsMap _$getOperations() => sq.OperationsMap({
         _$decodeJsonId: ($req) async {
           final dynamic $res;
@@ -97,10 +97,10 @@ extension on DataWorkerService {
       });
 }
 
-/// Invoker for DataWorkerService, implements the public interface to invoke the
+/// Invoker for SuggestionWorkerPool, implements the public interface to invoke the
 /// remote service.
-base mixin _$DataWorkerService$Invoker on sq.Invoker
-    implements DataWorkerService {
+base mixin _$SuggestionWorkerPool$Invoker on sq.Invoker
+    implements SuggestionWorkerPool {
   @override
   Future<dynamic> decodeJson(String jsonString) =>
       send(_$decodeJsonId, args: [jsonString]);
@@ -193,82 +193,83 @@ base mixin _$DataWorkerService$Invoker on sq.Invoker
   }
 }
 
-/// Facade for DataWorkerService, implements other details of the service unrelated to
+/// Facade for SuggestionWorkerPool, implements other details of the service unrelated to
 /// invoking the remote service.
-base mixin _$DataWorkerService$Facade implements DataWorkerService {}
+base mixin _$SuggestionWorkerPool$Facade implements SuggestionWorkerPool {}
 
-/// WorkerService class for DataWorkerService
-base class _$DataWorkerService$WorkerService extends DataWorkerService
+/// WorkerService class for SuggestionWorkerPool
+base class _$SuggestionWorkerPool$WorkerService extends SuggestionWorkerPool
     implements sq.WorkerService {
-  _$DataWorkerService$WorkerService() : super();
+  _$SuggestionWorkerPool$WorkerService() : super();
 
   @override
   sq.OperationsMap get operations => _$getOperations();
 }
 
-/// Service initializer for DataWorkerService
-sq.WorkerService $DataWorkerServiceInitializer(sq.WorkerRequest $req) =>
-    _$DataWorkerService$WorkerService();
+/// Service initializer for SuggestionWorkerPool
+sq.WorkerService $SuggestionWorkerPoolInitializer(sq.WorkerRequest $req) =>
+    _$SuggestionWorkerPool$WorkerService();
 
-/// Worker for DataWorkerService
-base class DataWorkerServiceWorker extends sq.Worker
-    with _$DataWorkerService$Invoker, _$DataWorkerService$Facade
-    implements DataWorkerService {
-  DataWorkerServiceWorker(
+/// Worker for SuggestionWorkerPool
+base class SuggestionWorkerPoolWorker extends sq.Worker
+    with _$SuggestionWorkerPool$Invoker, _$SuggestionWorkerPool$Facade
+    implements SuggestionWorkerPool {
+  SuggestionWorkerPoolWorker(
       {sq.PlatformThreadHook? threadHook,
       sq.ExceptionManager? exceptionManager})
-      : super($DataWorkerServiceActivator(sq.Squadron.platformType),
+      : super($SuggestionWorkerPoolActivator(sq.Squadron.platformType),
             threadHook: threadHook, exceptionManager: exceptionManager);
 
-  DataWorkerServiceWorker.vm(
+  SuggestionWorkerPoolWorker.vm(
       {sq.PlatformThreadHook? threadHook,
       sq.ExceptionManager? exceptionManager})
-      : super($DataWorkerServiceActivator(sq.SquadronPlatformType.vm),
+      : super($SuggestionWorkerPoolActivator(sq.SquadronPlatformType.vm),
             threadHook: threadHook, exceptionManager: exceptionManager);
 
-  DataWorkerServiceWorker.js(
+  SuggestionWorkerPoolWorker.js(
       {sq.PlatformThreadHook? threadHook,
       sq.ExceptionManager? exceptionManager})
-      : super($DataWorkerServiceActivator(sq.SquadronPlatformType.js),
+      : super($SuggestionWorkerPoolActivator(sq.SquadronPlatformType.js),
             threadHook: threadHook, exceptionManager: exceptionManager);
 
   @override
   List? getStartArgs() => null;
 }
 
-/// Worker pool for DataWorkerService
-base class DataWorkerServiceWorkerPool
-    extends sq.WorkerPool<DataWorkerServiceWorker>
-    with _$DataWorkerService$Facade
-    implements DataWorkerService {
-  DataWorkerServiceWorkerPool(
-      {sq.PlatformThreadHook? threadHook,
-      sq.ExceptionManager? exceptionManager,
-      sq.ConcurrencySettings? concurrencySettings})
-      : super(
-            (sq.ExceptionManager exceptionManager) => DataWorkerServiceWorker(
-                threadHook: threadHook, exceptionManager: exceptionManager),
-            concurrencySettings: concurrencySettings,
-            exceptionManager: exceptionManager);
-
-  DataWorkerServiceWorkerPool.vm(
+/// Worker pool for SuggestionWorkerPool
+base class SuggestionWorkerPoolWorkerPool
+    extends sq.WorkerPool<SuggestionWorkerPoolWorker>
+    with _$SuggestionWorkerPool$Facade
+    implements SuggestionWorkerPool {
+  SuggestionWorkerPoolWorkerPool(
       {sq.PlatformThreadHook? threadHook,
       sq.ExceptionManager? exceptionManager,
       sq.ConcurrencySettings? concurrencySettings})
       : super(
             (sq.ExceptionManager exceptionManager) =>
-                DataWorkerServiceWorker.vm(
+                SuggestionWorkerPoolWorker(
                     threadHook: threadHook, exceptionManager: exceptionManager),
             concurrencySettings: concurrencySettings,
             exceptionManager: exceptionManager);
 
-  DataWorkerServiceWorkerPool.js(
+  SuggestionWorkerPoolWorkerPool.vm(
       {sq.PlatformThreadHook? threadHook,
       sq.ExceptionManager? exceptionManager,
       sq.ConcurrencySettings? concurrencySettings})
       : super(
             (sq.ExceptionManager exceptionManager) =>
-                DataWorkerServiceWorker.js(
+                SuggestionWorkerPoolWorker.vm(
+                    threadHook: threadHook, exceptionManager: exceptionManager),
+            concurrencySettings: concurrencySettings,
+            exceptionManager: exceptionManager);
+
+  SuggestionWorkerPoolWorkerPool.js(
+      {sq.PlatformThreadHook? threadHook,
+      sq.ExceptionManager? exceptionManager,
+      sq.ConcurrencySettings? concurrencySettings})
+      : super(
+            (sq.ExceptionManager exceptionManager) =>
+                SuggestionWorkerPoolWorker.js(
                     threadHook: threadHook, exceptionManager: exceptionManager),
             concurrencySettings: concurrencySettings,
             exceptionManager: exceptionManager);

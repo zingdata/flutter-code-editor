@@ -7,14 +7,14 @@ import 'package:flutter/foundation.dart';
 
 /// Global flag to control logging output
 /// Set to false in production to disable all logging
-const bool printLogs = kDebugMode;
+const bool printLogs = kDebugMode || kProfileMode;
 
 /// Logs informational messages
 ///
 /// Only outputs when [printLogs] is true and running in debug mode
 void infoLog(String message) {
   if (printLogs) {
-    debugPrint('[INFO] $message');
+    print('[INFO] $message');
   }
 }
 
@@ -23,7 +23,7 @@ void infoLog(String message) {
 /// Only outputs when [printLogs] is true and running in debug mode
 void errorLog(String message) {
   if (printLogs) {
-    debugPrint('[ERROR] $message');
+    print('[ERROR] $message');
   }
 }
 
@@ -32,7 +32,7 @@ void errorLog(String message) {
 /// Only outputs when [printLogs] is true and running in debug mode
 void warnLog(String message) {
   if (printLogs) {
-    debugPrint('[WARN] $message');
+    print('[WARN] $message');
   }
 }
 
@@ -41,6 +41,6 @@ void warnLog(String message) {
 /// Only outputs when [printLogs] is true and running in debug mode
 void debugLog(String message) {
   if (printLogs) {
-    debugPrint('[DEBUG] $message');
+    print('[DEBUG] $message');
   }
 }

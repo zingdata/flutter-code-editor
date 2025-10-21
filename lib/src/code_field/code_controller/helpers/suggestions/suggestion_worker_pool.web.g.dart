@@ -7,16 +7,17 @@
 
 import 'package:squadron/squadron.dart' as sq;
 
-import 'data_worker_service.dart';
+import 'suggestion_worker_pool.dart';
 
 void main() {
-  /// Web entry point for DataWorkerService
-  sq.run($DataWorkerServiceInitializer);
+  /// Web entry point for SuggestionWorkerPool
+  sq.run($SuggestionWorkerPoolInitializer);
 }
 
-sq.EntryPoint $getDataWorkerServiceActivator(sq.SquadronPlatformType platform) {
+sq.EntryPoint $getSuggestionWorkerPoolActivator(
+    sq.SquadronPlatformType platform) {
   if (platform.isWeb) {
-    return sq.Squadron.uri('~/workers/data_worker_service.web.g.dart.js');
+    return sq.Squadron.uri('~/workers/suggestion_worker_pool.web.g.dart.js');
   } else {
     throw UnsupportedError('${platform.label} not supported.');
   }

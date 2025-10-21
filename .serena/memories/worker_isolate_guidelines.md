@@ -109,22 +109,23 @@ Library:'dart:async' Class: _Future
 
 ## Services Using Workers
 
-### DataWorkerService
-Location: `lib/services/data_worker_service.dart`
+### SuggestionWorkerPool
+Location: `lib/src/code_field/code_controller/helpers/suggestions/suggestion_worker_pool.dart`
 
 Uses Squadron for:
+- SQL suggestion processing
 - Data processing
 - Query result transformations
 - Complex calculations
 
 Generated files:
-- `data_worker_service.worker.g.dart` (worker implementation)
-- `data_worker_service.activator.g.dart` (activator)
-- `data_worker_service.web.g.dart` (web-specific)
-- `data_worker_service.vm.g.dart` (VM-specific)
+- `suggestion_worker_pool.worker.g.dart` (worker implementation)
+- `suggestion_worker_pool.activator.g.dart` (activator)
+- `suggestion_worker_pool.web.g.dart` (web-specific)
+- `suggestion_worker_pool.vm.g.dart` (VM-specific)
 
-### WorkerManagerService
-Location: `lib/services/worker_manager_service.dart`
+### WorkerPoolManager
+Location: `lib/src/code_field/code_controller/helpers/suggestions/worker_pool_manager.dart`
 
 Manages worker pool and execution.
 

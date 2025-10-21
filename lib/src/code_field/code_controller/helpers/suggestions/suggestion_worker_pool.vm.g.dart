@@ -7,16 +7,17 @@
 
 import 'package:squadron/squadron.dart' as sq;
 
-import 'data_worker_service.dart';
+import 'suggestion_worker_pool.dart';
 
-void _start$DataWorkerService(sq.WorkerRequest command) {
-  /// VM entry point for DataWorkerService
-  sq.run($DataWorkerServiceInitializer, command);
+void _start$SuggestionWorkerPool(sq.WorkerRequest command) {
+  /// VM entry point for SuggestionWorkerPool
+  sq.run($SuggestionWorkerPoolInitializer, command);
 }
 
-sq.EntryPoint $getDataWorkerServiceActivator(sq.SquadronPlatformType platform) {
+sq.EntryPoint $getSuggestionWorkerPoolActivator(
+    sq.SquadronPlatformType platform) {
   if (platform.isVm) {
-    return _start$DataWorkerService;
+    return _start$SuggestionWorkerPool;
   } else {
     throw UnsupportedError('${platform.label} not supported.');
   }

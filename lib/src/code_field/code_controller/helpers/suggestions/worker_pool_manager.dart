@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/data_worker_service.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/suggestion_worker_pool.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/utils/browser_compatibility.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/utils/logger.dart';
 import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/utils/squadron_web_debug.dart';
@@ -9,7 +9,7 @@ import 'package:squadron/squadron.dart';
 
 /// Squadron-based service for managing worker tasks with cancellation support
 /// Provides thread-safe operations using Squadron's WorkerPool
-class WorkerManagerService {
+class WorkerPoolManager {
   /// Default configuration - optimized for performance
   /// 2-8 workers with 4 concurrent tasks each = up to 32 parallel operations
   static WorkerManagerConfig _config = const WorkerManagerConfig();
@@ -18,7 +18,7 @@ class WorkerManagerService {
   static DateTime? _serviceStartTime;
 
   // Squadron worker pool for handling tasks
-  static DataWorkerServiceWorkerPool? _workerPool;
+  static SuggestionWorkerPoolWorkerPool? _workerPool;
 
   // Track active tasks for monitoring (Squadron handles cancellation internally)
   static final Set<String> _activeTasks = {};
@@ -93,13 +93,13 @@ class WorkerManagerService {
         infoLog('🌐 Web platform detected - Squadron will use JS/WASM workers');
         infoLog('🔍 Squadron Platform Type: ${Squadron.platformType}');
         infoLog('🎯 Expected worker file selection:');
-        infoLog('   - JS workers: ./workers/data_worker_service.web.g.dart.js');
+        infoLog('   - JS workers: ./workers/suggestion_worker_pool.web.g.dart.js');
         infoLog(
-            '   - WASM workers: ./workers/data_worker_service.web.g.dart.wasm');
+            '   - WASM workers: ./workers/suggestion_worker_pool.web.g.dart.wasm');
         infoLog(
-            '   - MJS module: ./workers/data_worker_service.web.g.dart.mjs');
+            '   - MJS module: ./workers/suggestion_worker_pool.web.g.dart.mjs');
         infoLog(
-            '   - Support JS: ./workers/data_worker_service.web.g.dart.support.js');
+            '   - Support JS: ./workers/suggestion_worker_pool.web.g.dart.support.js');
 
         // Additional web debugging info
         infoLog('🌍 User agent: ${Squadron.platformType.toString()}');
@@ -112,7 +112,7 @@ class WorkerManagerService {
       if (printLogs) infoLog('⏳ Creating Squadron WorkerPool instance...');
       final poolCreateStart = DateTime.now();
 
-      _workerPool = DataWorkerServiceWorkerPool(
+      _workerPool = SuggestionWorkerPoolWorkerPool(
         concurrencySettings: concurrencySettings,
       );
 
@@ -261,7 +261,7 @@ class WorkerManagerService {
           maxParallel: _config.maxParallel,
         );
 
-        _workerPool = DataWorkerServiceWorkerPool(
+        _workerPool = SuggestionWorkerPoolWorkerPool(
           concurrencySettings: concurrencySettings,
         );
 
@@ -1167,7 +1167,7 @@ class WorkerManagerService {
   /// Get debug information about Squadron activator
   static String _getActivatorDebugInfo() {
     try {
-      return 'DataWorkerServiceActivator configured for ${Squadron.platformType}';
+      return 'SuggestionWorkerPoolActivator configured for ${Squadron.platformType}';
     } catch (e) {
       return 'Failed to get activator info: $e';
     }
@@ -1480,7 +1480,7 @@ enum ExistingTaskPolicy {
   skipIfActive,
 }
 
-/// Runtime configuration for [WorkerManagerService]
+/// Runtime configuration for [WorkerPoolManager]
 class WorkerManagerConfig {
   const WorkerManagerConfig({
     this.minWorkers = 2, // Keep 2 workers ready for instant response

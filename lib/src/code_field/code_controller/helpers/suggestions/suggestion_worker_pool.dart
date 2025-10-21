@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/data_worker_service.activator.g.dart';
+import 'package:flutter_code_editor/src/code_field/code_controller/helpers/suggestions/suggestion_worker_pool.activator.g.dart';
 import 'package:squadron/squadron.dart' as sq;
 
-part 'data_worker_service.worker.g.dart';
+part 'suggestion_worker_pool.worker.g.dart';
 
 const bool showLogs = false;
 
@@ -12,7 +12,7 @@ const bool showLogs = false;
   baseUrl: '~/workers',
   targetPlatform: sq.TargetPlatform.vm | sq.TargetPlatform.js,
 )
-base class DataWorkerService {
+base class SuggestionWorkerPool {
   @sq.SquadronMethod()
   FutureOr<dynamic> decodeJson(String jsonString) {
     final methodStart = DateTime.now();
