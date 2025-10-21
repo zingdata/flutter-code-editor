@@ -1,0 +1,15 @@
+targets:
+  $default:
+    builders:
+      squadron_builder:
+        enabled: true
+        options:
+          # Worker output directory for web builds
+          web_output_path: web/workers
+
+          # Enable platform-specific worker generation
+          generate_vm: true
+          generate_web: true
+
+          # Code generation settings
+          format_output: true

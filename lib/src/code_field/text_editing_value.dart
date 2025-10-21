@@ -19,8 +19,7 @@ extension TextEditingValueExtension on TextEditingValue {
     final start = startEnd[0];
     final end = startEnd[1];
 
-    //TODO not sure this is right, I CHANGED THIS TO BE GREATER THAN OR EQUAL TO
-    return end >= start ? start : null;
+    return end > start ? start : null;
   }
 
   /// The word at the cursor, including if it is on either side of the cursor.
